@@ -146,11 +146,11 @@ SMS_SHOW_CODE = SMS_BACKEND.endswith("ConsoleBackend") and (DEBUG or env("SMS_SH
 # Doğrulama kodu sınırları (rapor, Bölüm 7)
 OTP_TTL_SECONDS = 180
 OTP_MAX_ATTEMPTS = 5
-OTP_RESEND_SECONDS = 30
-OTP_PER_PHONE_HOUR = 3
-OTP_PER_PHONE_DAY = 6
-OTP_PER_IP_HOUR = 10
-OTP_PER_BUSINESS_DAY = 300
+OTP_RESEND_SECONDS = int(env("OTP_RESEND_SECONDS", "30"))
+OTP_PER_PHONE_HOUR = int(env("OTP_PER_PHONE_HOUR", "3"))
+OTP_PER_PHONE_DAY = int(env("OTP_PER_PHONE_DAY", "6"))
+OTP_PER_IP_HOUR = int(env("OTP_PER_IP_HOUR", "10"))
+OTP_PER_BUSINESS_DAY = int(env("OTP_PER_BUSINESS_DAY", "300"))
 DEVICE_REMEMBER_DAYS = 90
 
 # Cloudflare Turnstile (isteğe bağlı). İkisi de doluysa kod gönderiminden önce doğrulanır.
