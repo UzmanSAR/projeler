@@ -1,0 +1,337 @@
+"""Veri modeli. Her kayıt bir işletmeye (kiracı) bağlıdır; sorgular her zaman
+işletme kimliğiyle filtrelenir."""
+import secrets
+from datetime import time
+
+from django.conf import settings
+from django.contrib.postgres.constraints import ExclusionConstraint
+from django.contrib.postgres.fields import DateTimeRangeField, RangeBoundary, RangeOperators
+from django.core.exceptions import ValidationError
+from django.core.validators import RegexValidator
+from django.db import models
+from django.db.models import Func, Q
+from django.utils import timezone
+
+RESERVED_SLUGS = {
+    "panel", "yonetim", "admin", "static", "media", "api", "giris", "kayit",
+    "fiyatlar", "hakkinda", "destek", "kvkk", "robots.txt", "favicon.ico",
+}
+
+slug_validator = RegexValidator(
+    r"^[a-z0-9]+(?:-[a-z0-9]+)*$", "Yalnızca küçük harf, rakam ve tire kullanın."
+)
+
+
+def validate_slug_free(value):
+    if value in RESERVED_SLUGS:
+        raise ValidationError("Bu adres kullanılamaz.")
+
+
+class TsTzRange(Func):
+    function = "TSTZRANGE"
+    output_field = DateTimeRangeField()
+
+
+class Business(models.Model):
+    class Plan(models.TextChoices):
+        SOLO = "solo", "Tek Koltuk"
+        SHOP = "shop", "Dükkân"
+        SALON = "salon", "Salon"
+
+    class Status(models.TextChoices):
+        TRIAL = "trial", "Deneme"
+        ACTIVE = "active", "Aktif"
+        PAST_DUE = "past_due", "Ödeme bekliyor"
+        SUSPENDED = "suspended", "Kapalı"
+
+    name = models.CharField("dükkân adı", max_length=80)
+    slug = models.CharField(
+        "sayfa adresi", max_length=40, unique=True,
+        validators=[slug_validator, validate_slug_free],
+    )
+    description = models.TextField("tanıtım", blank=True, max_length=600)
+    address = models.CharField("adres", max_length=200, blank=True)
+    district = models.CharField("semt / ilçe", max_length=60, blank=True)
+    phone = models.CharField("telefon", max_length=20, blank=True)
+    whatsapp = models.CharField("WhatsApp numarası", max_length=20, blank=True)
+    maps_url = models.URLField("harita linki", blank=True)
+    timezone = models.CharField(max_length=40, default="Europe/Istanbul")
+
+    plan = models.CharField(max_length=10, choices=Plan.choices, default=Plan.SOLO)
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.TRIAL)
+    trial_ends = models.DateField(null=True, blank=True)
+    sms_credit = models.IntegerField("SMS kredisi", default=100)
+
+    # Randevu kuralları
+    slot_step = models.PositiveSmallIntegerField("saat aralığı (dk)", default=15)
+    min_notice_minutes = models.PositiveIntegerField("en geç kaç dk önce alınabilir", default=60)
+    max_days_ahead = models.PositiveSmallIntegerField("en fazla kaç gün sonrası", default=30)
+    cancel_limit_minutes = models.PositiveIntegerField("iptal süresi (dk önce)", default=120)
+    max_open_per_phone = models.PositiveSmallIntegerField("numara başına açık randevu", default=2)
+    remind_manual = models.BooleanField(
+        "elle girilen randevuya da hatırlatma gönder", default=True
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "işletme"
+        verbose_name_plural = "işletmeler"
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def accepts_bookings(self):
+        """Ödeme gecikince hesap kapanmaz; yalnızca yeni online randevu durur."""
+        return self.status in (self.Status.TRIAL, self.Status.ACTIVE)
+
+
+class Membership(models.Model):
+    class Role(models.TextChoices):
+        OWNER = "owner", "Sahip"
+        STAFF = "staff", "Personel"
+
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name="memberships")
+    role = models.CharField(max_length=10, choices=Role.choices, default=Role.OWNER)
+
+    class Meta:
+        verbose_name = "panel üyeliği"
+        verbose_name_plural = "panel üyelikleri"
+
+    def __str__(self):
+        return f"{self.user} @ {self.business}"
+
+
+class Service(models.Model):
+    business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name="services")
+    name = models.CharField("işlem", max_length=60)
+    duration = models.PositiveSmallIntegerField("süre (dk)", default=30)
+    buffer = models.PositiveSmallIntegerField("hazırlık payı (dk)", default=0)
+    price = models.DecimalField("fiyat (₺)", max_digits=8, decimal_places=0)
+    order = models.PositiveSmallIntegerField("sıra", default=0)
+    active = models.BooleanField("aktif", default=True)
+    price_updated_at = models.DateField(default=timezone.localdate)
+
+    class Meta:
+        ordering = ["order", "id"]
+        verbose_name = "hizmet"
+        verbose_name_plural = "hizmetler"
+
+    def __str__(self):
+        return self.name
+
+
+class Staff(models.Model):
+    business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name="staff")
+    name = models.CharField("ad", max_length=40)
+    title = models.CharField("unvan", max_length=30, blank=True, default="usta")
+    services = models.ManyToManyField(Service, blank=True, verbose_name="yapabildiği işlemler")
+    order = models.PositiveSmallIntegerField("sıra", default=0)
+    active = models.BooleanField("aktif", default=True)
+
+    class Meta:
+        ordering = ["order", "id"]
+        verbose_name = "personel"
+        verbose_name_plural = "personel"
+
+    def __str__(self):
+        return self.name
+
+
+class WorkingHours(models.Model):
+    WEEKDAYS = [
+        (0, "Pazartesi"), (1, "Salı"), (2, "Çarşamba"), (3, "Perşembe"),
+        (4, "Cuma"), (5, "Cumartesi"), (6, "Pazar"),
+    ]
+    business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name="hours")
+    weekday = models.PositiveSmallIntegerField(choices=WEEKDAYS)
+    closed = models.BooleanField(default=False)
+    open = models.TimeField(default=time(9, 0))
+    close = models.TimeField(default=time(20, 0))
+    break_start = models.TimeField(null=True, blank=True)
+    break_end = models.TimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["weekday"]
+        constraints = [
+            models.UniqueConstraint(fields=["business", "weekday"], name="one_row_per_weekday")
+        ]
+        verbose_name = "çalışma saati"
+        verbose_name_plural = "çalışma saatleri"
+
+
+class TimeOff(models.Model):
+    """Kapalı gün, resmî tatil, izin ya da elle kapatılan saat. staff boşsa tüm dükkân."""
+    business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name="timeoffs")
+    staff = models.ForeignKey(Staff, null=True, blank=True, on_delete=models.CASCADE)
+    start = models.DateTimeField()
+    end = models.DateTimeField()
+    reason = models.CharField(max_length=80, blank=True)
+
+    class Meta:
+        ordering = ["start"]
+        verbose_name = "kapalı zaman"
+        verbose_name_plural = "kapalı zamanlar"
+
+
+class Customer(models.Model):
+    """Müşteri kaydı işletmeye özeldir; kuaförler birbirinin müşterisini göremez."""
+    business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name="customers")
+    phone = models.CharField(max_length=11)
+    name = models.CharField(max_length=60, blank=True)
+    note = models.TextField("berberin notu", blank=True, max_length=500)
+    verified_at = models.DateTimeField(null=True, blank=True)
+    no_show_count = models.PositiveSmallIntegerField(default=0)
+    blocked = models.BooleanField("online randevu kapalı", default=False)
+    marketing_consent = models.BooleanField(default=False)
+    marketing_consent_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["business", "phone"], name="one_customer_per_phone")
+        ]
+        verbose_name = "müşteri"
+        verbose_name_plural = "müşteriler"
+
+    def __str__(self):
+        return self.name or self.phone
+
+    @property
+    def masked_phone(self):
+        p = self.phone
+        return f"{p[:2]}•• ••• •• {p[-2:]}" if len(p) == 11 else p
+
+
+def new_token():
+    return secrets.token_urlsafe(16)
+
+
+class Appointment(models.Model):
+    class Status(models.TextChoices):
+        CONFIRMED = "confirmed", "Onaylı"
+        COMPLETED = "completed", "Tamamlandı"
+        NO_SHOW = "no_show", "Gelmedi"
+        CANCELLED_CUSTOMER = "cancelled_customer", "Müşteri iptali"
+        CANCELLED_BUSINESS = "cancelled_business", "İşletme iptali"
+
+    class Source(models.TextChoices):
+        ONLINE = "online", "Online"
+        MANUAL = "manual", "Elle"
+        WALKIN = "walkin", "Randevusuz"
+
+    class Payment(models.TextChoices):
+        CASH = "cash", "Nakit"
+        CARD = "card", "Kart"
+
+    # Takvimde yer tutan durumlar. İptaller saati boşaltır.
+    ACTIVE = [Status.CONFIRMED, Status.COMPLETED, Status.NO_SHOW]
+
+    business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name="appointments")
+    staff = models.ForeignKey(Staff, on_delete=models.PROTECT, related_name="appointments")
+    customer = models.ForeignKey(
+        Customer, null=True, blank=True, on_delete=models.SET_NULL, related_name="appointments"
+    )
+    start = models.DateTimeField()
+    end = models.DateTimeField()
+    block_end = models.DateTimeField(help_text="Bitiş + hazırlık payı")
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.CONFIRMED)
+    source = models.CharField(max_length=10, choices=Source.choices, default=Source.ONLINE)
+    planned_total = models.DecimalField(max_digits=9, decimal_places=0, default=0)
+    actual_total = models.DecimalField(max_digits=9, decimal_places=0, null=True, blank=True)
+    payment = models.CharField(max_length=5, choices=Payment.choices, blank=True)
+    token = models.CharField(max_length=32, unique=True, default=new_token, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["start"]
+        indexes = [models.Index(fields=["business", "start"])]
+        constraints = [
+            # Çakışma kontrolü veritabanında: aynı berbere aynı anda iki kayıt girilemez.
+            ExclusionConstraint(
+                name="no_overlap_per_staff",
+                expressions=[
+                    (TsTzRange("start", "block_end", RangeBoundary()), RangeOperators.OVERLAPS),
+                    ("staff", RangeOperators.EQUAL),
+                ],
+                condition=Q(status__in=["confirmed", "completed", "no_show"]),
+            ),
+            models.CheckConstraint(condition=Q(end__gt=models.F("start")), name="end_after_start"),
+        ]
+        verbose_name = "randevu"
+        verbose_name_plural = "randevular"
+
+    def __str__(self):
+        return f"{self.start:%d.%m %H:%M} {self.staff}"
+
+    @property
+    def summary(self):
+        return " + ".join(i.name for i in self.items.all())
+
+    @property
+    def is_open(self):
+        return self.status == self.Status.CONFIRMED
+
+    def can_cancel_online(self, now=None):
+        now = now or timezone.now()
+        limit = self.start - timezone.timedelta(minutes=self.business.cancel_limit_minutes)
+        return self.is_open and now <= limit
+
+
+class AppointmentItem(models.Model):
+    """Fiyat ve süre randevu anında kopyalanır; sonradan fiyat değişse geçmiş ciro bozulmaz."""
+    appointment = models.ForeignKey(Appointment, on_delete=models.CASCADE, related_name="items")
+    service = models.ForeignKey(Service, null=True, on_delete=models.SET_NULL)
+    name = models.CharField(max_length=60)
+    price = models.DecimalField(max_digits=8, decimal_places=0)
+    duration = models.PositiveSmallIntegerField()
+
+
+class MessageLog(models.Model):
+    class Kind(models.TextChoices):
+        OTP = "otp", "Doğrulama kodu"
+        CONFIRM = "confirm", "Randevu onayı"
+        REMINDER = "reminder", "Hatırlatma"
+        CANCEL = "cancel", "İptal bildirimi"
+
+    class Status(models.TextChoices):
+        QUEUED = "queued", "Sırada"
+        SENT = "sent", "Gönderildi"
+        FAILED = "failed", "Başarısız"
+        CANCELLED = "cancelled", "Vazgeçildi"
+
+    business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name="messages")
+    appointment = models.ForeignKey(
+        Appointment, null=True, blank=True, on_delete=models.CASCADE, related_name="messages"
+    )
+    phone = models.CharField(max_length=11)
+    kind = models.CharField(max_length=10, choices=Kind.choices)
+    body = models.CharField(max_length=320)
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.QUEUED)
+    scheduled_at = models.DateTimeField(default=timezone.now)
+    sent_at = models.DateTimeField(null=True, blank=True)
+    segments = models.PositiveSmallIntegerField(default=1)
+    cost = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    error = models.CharField(max_length=200, blank=True)
+
+    class Meta:
+        indexes = [models.Index(fields=["status", "scheduled_at"])]
+        verbose_name = "mesaj kaydı"
+        verbose_name_plural = "mesaj kayıtları"
+
+
+class AuditLog(models.Model):
+    """Kim, ne zaman, hangi randevuyu değiştirdi; uyuşmazlıkta tek kanıt."""
+    business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name="audit")
+    appointment = models.ForeignKey(Appointment, null=True, on_delete=models.SET_NULL)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL)
+    action = models.CharField(max_length=40)
+    detail = models.CharField(max_length=200, blank=True)
+    at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-at"]
+        verbose_name = "işlem kaydı"
+        verbose_name_plural = "işlem kayıtları"

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}{{ business.name }} · Online randevu{% endblock %}
+{% block body %}
+<div class="hero"><div class="inner">
+  <small>{% if business.district %}{{ business.district }} · {% endif %}Erkek kuaförü</small>
+  <h1><a href="{% url 'public:business' business.slug %}" style="color:#fff">{{ business.name }}</a></h1>
+  {% block hero %}{% endblock %}
+</div></div>
+<div class="stripe"></div>
+<main class="wrap">
+  {% include "_messages.html" %}
+  {% block content %}{% endblock %}
+  <p class="foot">Bu sayfa {{ SITE_NAME }} ile hazırlandı</p>
+</main>
+{% endblock %}

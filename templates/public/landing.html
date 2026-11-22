@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="hero"><div class="inner">
+  <small>Erkek kuaförleri için</small>
+  <h1>Berberin kendi randevu sayfası</h1>
+  <p>Pazar yeri yok, komisyon yok. Müşterin üye olmadan 30 saniyede randevu alır; sen cironu ve boş saatlerini tek ekranda görürsün.</p>
+</div></div>
+<div class="stripe"></div>
+<div class="wrap">
+  <div class="card"><b>Kendi linkin</b><p class="muted">Instagram profiline ve WhatsApp durumuna koyacağın tek adres. Sayfanda başka dükkân ya da reklam görünmez.</p></div>
+  <div class="card"><b>Dükkân kapalıyken de randevu</b><p class="muted">Müşteri boş saati görür, SMS koduyla onaylar. Hatırlatma mesajı kendiliğinden gider.</p></div>
+  <div class="card"><b>Randevusuz gelen de aynı takvimde</b><p class="muted">İki dokunuşla işlenir; raporların eksiksiz çıkar.</p></div>
+  <div class="card"><b>Sabit aylık ücret</b><p class="muted">Komisyon yok. İlk 14 gün ücretsiz, kart istemeden.</p></div>
+  <p><a class="btn block" href="{% url 'panel:signup' %}">Dükkânını 5 dakikada kur</a></p>
+  <p><a class="btn ghost block" href="{% url 'panel:login' %}">Kuaför girişi</a></p>
+</div>
+{% endblock %}

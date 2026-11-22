@@ -1,0 +1,22 @@
+{% extends "public/_shell.html" %}
+{% block content %}
+<div class="steps"><span class="on"></span><span></span><span></span><span></span></div>
+<form method="get">
+  <input type="hidden" name="devam" value="1">
+  <h2>Hangi işlem?</h2>
+  {% for s in services %}
+  <label class="pick"><input type="checkbox" name="h" value="{{ s.id }}" {% if s.id in selected_ids %}checked{% endif %}>
+    <span class="box"><span><b>{{ s.name }}</b><small>{{ s.duration }} dk</small></span><b>{{ s.price|floatformat:"0g" }} ₺</b></span></label>
+  {% endfor %}
+  {% if staff|length > 1 %}
+  <h2>Hangi berber?</h2>
+  <div class="chips">
+    <label class="pick"><input type="radio" name="b" value="0" {% if not sel.staff %}checked{% endif %}><span class="box"><b>Fark etmez</b><small>ilk boş olan</small></span></label>
+    {% for p in staff %}
+    <label class="pick"><input type="radio" name="b" value="{{ p.id }}" {% if sel.staff.id == p.id %}checked{% endif %}><span class="box"><b>{{ p.name }}</b><small>{{ p.title|default:"berber" }}</small></span></label>
+    {% endfor %}
+  </div>
+  {% else %}<input type="hidden" name="b" value="0">{% endif %}
+  <div class="sticky"><div class="inner"><button class="btn block">Devam et</button></div></div>
+</form>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Dükkânını kur{% endblock %}
+{% block body %}
+<div class="hero"><div class="inner"><small>{{ SITE_NAME }} · 14 gün ücretsiz</small><h1>Dükkânını 5 dakikada kur</h1><p>Saç, sakal ve saç + sakal hizmetleri hazır gelir; fiyatları sonra değiştirirsin.</p></div></div>
+<div class="stripe"></div>
+<main class="wrap">
+  <form method="post" novalidate>{% csrf_token %}
+    {{ form.non_field_errors }}
+    {% for f in form %}
+      <label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{{ f.errors }}
+      {% if f.help_text %}<span class="field-help">{{ f.help_text }}</span>{% endif %}
+    {% endfor %}
+    <p class="muted">Kayıt olarak kullanım koşullarını ve veri işleme ekini kabul etmiş olursun.</p>
+    <p><button class="btn block">Sayfamı yayınla</button></p>
+  </form>
+  <p class="muted">Zaten hesabın var mı? <a href="{% url 'panel:login' %}">Giriş yap</a></p>
+</main>
+{% endblock %}

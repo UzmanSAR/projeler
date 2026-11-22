@@ -1,0 +1,38 @@
+{% extends "public/_shell.html" %}
+{% block meta %}<meta name="robots" content="noindex">{% endblock %}
+{% block content %}
+{% if appt.status == "confirmed" %}<h2 style="margin-top:0">Randevun alındı ✓</h2>
+{% elif appt.status == "completed" %}<h2 style="margin-top:0">Randevu tamamlandı</h2>
+{% elif appt.status == "no_show" %}<h2 style="margin-top:0">Randevuya gelinmedi</h2>
+{% else %}<h2 style="margin-top:0">Randevu iptal edildi</h2>{% endif %}
+<div class="card"><dl class="summary" style="margin:0">
+  <dt>Zaman</dt><dd>{{ local_start|date:"j F Y l" }} · {{ local_start|time:"H:i" }}</dd>
+  <dt>İşlem</dt><dd>{{ appt.summary }} · {{ appt.planned_total|floatformat:"0g" }} ₺</dd>
+  <dt>Berber</dt><dd>{{ appt.staff.name }}</dd>
+  {% if business.address %}<dt>Adres</dt><dd>{{ business.address }}</dd>{% endif %}
+</dl></div>
+{% if appt.status == "confirmed" %}
+<div class="row">
+  <a class="btn ghost grow small" href="{% url 'public:appointment_ics' business.slug appt.token %}">Takvime ekle</a>
+  {% if business.maps_url %}<a class="btn ghost grow small" href="{{ business.maps_url }}" rel="noopener">Yol tarifi</a>{% endif %}
+</div>
+<h2>Gelemeyecek misin?</h2>
+{% if can_cancel %}
+<form method="post" action="{% url 'public:appointment_cancel' business.slug appt.token %}" onsubmit="return confirm('Randevu iptal edilsin mi?')">{% csrf_token %}
+  <p class="muted">Randevudan {{ cancel_hours|floatformat:"-1" }} saat öncesine kadar ücretsiz iptal edebilirsin. Ertelemek için iptal edip yeni saat seç.</p>
+  <button class="btn danger block">Randevuyu iptal et</button>
+</form>
+{% else %}<div class="card">Online iptal süresi geçti. {% if business.phone %}Lütfen dükkânı ara: <a href="tel:{{ business.phone }}">{{ business.phone }}</a>{% endif %}</div>{% endif %}
+{% else %}
+<p><a class="btn block" href="{{ rebook }}">Yeni randevu al</a></p>
+{% endif %}
+{% if appt.customer and appt.status == "confirmed" %}
+<h2>Kampanyalar (isteğe bağlı)</h2>
+<form method="post" class="card" action="{% url 'public:appointment_consent' business.slug appt.token %}">{% csrf_token %}
+  <label class="check" style="margin-top:0"><input type="checkbox" name="consent" value="1" {% if appt.customer.marketing_consent %}checked{% endif %}>
+  <span>{{ business.name }} bana kampanya ve indirim mesajı gönderebilir. Randevum bu izne bağlı değildir; istediğim zaman vazgeçebilirim.</span></label>
+  <p style="margin-top:10px"><button class="btn ghost small">Tercihi kaydet</button></p>
+</form>
+{% endif %}
+<p><a href="{% url 'public:account' business.slug %}">Randevularım</a></p>
+{% endblock %}

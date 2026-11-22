@@ -1,0 +1,25 @@
+{% extends "public/_shell.html" %}
+{% block content %}
+<div class="steps"><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div>
+{% include "public/_summary.html" %}
+<form method="post">{% csrf_token %}
+{% if known %}
+  <input type="hidden" name="known" value="1">
+  <label for="name">Ad</label>
+  <input id="name" type="text" name="name" value="{{ known.name }}" maxlength="60" autocomplete="name">
+  <p class="muted">{{ known.masked_phone }} numarası bu cihazda doğrulanmış; tekrar kod istenmez. <a href="{{ other_number }}">Başka numara kullan</a></p>
+  <div class="sticky"><div class="inner"><button class="btn block">Randevuyu onayla</button></div></div>
+{% else %}
+  <label for="name">Ad soyad</label>
+  <input id="name" type="text" name="name" value="{{ request.POST.name }}" maxlength="60" autocomplete="name" required>
+  <label for="phone">Cep telefonu</label>
+  <input id="phone" type="tel" name="phone" value="{{ request.POST.phone }}" placeholder="05xx xxx xx xx" inputmode="numeric" autocomplete="tel" required>
+  <span class="field-help">Numaranız randevuyu onaylamak ve hatırlatmak için kullanılır; {{ business.name }} ile paylaşılır. Kampanya mesajı için ayrıca ve isteğe bağlı olarak izin sorulur.</span>
+  {% if TURNSTILE_SITE_KEY %}
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <div class="cf-turnstile" data-sitekey="{{ TURNSTILE_SITE_KEY }}" style="margin-top:12px"></div>
+  {% endif %}
+  <div class="sticky"><div class="inner"><button class="btn block">Onay kodu gönder</button></div></div>
+{% endif %}
+</form>
+{% endblock %}

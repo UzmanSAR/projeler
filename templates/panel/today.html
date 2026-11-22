@@ -1,0 +1,27 @@
+{% extends "panel/_shell.html" %}
+{% block content %}
+<div class="kpis three">
+  <div class="kpi"><small>Bugünkü ciro</small><b>{{ revenue|floatformat:"0g" }} ₺</b></div>
+  <div class="kpi"><small>Tamamlanan</small><b>{{ done_count }}</b></div>
+  <div class="kpi"><small>Bekleyen</small><b>{{ waiting }}</b></div>
+</div>
+{% if unclosed %}
+<ul class="msgs"><li class="warning"><b>{{ unclosed|length }} eski randevu kapatılmamış.</b> Raporların doğru çıkması için tamamlandı ya da gelmedi olarak işaretle.</li></ul>
+{% for a in unclosed %}{% include "panel/_appt.html" with show_date=True %}{% endfor %}
+{% endif %}
+<div class="two">
+<div>
+  <h2 style="margin-top:0">Bugün · {{ now|date:"j F l" }}</h2>
+  {% for a in appts %}{% include "panel/_appt.html" %}
+  {% empty %}<div class="card">Bugün için randevu yok. Linkini paylaş:<div class="linkbox" style="margin-top:8px">{{ page_url }}</div></div>{% endfor %}
+</div>
+<div>
+  <h2 style="margin-top:0">Randevusuz müşteri</h2>
+  <form method="post" action="{% url 'panel:walkin' %}" class="card">{% csrf_token %}
+    {% include "panel/_pick_fields.html" with prefix="w" %}
+    <p style="margin-top:14px"><button class="btn dark block">Şimdi koltuğa al</button></p>
+    <small>Şu anki saate işlenir; randevulu müşteriyle çakışmaz.</small>
+  </form>
+</div>
+</div>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends "public/_shell.html" %}
+{% block content %}
+<div class="steps"><span class="on"></span><span class="on"></span><span></span><span></span></div>
+<p class="muted">{% for s in sel.services %}{{ s.name }}{% if not forloop.last %} + {% endif %}{% endfor %} · {{ sel.duration }} dk · {{ sel.price|floatformat:"0g" }} ₺ · {{ sel.staff.name|default:"Fark etmez" }} <a href="{{ back }}">değiştir</a></p>
+<h2>Gün</h2>
+<div class="days">
+{% for d in days %}
+  {% if d.free %}<a class="day {% if d.date == picked %}on{% endif %}" href="{{ d.url }}"><small>{{ d.name }}</small><b>{{ d.date.day }}</b></a>
+  {% else %}<span class="day off" title="Boş saat yok"><small>{{ d.name }}</small><b>{{ d.date.day }}</b></span>{% endif %}
+{% endfor %}
+</div>
+<h2>Saat{% if picked %} · {{ picked|date:"j F l" }}{% endif %}</h2>
+{% if slots %}
+<div class="slots">{% for s in slots %}<a class="slot" href="{{ s.url }}">{{ s.label }}</a>{% endfor %}</div>
+<p class="muted">Yalnızca boş saatler gösterilir.</p>
+{% else %}
+<div class="card">Önümüzdeki günlerde boş saat görünmüyor. {% if business.phone %}Dükkânı arayabilirsiniz: <a href="tel:{{ business.phone }}">{{ business.phone }}</a>{% endif %}</div>
+{% endif %}
+{% endblock %}

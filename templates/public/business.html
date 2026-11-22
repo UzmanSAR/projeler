@@ -1,0 +1,43 @@
+{% extends "public/_shell.html" %}
+{% block meta %}<meta name="description" content="{{ business.name }} online randevu. İşlem, süre ve fiyatları görün; üye olmadan randevu alın.">{% endblock %}
+{% block hero %}
+  {% if business.description %}<p>{{ business.description }}</p>{% endif %}
+  {% if business.address %}<p>{{ business.address }}{% if business.maps_url %} · <a href="{{ business.maps_url }}" rel="noopener">Yol tarifi</a>{% endif %}</p>{% endif %}
+{% endblock %}
+{% block content %}
+{% if not business.accepts_bookings %}
+  <div class="card">Bu dükkân şu an online randevu almıyor. Lütfen telefonla arayın.</div>
+{% endif %}
+{% if known %}
+  <div class="card row between"><span>Tekrar hoş geldin{% if known.name %}, <b>{{ known.name }}</b>{% endif %}</span>
+  <a href="{% url 'public:account' business.slug %}">Randevularım</a></div>
+{% endif %}
+<h2>Hizmetler</h2>
+<div class="card">
+  <table class="plain">
+  {% for s in services %}
+    <tr><td><b>{{ s.name }}</b><br><small>{{ s.duration }} dk</small></td><td class="num"><b>{{ s.price|floatformat:"0g" }} ₺</b></td></tr>
+  {% empty %}<tr><td>Hizmet listesi henüz eklenmedi.</td></tr>{% endfor %}
+  </table>
+  {% with s=services.0 %}{% if s %}<small>Fiyatlar dükkân tarafından girilir.</small>{% endif %}{% endwith %}
+</div>
+{% if staff|length > 1 %}
+<h2>Berberler</h2>
+<div class="card">{% for p in staff %}<span class="badge gray" style="margin-right:6px">{{ p.name }}{% if p.title %} {{ p.title }}{% endif %}</span>{% endfor %}</div>
+{% endif %}
+<h2>Çalışma saatleri</h2>
+<div class="card"><table class="plain">
+{% for label, h in week %}
+  <tr><td>{{ label }}</td><td class="num">{% if not h or h.closed %}<span class="muted">Kapalı</span>{% else %}{{ h.open|time:"H:i" }} – {{ h.close|time:"H:i" }}{% endif %}</td></tr>
+{% endfor %}
+</table></div>
+{% if business.phone or business.whatsapp %}
+<div class="row">
+  {% if business.phone %}<a class="btn ghost grow" href="tel:{{ business.phone }}">Ara</a>{% endif %}
+  {% if business.whatsapp %}<a class="btn ghost grow" href="https://wa.me/9{{ business.whatsapp }}" rel="noopener">WhatsApp</a>{% endif %}
+</div>
+{% endif %}
+{% if business.accepts_bookings and services %}
+<div class="sticky"><div class="inner"><a class="btn block" href="{% url 'public:book_select' business.slug %}">Randevu al</a></div></div>
+{% endif %}
+{% endblock %}

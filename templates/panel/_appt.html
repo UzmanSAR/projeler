@@ -1,0 +1,34 @@
+<div class="card appt {{ a.status }} {% if a.is_open and a.end < now %}past{% endif %}">
+  <div class="row">
+    <span class="time">{{ a.start|time:"H:i" }}{% if show_date %}<br><small>{{ a.start|date:"d.m" }}</small>{% endif %}</span>
+    <span class="grow">
+      <b>{% if a.customer %}<a href="{% url 'panel:customer' a.customer.id %}" style="color:inherit">{{ a.customer.name|default:a.customer.phone }}</a>{% else %}İsimsiz müşteri{% endif %}</b>
+      {% if a.customer.no_show_count >= 2 %}<span class="badge red">{{ a.customer.no_show_count }} kez gelmedi</span>{% endif %}
+      <br><small>{{ a.summary }} · {{ a.staff.name }}{% if a.customer.note %} · “{{ a.customer.note|truncatechars:40 }}”{% endif %}</small>
+    </span>
+    <span style="text-align:right">
+      <b>{% if a.actual_total != None %}{{ a.actual_total|floatformat:"0g" }}{% else %}{{ a.planned_total|floatformat:"0g" }}{% endif %} ₺</b><br>
+      {% if a.status == "completed" %}<span class="badge green">{{ a.get_payment_display|default:"Tamam" }}</span>
+      {% elif a.status == "no_show" %}<span class="badge red">Gelmedi</span>
+      {% elif a.source == "walkin" %}<span class="badge amber">Randevusuz</span>
+      {% elif a.source == "online" %}<span class="badge">Online</span>
+      {% else %}<span class="badge gray">Elle</span>{% endif %}
+    </span>
+  </div>
+  <details style="margin-top:8px">
+    <summary>{% if a.is_open %}Kapat{% else %}Düzelt{% endif %}</summary>
+    <form method="post" action="{% url 'panel:close' a.id %}" class="inline-form">{% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.get_full_path }}">
+      <input type="number" name="amount" min="0" step="1" value="{% if a.actual_total != None %}{{ a.actual_total|floatformat:'0u' }}{% else %}{{ a.planned_total|floatformat:'0u' }}{% endif %}" aria-label="Alınan tutar">
+      <select name="payment" aria-label="Ödeme şekli"><option value="cash">Nakit</option><option value="card" {% if a.payment == "card" %}selected{% endif %}>Kart</option></select>
+      <button class="btn green small" name="status" value="completed">Tamamlandı</button>
+      <button class="btn danger small" name="status" value="no_show">Gelmedi</button>
+    </form>
+    {% if a.is_open %}
+    <form method="post" action="{% url 'panel:cancel' a.id %}" style="margin-top:8px" onsubmit="return confirm('Randevu iptal edilsin mi? Müşteriye bildirim gider.')">{% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.get_full_path }}">
+      <button class="btn ghost small">Randevuyu iptal et</button>
+    </form>
+    {% endif %}
+  </details>
+</div>

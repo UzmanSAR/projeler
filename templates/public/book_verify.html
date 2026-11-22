@@ -1,0 +1,17 @@
+{% extends "public/_shell.html" %}
+{% block content %}
+<div class="steps"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span></div>
+<h2>Kodu gir</h2>
+<p>{{ masked }} numarasına 6 haneli bir kod gönderdik.</p>
+<form method="post">{% csrf_token %}
+  <input class="code-input" type="text" name="code" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" autofocus required aria-label="Onay kodu">
+  <p class="muted">Kodu girerek yalnızca bu randevuyu onaylarsınız.</p>
+  <p><button class="btn block">Randevuyu onayla</button></p>
+</form>
+<form method="post" class="row between">{% csrf_token %}
+  <input type="hidden" name="action" value="resend">
+  <span class="muted">Kod gelmedi mi?</span>
+  <button class="btn ghost small">Tekrar gönder</button>
+</form>
+<p class="muted">Kod 3 dakika geçerlidir. Ulaşmazsa {% if business.phone %}<a href="tel:{{ business.phone }}">dükkânı arayabilir</a>{% else %}dükkânı arayabilir{% endif %} ya da <a href="{{ retry }}">saat seçimine dönebilirsiniz</a>.</p>
+{% endblock %}

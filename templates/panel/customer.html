@@ -1,0 +1,35 @@
+{% extends "panel/_shell.html" %}
+{% block content %}
+<p><a href="{% url 'panel:customers' %}">‹ Müşteriler</a></p>
+<h1>{{ customer.name|default:"İsimsiz müşteri" }}</h1>
+<p class="muted">{{ customer.phone }}{% if customer.verified_at %} · numara doğrulanmış{% endif %}{% if customer.marketing_consent %} · kampanya izni var{% endif %}</p>
+<div class="kpis three">
+  <div class="kpi"><small>Ziyaret</small><b>{{ visits }}</b></div>
+  <div class="kpi"><small>Toplam harcama</small><b>{{ spent|floatformat:"0g" }} ₺</b></div>
+  <div class="kpi"><small>Gelmedi</small><b>{{ customer.no_show_count }}</b></div>
+</div>
+<div class="two">
+<div>
+  <h2 style="margin-top:0">Geçmiş</h2>
+  <div class="card"><table class="plain">
+  {% for a in appts %}
+    <tr><td>{{ a.start|date:"d.m.Y H:i" }}<br><small>{{ a.summary }} · {{ a.staff.name }}</small></td>
+    <td class="num">{% if a.actual_total != None %}{{ a.actual_total|floatformat:"0g" }}{% else %}{{ a.planned_total|floatformat:"0g" }}{% endif %} ₺<br><small>{{ a.get_status_display }}</small></td></tr>
+  {% empty %}<tr><td>Henüz randevu yok.</td></tr>{% endfor %}
+  </table></div>
+</div>
+<div>
+  <form method="post" class="card">{% csrf_token %}
+    <label for="name" style="margin-top:0">Ad</label><input id="name" type="text" name="name" value="{{ customer.name }}" maxlength="60">
+    <label for="note">Not</label><textarea id="note" name="note" rows="3" maxlength="500" placeholder="Örn. yanlar 2 numara">{{ customer.note }}</textarea>
+    <label class="check"><input type="checkbox" name="blocked" value="1" {% if customer.blocked %}checked{% endif %}><span>Online randevu alamasın (yalnızca arayarak)</span></label>
+    <p style="margin-top:14px"><button class="btn block">Kaydet</button></p>
+  </form>
+  <form method="post" onsubmit="return confirm('Müşteri kaydı kalıcı olarak silinsin mi?')">{% csrf_token %}
+    <input type="hidden" name="action" value="delete">
+    <button class="btn danger small">Müşteri kaydını sil</button>
+    <span class="field-help">Müşteri verisinin silinmesini isterse kullan. Geçmiş randevular isimsiz olarak raporlarda kalır.</span>
+  </form>
+</div>
+</div>
+{% endblock %}

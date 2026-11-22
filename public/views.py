@@ -1,0 +1,363 @@
+"""Müşteri tarafı: kuaförün sayfası ve dört adımda randevu."""
+from datetime import datetime, timedelta, timezone as dt_timezone
+from urllib.parse import urlencode
+
+from django.conf import settings
+from django.contrib import messages
+from django.core import signing
+from django.http import Http404, HttpResponse, QueryDict
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+from django.utils import timezone
+from django.views.decorators.http import require_POST
+
+from core import otp
+from core.availability import business_tz, day_slots, merged_slots
+from core.booking import (BookingError, cancel_appointment, create_appointment, eligible_staff,
+                          get_or_create_customer, totals)
+from core.models import Appointment, Business, Customer, Service, Staff, WorkingHours
+
+DAY_NAMES = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"]
+
+
+def landing(request):
+    return render(request, "public/landing.html")
+
+
+def _business(slug):
+    business = get_object_or_404(Business, slug=slug)
+    if business.status == Business.Status.SUSPENDED:
+        raise Http404
+    timezone.activate(business_tz(business))  # şablonlarda saatler dükkânın saat diliminde
+    return business
+
+
+# ---- Cihazı hatırlama: doğrulanmış telefon 90 gün tekrar kod istemez ------
+
+def _cookie_name(business):
+    return f"dv{business.id}"
+
+
+def device_customer(request, business):
+    raw = request.COOKIES.get(_cookie_name(business))
+    if not raw:
+        return None
+    try:
+        data = signing.loads(raw, salt="device", max_age=settings.DEVICE_REMEMBER_DAYS * 86400)
+    except signing.BadSignature:
+        return None
+    return Customer.objects.filter(business=business, id=data.get("c"), blocked=False).first()
+
+
+def remember_device(response, business, customer):
+    response.set_cookie(
+        _cookie_name(business), signing.dumps({"c": customer.id}, salt="device"),
+        max_age=settings.DEVICE_REMEMBER_DAYS * 86400, httponly=True, samesite="Lax",
+        secure=not settings.DEBUG,
+    )
+    return response
+
+
+# ---- Seçim (işlemler, berber, saat) adres çubuğunda taşınır ---------------
+
+class Selection:
+    def __init__(self, request, business):
+        data = request.GET  # form gönderilse bile seçim adres çubuğunda kalır
+        ids = [int(x) for x in data.getlist("h") if x.isdigit()][:6]
+        by_id = {s.id: s for s in Service.objects.filter(business=business, active=True, id__in=ids)}
+        self.services = [by_id[i] for i in dict.fromkeys(ids) if i in by_id]
+        staff_id = data.get("b", "0")
+        self.staff = (Staff.objects.filter(business=business, active=True, id=staff_id).first()
+                      if staff_id.isdigit() and staff_id != "0" else None)
+        self.duration, self.buffer, self.price = totals(self.services)
+        self.start = None
+        t = data.get("t", "")
+        if t.isdigit():
+            try:
+                self.start = datetime.fromtimestamp(int(t), tz=dt_timezone.utc)
+            except (OverflowError, OSError, ValueError):
+                pass
+
+    def query(self, **extra):
+        pairs = [("h", s.id) for s in self.services] + [("b", self.staff.id if self.staff else 0)]
+        if self.start and "t" not in extra:
+            pairs.append(("t", int(self.start.timestamp())))
+        pairs += [(k, v) for k, v in extra.items() if v is not None]
+        return urlencode(pairs)
+
+
+def _url(name, business, sel=None, **extra):
+    url = reverse(f"public:{name}", args=[business.slug])
+    return f"{url}?{sel.query(**extra)}" if sel else url
+
+
+# ---- Sayfalar -------------------------------------------------------------
+
+def business_page(request, slug):
+    business = _business(slug)
+    hours = {h.weekday: h for h in business.hours.all()}
+    week = [(label, hours.get(i)) for i, label in WorkingHours.WEEKDAYS]
+    return render(request, "public/business.html", {
+        "business": business,
+        "services": business.services.filter(active=True),
+        "staff": business.staff.filter(active=True),
+        "week": week,
+        "known": device_customer(request, business),
+    })
+
+
+def book_select(request, slug):
+    """Adım 1: işlem ve berber seçimi."""
+    business = _business(slug)
+    sel = Selection(request, business)
+    if request.GET.get("devam"):
+        if not sel.services:
+            messages.error(request, "En az bir işlem seçin.")
+        elif not eligible_staff(business, sel.services, sel.staff):
+            messages.error(request, "Seçtiğiniz berber bu işlemlerin hepsini yapmıyor. "
+                                    "'Fark etmez' seçeneğini deneyin.")
+        else:
+            return redirect(_url("book_time", business, sel))
+    return render(request, "public/book_select.html", {
+        "business": business, "sel": sel,
+        "services": business.services.filter(active=True),
+        "staff": business.staff.filter(active=True),
+        "selected_ids": [s.id for s in sel.services],
+    })
+
+
+def book_time(request, slug):
+    """Adım 2: gün ve saat. Yalnızca gerçekten boş saatler listelenir."""
+    business = _business(slug)
+    sel = Selection(request, business)
+    candidates = eligible_staff(business, sel.services, sel.staff) if sel.services else []
+    if not candidates:
+        return redirect(_url("book_select", business, sel))
+
+    tz = business_tz(business)
+    today = timezone.now().astimezone(tz).date()
+    horizon = min(business.max_days_ahead, 13)
+    picked = None
+    try:
+        picked = datetime.strptime(request.GET.get("g", ""), "%Y-%m-%d").date()
+    except ValueError:
+        pass
+
+    days, slots = [], []
+    for offset in range(horizon + 1):
+        day = today + timedelta(days=offset)
+        times = merged_slots(day_slots(business, candidates, day, sel.duration, sel.buffer))
+        if picked is None and times:
+            picked = day
+        days.append({"date": day, "name": DAY_NAMES[day.weekday()], "free": bool(times),
+                     "url": _url("book_time", business, sel, g=day.isoformat(), t=None)})
+        if day == picked:
+            slots = [{"label": t.astimezone(tz).strftime("%H:%M"),
+                      "url": _url("book_details", business, sel, t=int(t.timestamp()))}
+                     for t in times]
+    return render(request, "public/book_time.html", {
+        "business": business, "sel": sel, "days": days, "picked": picked, "slots": slots,
+        "back": _url("book_select", business, sel, t=None),
+    })
+
+
+def _finish(request, business, sel, customer):
+    """Randevuyu oluşturur; saat dolduysa saat seçimine geri gönderir."""
+    try:
+        appt = create_appointment(business, sel["services"], sel["start"], staff=sel["staff"],
+                                  customer=customer)
+    except BookingError as exc:
+        messages.error(request, str(exc))
+        return None
+    request.session.pop("pending", None)
+    response = redirect("public:appointment", business.slug, appt.token)
+    return remember_device(response, business, customer)
+
+
+def book_details(request, slug):
+    """Adım 3: ad ve telefon. Tanınan cihazda kod istenmez."""
+    business = _business(slug)
+    sel = Selection(request, business)
+    if not sel.services or not sel.start:
+        return redirect(_url("book_select", business, sel))
+    known = None if request.GET.get("yeni") else device_customer(request, business)
+    back = _url("book_time", business, sel, t=None,
+                g=sel.start.astimezone(business_tz(business)).date().isoformat())
+
+    if request.method == "POST":
+        name = request.POST.get("name", "").strip()[:60]
+        choice = {"services": sel.services, "staff": sel.staff, "start": sel.start}
+        if known and request.POST.get("known") == "1":
+            if name and name != known.name:
+                known.name = name
+                known.save(update_fields=["name"])
+            response = _finish(request, business, choice, known)
+            return response or redirect(back)
+
+        phone = otp.normalize_phone(request.POST.get("phone"))
+        if not name:
+            messages.error(request, "Adınızı yazın.")
+        elif not phone:
+            messages.error(request, "Geçerli bir cep numarası yazın (05xx xxx xx xx).")
+        elif not otp.verify_turnstile(request.POST.get("cf-turnstile-response"), otp.client_ip(request)):
+            messages.error(request, "Güvenlik kontrolü tamamlanamadı. Sayfayı yenileyip tekrar deneyin.")
+        else:
+            try:
+                code = otp.request_code(business, phone, otp.client_ip(request))
+            except otp.OtpError as exc:
+                messages.error(request, str(exc))
+            else:
+                request.session["pending"] = {
+                    "slug": business.slug, "name": name, "phone": phone, "query": sel.query(),
+                }
+                if code:
+                    messages.info(request, f"Geliştirme modu, SMS gönderilmedi. Kod: {code}")
+                return redirect("public:book_verify", business.slug)
+
+    return render(request, "public/book_details.html", {
+        "business": business, "sel": sel, "known": known, "back": back,
+        "local_start": sel.start.astimezone(business_tz(business)),
+        "other_number": _url("book_details", business, sel, yeni=1),
+    })
+
+
+def book_verify(request, slug):
+    """Adım 4: SMS kodu. Kod yalnızca randevuyu onaylar; pazarlama izni burada sorulmaz."""
+    business = _business(slug)
+    pending = request.session.get("pending")
+    if not pending or pending.get("slug") != business.slug:
+        return redirect("public:book_select", business.slug)
+    phone = pending["phone"]
+    retry = f"{reverse('public:book_time', args=[business.slug])}?{pending['query']}"
+
+    if request.method == "POST":
+        if request.POST.get("action") == "resend":
+            try:
+                code = otp.request_code(business, phone, otp.client_ip(request))
+                messages.success(request, "Yeni kod gönderildi.")
+                if code:
+                    messages.info(request, f"Geliştirme modu, SMS gönderilmedi. Kod: {code}")
+            except otp.OtpError as exc:
+                messages.error(request, str(exc))
+            return redirect("public:book_verify", business.slug)
+        try:
+            otp.check_code(business, phone, request.POST.get("code"))
+        except otp.OtpError as exc:
+            messages.error(request, str(exc))
+        else:
+            customer = get_or_create_customer(business, phone, pending["name"], verified=True)
+            response = _finish(request, business, _selection_from(pending, business), customer)
+            if response:
+                return response
+            # Telefon doğrulandı ama saat doldu: cihazı hatırla, yeni saat seçtir.
+            request.session.pop("pending", None)
+            return remember_device(redirect(retry), business, customer)
+
+    return render(request, "public/book_verify.html", {
+        "business": business, "masked": f"{phone[:2]}•• ••• •• {phone[-2:]}", "retry": retry,
+        "resend_seconds": settings.OTP_RESEND_SECONDS,
+    })
+
+
+class _Query:
+    """Oturumda saklanan seçimi Selection'ın okuyabileceği biçime çevirir."""
+
+    def __init__(self, query):
+        self.GET = QueryDict(query)
+
+
+def _selection_from(pending, business):
+    sel = Selection(_Query(pending["query"]), business)
+    return {"services": sel.services, "staff": sel.staff, "start": sel.start}
+
+
+def _appointment(slug, token):
+    business = _business(slug)
+    appt = get_object_or_404(
+        Appointment.objects.select_related("staff", "customer").prefetch_related("items"),
+        business=business, token=token,
+    )
+    return business, appt
+
+
+def appointment(request, slug, token):
+    """Onay sayfası. Linki bilen görür; link tahmin edilemez ve tek randevuya özeldir."""
+    business, appt = _appointment(slug, token)
+    rebook = urlencode([("h", i.service_id) for i in appt.items.all() if i.service_id]
+                       + [("b", appt.staff_id)])
+    return render(request, "public/appointment.html", {
+        "business": business, "appt": appt,
+        "local_start": appt.start.astimezone(business_tz(business)),
+        "can_cancel": appt.can_cancel_online(),
+        "cancel_hours": business.cancel_limit_minutes / 60,
+        "rebook": f"{reverse('public:book_time', args=[slug])}?{rebook}",
+    })
+
+
+@require_POST
+def appointment_cancel(request, slug, token):
+    business, appt = _appointment(slug, token)
+    try:
+        cancel_appointment(appt, by_customer=True)
+        messages.success(request, "Randevunuz iptal edildi.")
+    except BookingError as exc:
+        messages.error(request, str(exc))
+    return redirect("public:appointment", slug, token)
+
+
+@require_POST
+def appointment_consent(request, slug, token):
+    """Kampanya izni randevu bittikten sonra, ayrı ve işaretsiz bir kutuyla sorulur."""
+    business, appt = _appointment(slug, token)
+    if appt.customer:
+        agreed = request.POST.get("consent") == "1"
+        appt.customer.marketing_consent = agreed
+        appt.customer.marketing_consent_at = timezone.now() if agreed else None
+        appt.customer.save(update_fields=["marketing_consent", "marketing_consent_at"])
+        messages.success(request, "Tercihiniz kaydedildi.")
+    return redirect("public:appointment", slug, token)
+
+
+def appointment_ics(request, slug, token):
+    business, appt = _appointment(slug, token)
+    fmt = "%Y%m%dT%H%M%SZ"
+    utc = dt_timezone.utc
+    lines = [
+        "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//randevu//TR", "BEGIN:VEVENT",
+        f"UID:{appt.token}@randevu",
+        f"DTSTAMP:{timezone.now().astimezone(utc).strftime(fmt)}",
+        f"DTSTART:{appt.start.astimezone(utc).strftime(fmt)}",
+        f"DTEND:{appt.end.astimezone(utc).strftime(fmt)}",
+        f"SUMMARY:{business.name} - {appt.summary}",
+        f"LOCATION:{business.address}".replace(",", "\\,"),
+        "END:VEVENT", "END:VCALENDAR",
+    ]
+    response = HttpResponse("\r\n".join(lines), content_type="text/calendar; charset=utf-8")
+    response["Content-Disposition"] = 'attachment; filename="randevu.ics"'
+    return response
+
+
+def account(request, slug):
+    """Müşteri hesabı: şifre yok, doğrulanmış cihaz yeterli."""
+    business = _business(slug)
+    customer = device_customer(request, business)
+    appts = []
+    if customer:
+        tz = business_tz(business)
+        for a in (customer.appointments.select_related("staff").prefetch_related("items")
+                  .order_by("-start")[:30]):
+            rebook = urlencode([("h", i.service_id) for i in a.items.all() if i.service_id]
+                               + [("b", a.staff_id)])
+            appts.append({"a": a, "local": a.start.astimezone(tz),
+                          "rebook": f"{reverse('public:book_time', args=[slug])}?{rebook}"})
+    return render(request, "public/account.html", {
+        "business": business, "customer": customer, "appts": appts,
+    })
+
+
+@require_POST
+def account_forget(request, slug):
+    business = _business(slug)
+    response = redirect("public:business", slug)
+    response.delete_cookie(_cookie_name(business))
+    return response

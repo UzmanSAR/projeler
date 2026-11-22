@@ -1,0 +1,26 @@
+{% extends "public/_shell.html" %}
+{% block meta %}<meta name="robots" content="noindex">{% endblock %}
+{% block content %}
+<h2 style="margin-top:0">Randevularım</h2>
+{% if not customer %}
+<div class="card">Bu cihazda doğrulanmış bir numara yok. İlk randevunu aldığında geçmişin burada görünür.</div>
+<p><a class="btn block" href="{% url 'public:book_select' business.slug %}">Randevu al</a></p>
+{% else %}
+<p class="muted">{{ customer.name }} · {{ customer.masked_phone }}</p>
+{% for row in appts %}
+<div class="card">
+  <div class="row between"><b>{{ row.local|date:"j F Y" }} · {{ row.local|time:"H:i" }}</b>
+  <span class="badge {% if row.a.status == 'completed' %}green{% elif row.a.status == 'confirmed' %}{% elif row.a.status == 'no_show' %}red{% else %}gray{% endif %}">{{ row.a.get_status_display }}</span></div>
+  <p>{{ row.a.summary }} · {{ row.a.staff.name }} · {% if row.a.actual_total != None %}{{ row.a.actual_total|floatformat:"0g" }}{% else %}{{ row.a.planned_total|floatformat:"0g" }}{% endif %} ₺</p>
+  <div class="row">
+    {% if row.a.status == "confirmed" %}<a class="btn ghost small" href="{% url 'public:appointment' business.slug row.a.token %}">Detay / iptal</a>
+    {% else %}<a class="btn ghost small" href="{{ row.rebook }}">Aynısını tekrar al</a>{% endif %}
+  </div>
+</div>
+{% empty %}<div class="card">Henüz randevun yok.</div>{% endfor %}
+<p><a class="btn block" href="{% url 'public:book_select' business.slug %}">Yeni randevu al</a></p>
+<form method="post" action="{% url 'public:account_forget' business.slug %}">{% csrf_token %}
+  <button class="btn ghost small">Bu cihazda numaramı unut</button>
+</form>
+{% endif %}
+{% endblock %}

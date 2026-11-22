@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Kuaför girişi{% endblock %}
+{% block body %}
+<div class="hero"><div class="inner"><small>{{ SITE_NAME }}</small><h1>Kuaför girişi</h1></div></div>
+<div class="stripe"></div>
+<main class="wrap">
+  {% if form.errors %}<ul class="msgs"><li class="error">E-posta ya da şifre hatalı.</li></ul>{% endif %}
+  <form method="post">{% csrf_token %}
+    <label for="id_username">E-posta</label>
+    <input id="id_username" type="email" name="username" autocomplete="username" required autofocus>
+    <label for="id_password">Şifre</label>
+    <input id="id_password" type="password" name="password" autocomplete="current-password" required>
+    <p style="margin-top:16px"><button class="btn block">Giriş yap</button></p>
+  </form>
+  <p class="muted">Hesabın yok mu? <a href="{% url 'panel:signup' %}">Dükkânını kur</a></p>
+</main>
+{% endblock %}

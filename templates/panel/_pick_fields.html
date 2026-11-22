@@ -1,0 +1,10 @@
+<label>İşlem</label>
+<div class="row wrapx">{% for s in services %}<label class="check" style="margin:0"><input type="checkbox" name="h" value="{{ s.id }}"> {{ s.name }}</label>{% endfor %}</div>
+{% if staff|length > 1 %}
+<label for="{{ prefix }}b">Berber</label>
+<select id="{{ prefix }}b" name="b"><option value="0">İlk boş olan</option>{% for p in staff %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}</select>
+{% else %}<input type="hidden" name="b" value="0">{% endif %}
+<div class="cols">
+  <div><label for="{{ prefix }}name">Ad <small>(isteğe bağlı)</small></label><input id="{{ prefix }}name" type="text" name="name" maxlength="60"></div>
+  <div><label for="{{ prefix }}phone">Telefon <small>(isteğe bağlı)</small></label><input id="{{ prefix }}phone" type="tel" name="phone" placeholder="05xx" inputmode="numeric"></div>
+</div>

@@ -1,0 +1,21 @@
+{% extends "panel/_shell.html" %}
+{% block content %}
+<p><a href="{% url 'panel:settings' %}">‹ Ayarlar</a></p>
+<h1>Çalışma saatleri</h1>
+<p class="muted">Mola boş bırakılabilir. Tek seferlik kapalı gün ya da izin için Takvim'deki "Saat kapat" bölümünü kullan.</p>
+<form method="post">{% csrf_token %}
+{% for h in week %}
+<div class="card">
+  <div class="row between"><b>{{ h.get_weekday_display }}</b>
+  <label class="check" style="margin:0"><input type="checkbox" name="closed_{{ h.weekday }}" value="1" {% if h.closed %}checked{% endif %}><span>Kapalı</span></label></div>
+  <div class="cols">
+    <div><label for="o{{ h.weekday }}">Açılış</label><input id="o{{ h.weekday }}" type="time" name="open_{{ h.weekday }}" value="{{ h.open|time:'H:i' }}"></div>
+    <div><label for="c{{ h.weekday }}">Kapanış</label><input id="c{{ h.weekday }}" type="time" name="close_{{ h.weekday }}" value="{{ h.close|time:'H:i' }}"></div>
+    <div><label for="bs{{ h.weekday }}">Mola başı</label><input id="bs{{ h.weekday }}" type="time" name="bs_{{ h.weekday }}" value="{{ h.break_start|time:'H:i' }}"></div>
+    <div><label for="be{{ h.weekday }}">Mola sonu</label><input id="be{{ h.weekday }}" type="time" name="be_{{ h.weekday }}" value="{{ h.break_end|time:'H:i' }}"></div>
+  </div>
+</div>
+{% endfor %}
+<p><button class="btn block">Kaydet</button></p>
+</form>
+{% endblock %}

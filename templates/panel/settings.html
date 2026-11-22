@@ -1,0 +1,36 @@
+{% extends "panel/_shell.html" %}
+{% block content %}
+<div class="card"><b>Randevu linkin</b><div class="linkbox" style="margin-top:6px">{{ page_url }}</div>
+<small>Instagram profiline, WhatsApp durumuna ve Google işletme kaydındaki randevu bağlantısına koy.</small></div>
+<div class="two">
+<div>
+  <div class="row between"><h2>Hizmetler</h2><a class="btn small" href="{% url 'panel:service_add' %}">+ Ekle</a></div>
+  <div class="card"><table class="plain">
+  {% for s in services %}<tr><td><a href="{% url 'panel:service_edit' s.id %}"><b>{{ s.name }}</b></a>{% if not s.active %} <span class="badge gray">Kapalı</span>{% endif %}<br><small>{{ s.duration }} dk{% if s.buffer %} + {{ s.buffer }} dk hazırlık{% endif %}{% if s.price_updated_at < stale %} · <span class="bad">fiyat {{ s.price_updated_at|date:"d.m.Y" }} tarihinden beri aynı, güncel mi?</span>{% endif %}</small></td><td class="num">{{ s.price|floatformat:"0g" }} ₺</td></tr>
+  {% empty %}<tr><td>Hizmet eklenmedi.</td></tr>{% endfor %}
+  </table></div>
+  <div class="row between"><h2>Personel</h2><a class="btn small" href="{% url 'panel:staff_add' %}">+ Ekle</a></div>
+  <div class="card"><table class="plain">
+  {% for p in staff %}<tr><td><a href="{% url 'panel:staff_edit' p.id %}"><b>{{ p.name }}</b></a> <small>{{ p.title }}</small>{% if not p.active %} <span class="badge gray">Pasif</span>{% endif %}</td><td class="num"><small>{{ p.services.count }} işlem</small></td></tr>{% endfor %}
+  </table></div>
+  <div class="row between"><h2>Çalışma saatleri</h2><a class="btn small" href="{% url 'panel:hours' %}">Düzenle</a></div>
+  <div class="card"><table class="plain">
+  {% for h in hours %}<tr><td>{{ h.get_weekday_display }}</td><td class="num">{% if h.closed %}<span class="muted">Kapalı</span>{% else %}{{ h.open|time:"H:i" }}–{{ h.close|time:"H:i" }}{% if h.break_start %} <small>(mola {{ h.break_start|time:"H:i" }}–{{ h.break_end|time:"H:i" }})</small>{% endif %}{% endif %}</td></tr>{% endfor %}
+  </table></div>
+</div>
+<div>
+  <h2>Dükkân bilgileri ve randevu kuralları</h2>
+  <form method="post" class="card">{% csrf_token %}
+    {{ form.non_field_errors }}
+    {% for f in form %}
+      {% if f.field.widget.input_type == "checkbox" %}<label class="check">{{ f }}<span>{{ f.label|capfirst }}</span></label>
+      {% else %}<label for="{{ f.id_for_label }}" {% if forloop.first %}style="margin-top:0"{% endif %}>{{ f.label|capfirst }}</label>{{ f }}{% endif %}{{ f.errors }}
+    {% endfor %}
+    <p style="margin-top:14px"><button class="btn block">Kaydet</button></p>
+  </form>
+  <div class="card"><div class="row between"><span>Paket</span><b>{{ request.business.get_plan_display }} · {{ request.business.get_status_display }}</b></div>
+  {% if request.business.status == "trial" and request.business.trial_ends %}<div class="row between"><span>Deneme bitişi</span><b>{{ request.business.trial_ends|date:"d.m.Y" }}</b></div>{% endif %}
+  <div class="row between"><span>Kalan SMS kredisi</span><b>{{ request.business.sms_credit }}</b></div></div>
+</div>
+</div>
+{% endblock %}

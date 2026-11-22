@@ -1,0 +1,14 @@
+{% extends "panel/_shell.html" %}
+{% block content %}
+<p><a href="{% url 'panel:settings' %}">‹ Ayarlar</a></p>
+<h1>{{ title }}</h1>
+<form method="post" class="card">{% csrf_token %}
+  {{ form.non_field_errors }}
+  {% for f in form %}
+    {% if f.field.widget.input_type == "checkbox" and not f.field.widget.allow_multiple_selected %}<label class="check">{{ f }}<span>{{ f.label|capfirst }}</span></label>
+    {% else %}<label for="{{ f.id_for_label }}">{{ f.label|capfirst }}</label>{{ f }}{% endif %}{{ f.errors }}
+  {% endfor %}
+  {% if hint %}<p class="muted">{{ hint }}</p>{% endif %}
+  <p style="margin-top:14px"><button class="btn block">Kaydet</button></p>
+</form>
+{% endblock %}

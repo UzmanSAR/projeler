@@ -1,0 +1,56 @@
+{% extends "panel/_shell.html" %}
+{% block content %}
+<div class="row between" style="margin-bottom:10px">
+  <a class="btn ghost small" href="?g={{ prev|date:'Y-m-d' }}">‹ Önceki</a>
+  <form method="get"><input type="date" name="g" value="{{ day|date:'Y-m-d' }}" onchange="this.form.submit()" aria-label="Gün"></form>
+  <a class="btn ghost small" href="?g={{ next|date:'Y-m-d' }}">Sonraki ›</a>
+</div>
+<h2 style="margin-top:0">{{ day|date:"j F Y l" }}{% if closed %} <span class="badge gray">Kapalı gün</span>{% endif %}</h2>
+<div class="cal">
+  <div class="axis"><div class="head"></div><div style="position:relative;height:{{ height }}px">{% for m in marks %}<span style="top:{{ m.top }}px">{{ m.label }}</span>{% endfor %}</div></div>
+  {% for col in columns %}
+  <div class="col">
+    <div class="head">{{ col.staff.name }}</div>
+    <div class="lane" style="height:{{ height }}px">
+      {% for o in col.offs %}<div class="off" style="top:{{ o.top }}px;height:{{ o.height }}px">{% if o.o %}{{ o.o.reason|default:"Kapalı" }}{% else %}Mola{% endif %}</div>{% endfor %}
+      {% for e in col.appts %}
+      <a class="ev {{ e.a.status }} {{ e.a.source }}" style="top:{{ e.top }}px;height:{{ e.height }}px" {% if e.a.customer %}href="{% url 'panel:customer' e.a.customer.id %}"{% endif %} title="{{ e.a.summary }}">
+        <b>{{ e.a.start|time:"H:i" }}</b> {% if e.a.customer %}{{ e.a.customer.name|default:e.a.customer.phone }}{% else %}İsimsiz{% endif %}<br>{{ e.a.summary }}
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% empty %}<div class="col"><div class="head">Aktif personel yok</div></div>{% endfor %}
+</div>
+<p class="muted">Mavi: onaylı · Yeşil: tamamlandı · Kırmızı: gelmedi · Kesik çizgi: randevusuz. Randevuyu kapatmak için Bugün ekranını kullan.</p>
+<div class="two">
+  <form method="post" action="{% url 'panel:manual_create' %}" class="card">{% csrf_token %}
+    <b>Randevu ekle</b> <small>(arayan müşteri için)</small>
+    <input type="hidden" name="date" value="{{ day|date:'Y-m-d' }}">
+    <label for="mtime">Saat</label><input id="mtime" type="time" name="time" step="300" required>
+    {% include "panel/_pick_fields.html" with prefix="m" %}
+    <p style="margin-top:14px"><button class="btn block">Randevuyu ekle</button></p>
+    {% if request.business.remind_manual %}<small>Telefon yazarsan müşteriye onay ve hatırlatma mesajı gider.</small>{% endif %}
+  </form>
+  <div>
+    <form method="post" action="{% url 'panel:timeoff_create' %}" class="card">{% csrf_token %}
+      <b>Saat kapat</b> <small>(izin, mola, tatil)</small>
+      <input type="hidden" name="date" value="{{ day|date:'Y-m-d' }}">
+      <div class="cols">
+        <div><label for="from">Başlangıç</label><input id="from" type="time" name="from" required></div>
+        <div><label for="to">Bitiş</label><input id="to" type="time" name="to" required></div>
+      </div>
+      <label for="ob">Kim için</label>
+      <select id="ob" name="b"><option value="0">Tüm dükkân</option>{% for p in staff %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}</select>
+      <label for="reason">Not</label><input id="reason" type="text" name="reason" maxlength="80" placeholder="Örn. izin">
+      <p style="margin-top:14px"><button class="btn ghost block">Kapat</button></p>
+    </form>
+    {% for o in day_offs %}
+    <form method="post" action="{% url 'panel:timeoff_delete' o.id %}" class="card row between">{% csrf_token %}
+      <span>{{ o.start|time:"H:i" }}–{{ o.end|time:"H:i" }} · {{ o.staff.name|default:"Tüm dükkân" }}{% if o.reason %} · {{ o.reason }}{% endif %}</span>
+      <button class="btn danger small">Aç</button>
+    </form>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
