@@ -1,6 +1,7 @@
 """Proje ayarları. Gizli değerler ortam değişkenlerinden okunur (.env.example dosyasına bak)."""
 import os
 from pathlib import Path
+from urllib.parse import unquote, urlparse
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -16,6 +17,10 @@ if not DEBUG and SECRET_KEY.startswith("dev-only"):
 
 ALLOWED_HOSTS = [h for h in env("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h]
 CSRF_TRUSTED_ORIGINS = [o for o in env("CSRF_TRUSTED_ORIGINS", "").split(",") if o]
+# Render kendi alan adını bu değişkenlerle bildirir.
+if env("RENDER_EXTERNAL_HOSTNAME"):
+    ALLOWED_HOSTS.append(env("RENDER_EXTERNAL_HOSTNAME"))
+    CSRF_TRUSTED_ORIGINS.append("https://" + env("RENDER_EXTERNAL_HOSTNAME"))
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -32,6 +37,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -71,6 +77,14 @@ DATABASES = {
     }
 }
 
+# Barındırma hizmetleri bağlantıyı tek satırda verir: postgres://kullanici:sifre@sunucu:port/ad
+if env("DATABASE_URL"):
+    _db = urlparse(env("DATABASE_URL"))
+    DATABASES["default"].update(
+        NAME=_db.path.lstrip("/"), USER=unquote(_db.username or ""),
+        PASSWORD=unquote(_db.password or ""), HOST=_db.hostname or "", PORT=str(_db.port or 5432),
+    )
+
 # Doğrulama kodları ve gönderim sınırları önbellekte tutulur. Birden fazla
 # sunucu süreci varsa REDIS_URL zorunludur; yoksa sınırlar süreç başına sayılır.
 if env("REDIS_URL"):
@@ -98,6 +112,10 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedStaticFilesStorage"},
+}
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -114,14 +132,16 @@ if not DEBUG:
 
 # ---- Ürün ayarları -------------------------------------------------------
 SITE_NAME = env("SITE_NAME", "Berber Randevu")
-SITE_URL = env("SITE_URL", "http://localhost:8000")
+SITE_URL = env("SITE_URL") or env("RENDER_EXTERNAL_URL") or "http://localhost:8000"
 
 # SMS: geliştirmede mesajlar konsola yazılır. Yayında gerçek sağlayıcı sınıfı verilir.
 SMS_BACKEND = env("SMS_BACKEND", "core.sms.ConsoleBackend")
 SMS_UNIT_COST = env("SMS_UNIT_COST", "0.17")
 SMS_OTP_UNIT_COST = env("SMS_OTP_UNIT_COST", "0.24")
-# Geliştirmede doğrulama kodunu ekranda göster (gerçek SMS gitmediği için).
-SMS_SHOW_CODE = DEBUG and SMS_BACKEND.endswith("ConsoleBackend")
+# Gerçek SMS gitmediğinde doğrulama kodunu ekranda göster. Geliştirmede kendiliğinden
+# açıktır; tanıtım sitesinde SMS_SHOW_CODE=1 ile açılır. Gerçek sağlayıcı bağlanınca
+# kapatılmalıdır, yoksa telefon doğrulaması anlamsız kalır.
+SMS_SHOW_CODE = SMS_BACKEND.endswith("ConsoleBackend") and (DEBUG or env("SMS_SHOW_CODE") == "1")
 
 # Doğrulama kodu sınırları (rapor, Bölüm 7)
 OTP_TTL_SECONDS = 180

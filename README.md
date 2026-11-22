@@ -29,6 +29,20 @@ Geliştirmede SMS gönderilmez; mesajlar konsola yazılır ve doğrulama kodu ek
 
 Testler: `python manage.py test` (43 test).
 
+## Canlı tanıtım sitesi (Render)
+
+Depoda `render.yaml` var; web servisini ve PostgreSQL'i birlikte kurar.
+
+1. <https://render.com/deploy?repo=https://github.com/UzmanSAR/projeler/tree/claude/proje-incelemesi-l3887x>
+   adresini aç, Render'a GitHub hesabınla giriş yap ve depoya erişim izni ver.
+2. "Apply" / "Deploy Blueprint" düğmesine bas. Kurulum birkaç dakika sürer.
+3. Site adresi `berber-randevu` servisinin sayfasında görünür (`https://berber-randevu-....onrender.com`).
+
+Bu bir tanıtım kurulumudur: SMS gitmez, doğrulama kodu ekranda gösterilir, örnek dükkân
+(`/ornek-berber/`, panel: `demo@example.com` / `demo-sifre-1`) hazır gelir ve hatırlatma
+mesajları gönderilmez. Gerçek müşteriyle kullanmadan önce `SMS_SHOW_CODE` ve `SEED_DEMO`
+değişkenlerini kaldır, demo kullanıcısını sil ve aşağıdaki "Yayına almadan önce" listesini uygula.
+
 ## Neler var
 
 **Müşteri tarafı**
