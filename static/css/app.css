@@ -50,7 +50,7 @@ small, .muted { color: var(--muted); font-size: .875rem; }
 .btn {
   display: inline-block; border: 1px solid var(--gold); border-radius: 10px; background: var(--gold); color: var(--on-gold);
   font: inherit; font-weight: 700; letter-spacing: .01em; padding: 12px 18px; cursor: pointer; text-align: center;
-  transition: background .15s, border-color .15s, color .15s;
+  transition: background var(--t-fast), border-color var(--t-fast), color var(--t-fast), box-shadow var(--t-base), transform 260ms var(--e-spring);
 }
 .btn:hover { background: var(--gold-bright); border-color: var(--gold-bright); color: var(--on-gold); }
 .btn:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 2px; }
@@ -201,4 +201,183 @@ details[open] > summary { margin-bottom: 8px; }
   .wrap.wide { padding-bottom: 48px; }
   .slots { grid-template-columns: repeat(5, 1fr); }
 }
-@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+/* ===== HAREKET / MOTION =====
+   ustura (razor) = eşik · varak (foil) = değer, tek geçiş · direk (pole) = bekleme, tek döngü.
+   The resting state is the visible state: keyframes define only "from" (fill: backwards).
+   If this section, app.js or an animation fails, the page is still complete. */
+:root {
+  --t-press: 90ms; --t-fast: 160ms; --t-base: 240ms; --t-slow: 420ms; --t-scene: 700ms;
+  --t-vt: 240ms; --t-razor: 300ms;   /* 300ms: ceiling on ::view-transition-* */
+  /* cubic-bezier only: a failed linear() in a var() disables the whole transition */
+  --e-out: cubic-bezier(.22, .8, .24, 1);
+  --e-in: cubic-bezier(.5, 0, .9, .3);
+  --e-inout: cubic-bezier(.65, 0, .35, 1);
+  --e-spring: cubic-bezier(.34, 1.45, .5, 1); --e-soft: cubic-bezier(.3, 1.15, .4, 1);   /* live elements only */
+  --e-razor: cubic-bezier(.7, 0, .2, 1);
+  --rise: 12px; --rise-sm: 6px; --slide: 16px;
+  --dx: 0px; --dy: var(--rise); --vt-out-x: 0px;
+  --stagger: 40ms;
+  --foil: linear-gradient(105deg, transparent 36%, rgba(255, 243, 207, .5) 50%, transparent 64%);
+  --foil-soft: linear-gradient(105deg, transparent 36%, rgba(205, 168, 95, .18) 50%, transparent 64%);
+  --pole: repeating-linear-gradient(90deg, var(--gold-bright) 0 10px, #5a4720 10px 16px);
+}
+html[data-nav="fwd"] { --dx: var(--slide); --dy: 0px; --vt-out-x: calc(var(--slide) * -1); }
+html[data-nav="back"] { --dx: calc(var(--slide) * -1); --dy: 0px; --vt-out-x: var(--slide); }
+/* a sideways entrance must not widen the page: on a phone that aborts the transition */
+html { background: var(--bg); overflow-x: clip; }
+.wrap { overflow-x: clip; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* shared keyframes */
+@keyframes rise { from { opacity: 0; transform: translate(var(--dx), var(--dy)); } }
+@keyframes fade-in { from { opacity: 0; } }
+@keyframes sheen { from { transform: translateX(-130%); } to { transform: translateX(130%); } }
+@keyframes draw-x { from { transform: scaleX(0); } }
+@keyframes pop { from { opacity: 0; transform: scale(.5); } }
+@keyframes shake { 20% { transform: translateX(-7px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(2px); } }
+@keyframes pole { from { transform: skewX(-35deg) translateX(0); } to { transform: skewX(-35deg) translateX(16px); } }
+@keyframes msg-in { from { opacity: 0; transform: translateY(-8px); } }
+
+/* 1. view transitions (opt-in: inline in base.html). Names, closed list: hero stripe steps bar topbar tabs
+   scene · pick (public) · tab-pill (panel). A duplicate name on a page cancels the whole transition. */
+.hero { view-transition-name: hero; } .stripe { view-transition-name: stripe; } .steps { view-transition-name: steps; }
+.sticky { view-transition-name: bar; } .topbar { view-transition-name: topbar; } .tabs { view-transition-name: tabs; }
+::view-transition-group(*) { animation-duration: var(--t-vt); animation-timing-function: var(--e-inout); }
+::view-transition-old(*), ::view-transition-new(*) { animation-duration: var(--t-vt); }
+::view-transition-group(hero) { overflow: clip; }
+::view-transition-group(bar), ::view-transition-group(tabs) { backdrop-filter: none; }
+::view-transition-old(root), ::view-transition-new(root), ::view-transition-old(bar), ::view-transition-new(bar) { mix-blend-mode: normal; }
+::view-transition-old(root) { z-index: 1; animation: vt-out 150ms var(--e-in) both; }
+::view-transition-new(root) { animation: none; }   /* the cascade plays in it */
+@keyframes vt-out { to { opacity: 0; transform: translateX(var(--vt-out-x)); } }
+@keyframes vt-fade { to { opacity: 0; } }
+html[data-enter="off"]:not([data-vt="wipe"])::view-transition-old(root) { animation: vt-fade 160ms linear both; }
+/* on both pages: stands still. On one side only: the :only-child rules (:not(:only-child) never matches) */
+::view-transition-old(tabs), ::view-transition-old(topbar), ::view-transition-old(stripe), ::view-transition-old(steps) { display: none; }
+::view-transition-new(tabs), ::view-transition-new(topbar), ::view-transition-new(stripe), ::view-transition-new(steps) { animation: none; mix-blend-mode: normal; }
+::view-transition-old(bar) { animation: none; }   /* held; the new label fades in over it */
+::view-transition-new(bar) { animation: fade-in 180ms linear both; }
+::view-transition-old(tabs):only-child, ::view-transition-old(topbar):only-child,
+::view-transition-old(stripe):only-child, ::view-transition-old(steps):only-child { display: block; animation: vt-fade var(--t-vt) both; }
+::view-transition-new(tabs):only-child, ::view-transition-new(topbar):only-child,
+::view-transition-new(stripe):only-child, ::view-transition-new(steps):only-child { animation: fade-in var(--t-vt) both; }
+/* a bottom bar on one side only sinks or rises as a snapshot; the real one never moves */
+::view-transition-old(bar):only-child { animation: bar-down 180ms var(--e-in) both; }
+::view-transition-new(bar):only-child { animation: bar-up var(--t-vt) var(--e-out) both; }
+@media (max-width: 759.98px) {   /* wider: a static top row, it fades */
+  ::view-transition-old(tabs):only-child { animation: bar-down 180ms var(--e-in) both; }
+  ::view-transition-new(tabs):only-child { animation: bar-up var(--t-vt) var(--e-out) both; }
+}
+@keyframes bar-down { to { transform: translateY(100%); } }
+@keyframes bar-up { from { transform: translateY(100%); } }
+/* razor: the new page is one snapshot behind a slanted clip edge; group and image counter-move, so the
+   picture stands still. The clip box is stretched (1.6 x .625 = 1) and runs until the top of the leaning
+   edge has left the screen too: no corner of the old page pops at the end. */
+html[data-vt="wipe"] { view-transition-name: scene; }
+html[data-vt="wipe"] *, html[data-vt="wipe"] ::before, html[data-vt="wipe"] ::after { view-transition-name: none !important; }
+html[data-vt="wipe"]::view-transition-old(*):only-child { display: block; animation: none; opacity: 1; }
+html[data-vt="wipe"]::view-transition-group(*) { animation: none; }
+html[data-vt="wipe"]::view-transition-group(scene) { overflow: clip; transform-origin: 0 100%;
+  box-shadow: -1px 0 0 0 var(--gold-bright), -5px 0 14px 0 rgba(226, 192, 120, .2);
+  animation: razor-g var(--t-razor) var(--e-razor) both; }
+html[data-vt="wipe"]::view-transition-new(scene) { transform-origin: 0 100%; animation: razor-i var(--t-razor) var(--e-razor) both; }
+@keyframes razor-g { from { transform: translateX(calc(100% + 8px)) skewX(-9deg) scaleX(1.6); } to { transform: translateX(-18vh) skewX(-9deg) scaleX(1.6); } }
+@keyframes razor-i { from { transform: scaleX(.625) skewX(9deg) translateX(calc(-100% - 8px)); } to { transform: scaleX(.625) skewX(9deg) translateX(18vh); } }
+/* lite, off: a 160ms cross-fade */
+html:not([data-motion="full"]) *, html:not([data-motion="full"]) ::before, html:not([data-motion="full"]) ::after { view-transition-name: none !important; }
+html:not([data-motion="full"])::view-transition-old(root) { animation: vt-fade 160ms linear both; }
+html:not([data-motion="full"])::view-transition-group(*) { animation-duration: 160ms; }
+
+/* 2. arrival cascade (JS off: neutral rise). Never on main.wrap or a form holding .sticky: a transform there
+   re-anchors the fixed bar. In :where(): an owner rule with the gate prefix and a class wins. */
+html:not([data-enter="off"]) :where(
+  main.wrap > :not(.sticky, .msgs, .steps, form),
+  main.wrap > form:not(:has(.sticky)),
+  main.wrap > form:has(.sticky) > :not(.sticky, input[type="hidden"]),
+  div.wrap > *
+) { animation: rise var(--t-base) var(--e-out) backwards; animation-delay: calc(var(--i, 0) * var(--stagger)); }
+:is(.wrap, .wrap > form) > :nth-child(2) { --i: 1; }
+:is(.wrap, .wrap > form) > :nth-child(3) { --i: 2; }
+:is(.wrap, .wrap > form) > :nth-child(4) { --i: 3; }
+:is(.wrap, .wrap > form) > :nth-child(5) { --i: 4; }
+:is(.wrap, .wrap > form) > :nth-child(n+6) { --i: 5; }
+
+/* 3. tabela: first page of a session (data-first); [data-calm] switches it off */
+html[data-first]:not(:has([data-calm])) .hero .inner > * { animation: rise var(--t-slow) var(--e-out) backwards; --dy: 14px; }
+html[data-first]:not(:has([data-calm])) .hero .inner > :where(:nth-child(2)) { animation-delay: 60ms; }
+html[data-first]:not(:has([data-calm])) .hero .inner > :where(:nth-child(n+3)) { animation-delay: 140ms; }
+html[data-first]:not(:has([data-calm])) .stripe { animation: draw-x 700ms var(--e-inout) 200ms backwards; }
+html[data-first]:not(:has([data-calm])) :where(main.wrap > :not(.sticky, .msgs, .steps), main.wrap > form > *, div.wrap > *) { animation-delay: calc(120ms + var(--i, 0) * 45ms); }
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  html[data-first]:not(:has([data-calm])) :is(.hero h1 a, .hero .inner > h1:not(:has(a))) {
+    background: linear-gradient(105deg, var(--ink) 0 42%, #fff3cf 48%, var(--gold-bright) 52%, var(--ink) 58% 100%) 100% 0 / 320% 100% no-repeat;
+    -webkit-background-clip: text; background-clip: text;
+  }
+  html[data-first]:not(:has([data-calm])) .hero h1 a { animation: foil-text 900ms var(--e-inout) 420ms backwards; }
+  html[data-first]:not(:has([data-calm])) .hero .inner > h1:not(:has(a)) { animation: rise var(--t-slow) var(--e-out) 60ms backwards, foil-text 900ms var(--e-inout) 420ms backwards; }
+}
+/* transparent fill only inside the keyframes: plain ink at rest */
+@keyframes foil-text { from { -webkit-text-fill-color: transparent; } to { -webkit-text-fill-color: transparent; background-position: 0 0; } }
+
+/* 4. buttons */
+.btn { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+:is(.btn, a, summary):focus-visible { animation: ring 200ms var(--e-out); }
+@keyframes ring { from { outline-offset: 7px; outline-color: transparent; } }
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover { transform: translateY(-1px); box-shadow: 0 8px 22px -10px rgba(205, 168, 95, .6); }
+  .btn.ghost:hover, .btn.danger:hover { box-shadow: none; }
+  .btn:hover::before { transform: translateX(130%); transition: transform 650ms var(--e-inout); }   /* resets unseen */
+}
+.btn:active { transform: scale(.97) translateY(1px); box-shadow: none; transition-duration: var(--t-press); transition-timing-function: ease-out; }
+.btn.small:active { transform: scale(.96); }
+/* clips the two bands, keeps the baseline. Not contain: paint: it shifts the label half a pixel at rest */
+@supports (overflow: clip) {
+  .btn { position: relative; overflow: clip; }
+  .btn::before { content: ""; position: absolute; inset: 0; background: var(--foil); transform: translateX(-130%); }   /* foil */
+  .btn.ghost::before, .btn.danger::before { background: var(--foil-soft); }
+  .btn::after { content: ""; position: absolute; left: -32px; right: -32px; bottom: 0; height: 3px; opacity: 0;   /* pole */
+    background: repeating-linear-gradient(90deg, rgba(26, 20, 8, .7) 0 10px, transparent 10px 16px); transform: skewX(-35deg); }
+  .btn.ghost::after, .btn.danger::after { background: repeating-linear-gradient(90deg, var(--gold-bright) 0 10px, transparent 10px 16px); }
+  .btn.small::after { height: 2px; }
+  .btn.is-busy::after { opacity: 1; transition: opacity var(--t-fast) 120ms; animation: pole 520ms linear infinite; }
+  .btn.is-done::before { animation: sheen var(--t-scene) var(--e-inout) 200ms backwards; }
+  html:not([data-motion="full"]) .btn::before { content: none; }
+}
+/* busy: never combined with the disabled attribute */
+.btn.is-busy { box-shadow: inset 0 0 0 99px rgba(0, 0, 0, .08); }
+.btn.is-busy, form[data-busy] .btn { pointer-events: none; }
+form[data-busy] .btn:not(.is-busy) { opacity: .45; }
+.btn.is-done { animation: done-ring 800ms var(--e-out) 200ms; }
+@keyframes done-ring { from { box-shadow: 0 0 0 0 rgba(94, 199, 149, .65); } to { box-shadow: 0 0 0 12px rgba(94, 199, 149, 0); } }
+
+/* 5. waiting: the pole (the only loop), the words */
+html.is-waiting body::before { content: ""; position: fixed; z-index: 30; top: 0; left: -32px; right: -32px; height: 3px; pointer-events: none;
+  background: var(--pole); animation: pole 520ms linear infinite, fade-in 200ms linear backwards; }
+#nav-status { position: fixed; z-index: 31; top: calc(10px + env(safe-area-inset-top)); left: 16px; right: 16px; width: fit-content; margin: 0 auto;
+  padding: 7px 14px; border-radius: 99px; pointer-events: none; text-align: center;
+  background: var(--surface-2); border: 1px solid rgba(205, 168, 95, .45); color: var(--gold-bright); font-size: .82rem;
+  box-shadow: 0 14px 34px -12px rgba(0, 0, 0, .8); animation: fade-in var(--t-fast) linear backwards; }
+#nav-status:empty { display: none; }
+
+/* 6. flash messages */
+.msgs.flash li { animation: msg-in var(--t-base) var(--e-out) 80ms backwards; }
+.msgs.flash li:nth-child(n+2) { animation-delay: 140ms; }
+.msgs.flash li.error { animation: msg-in var(--t-base) var(--e-out) 80ms backwards, shake 360ms var(--e-out) 320ms; }
+html:not([data-motion="full"]) .msgs.flash li { animation: none; }
+
+/* 7. fields */
+input, select, textarea { transition: border-color var(--t-fast), box-shadow var(--t-fast); }
+label { transition: color var(--t-fast); }
+label:has(+ :is(input, select, textarea):focus) { color: var(--gold-bright); }
+
+/* 8. reduced motion, MOTION=off (duration form) */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after { animation-duration: .01ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important; transition-delay: 0s !important; }
+  .btn:is(:active, :hover) { transform: none !important; }
+}
+html[data-motion="off"] *, html[data-motion="off"] ::before, html[data-motion="off"] ::after {
+  animation-duration: .01ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important;
+  transition-duration: .01ms !important; transition-delay: 0s !important; }
+html[data-motion="off"] .btn:is(:active, :hover) { transform: none !important; }
+/* ===== /HAREKET ===== */

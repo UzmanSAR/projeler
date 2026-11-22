@@ -1,1 +1,1 @@
-{% if messages %}<ul class="msgs">{% for m in messages %}<li class="{{ m.tags }}">{{ m }}</li>{% endfor %}</ul>{% endif %}
+{% if messages %}<ul class="msgs flash" role="status">{% for m in messages %}<li class="{{ m.tags }}"{% if "error" in m.tags %} role="alert"{% endif %}>{{ m }}</li>{% endfor %}</ul>{% endif %}

@@ -1,5 +1,5 @@
 {% load static %}<!doctype html>
-<html lang="tr">
+<html lang="tr" data-motion="{{ MOTION|default:'full' }}" data-flags="live-total now-line copy-link">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -7,9 +7,15 @@
 <meta name="theme-color" content="#0d0e10">
 <meta name="color-scheme" content="dark">
 {% block meta %}{% endblock %}
-<link rel="stylesheet" href="{% static 'css/app.css' %}">
+{% if MOTION != "off" %}<style>@media (prefers-reduced-motion: no-preference) { @view-transition { navigation: auto; } }</style>{% endif %}
+<link rel="expect" href="#eof" blocking="render">
+<link rel="stylesheet" href="{% static 'css/app.css' %}?v=1">
+{% block extra_css %}{% endblock %}
+<script src="{% static 'js/app.js' %}?v=1"></script>
 </head>
 <body>
 {% block body %}{% endblock %}
+{% block extra_js %}{% endblock %}
+<i id="eof" hidden></i>
 </body>
 </html>

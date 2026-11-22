@@ -133,6 +133,7 @@ if not DEBUG:
 # ---- Ürün ayarları -------------------------------------------------------
 SITE_NAME = env("SITE_NAME", "Berber Randevu")
 SITE_URL = env("SITE_URL") or env("RENDER_EXTERNAL_URL") or "http://localhost:8000"
+MOTION = env("MOTION", "full")  # hareket katmanı: full | lite | off (kapatma düğmesi)
 
 # SMS: geliştirmede mesajlar konsola yazılır. Yayında gerçek sağlayıcı sınıfı verilir.
 SMS_BACKEND = env("SMS_BACKEND", "core.sms.ConsoleBackend")
