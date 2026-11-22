@@ -211,7 +211,7 @@ def book_details(request, slug):
                     "slug": business.slug, "name": name, "phone": phone, "query": sel.query(),
                 }
                 if code:
-                    messages.info(request, f"Geliştirme modu, SMS gönderilmedi. Kod: {code}")
+                    messages.info(request, f"Tanıtım modu, SMS gönderilmedi. Kod: {code}")
                 return redirect("public:book_verify", business.slug)
 
     return render(request, "public/book_details.html", {
@@ -236,7 +236,7 @@ def book_verify(request, slug):
                 code = otp.request_code(business, phone, otp.client_ip(request))
                 messages.success(request, "Yeni kod gönderildi.")
                 if code:
-                    messages.info(request, f"Geliştirme modu, SMS gönderilmedi. Kod: {code}")
+                    messages.info(request, f"Tanıtım modu, SMS gönderilmedi. Kod: {code}")
             except otp.OtpError as exc:
                 messages.error(request, str(exc))
             return redirect("public:book_verify", business.slug)
