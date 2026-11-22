@@ -503,3 +503,33 @@ class ReportTests(Base):
         self.assertEqual(r["by_service"][0]["name"], "Saç + sakal")
         self.assertEqual(sum(c["n"] for row in r["heat"] for c in row["cells"]), 3)
         self.assertGreater(r["cur"]["occupancy"], 0)
+
+
+class SuperuserCommandTests(TestCase):
+    def run_cmd(self, **env):
+        from io import StringIO
+        from unittest import mock
+        from django.core.management import call_command
+        out = StringIO()
+        with mock.patch.dict("os.environ", env):
+            call_command("ensure_superuser", stdout=out)
+        return out.getvalue()
+
+    def test_creates_once_and_keeps_password(self):
+        self.assertIn("atlandı", self.run_cmd(SUPERUSER_EMAIL="", SUPERUSER_PASSWORD=""))
+        self.assertFalse(User.objects.exists())
+        self.run_cmd(SUPERUSER_EMAIL="Yonetici@Example.com", SUPERUSER_PASSWORD="cok-uzun-sifre-42")
+        user = User.objects.get(username="yonetici@example.com")
+        self.assertTrue(user.is_superuser and user.is_staff)
+        self.run_cmd(SUPERUSER_EMAIL="yonetici@example.com", SUPERUSER_PASSWORD="baska-bir-sifre-77")
+        user.refresh_from_db()
+        self.assertTrue(user.check_password("cok-uzun-sifre-42"))
+        self.assertTrue(self.client.login(username="yonetici@example.com", password="cok-uzun-sifre-42"))
+        self.assertEqual(self.client.get("/yonetim/").status_code, 200)
+        self.assertRedirects(self.client.get("/panel/"), "/yonetim/")
+
+    def test_weak_password_rejected(self):
+        from django.core.management.base import CommandError
+        with self.assertRaises(CommandError):
+            self.run_cmd(SUPERUSER_EMAIL="a@example.com", SUPERUSER_PASSWORD="12345678")
+        self.assertFalse(User.objects.exists())

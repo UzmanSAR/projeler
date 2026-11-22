@@ -27,7 +27,7 @@ python manage.py runserver
 
 Geliştirmede SMS gönderilmez; mesajlar konsola yazılır ve doğrulama kodu ekranda gösterilir.
 
-Testler: `python manage.py test` (43 test).
+Testler: `python manage.py test` (45 test).
 
 ## Canlı tanıtım sitesi (Render)
 
@@ -37,6 +37,11 @@ Depoda `render.yaml` var; web servisini ve PostgreSQL'i birlikte kurar.
    adresini aç, Render'a GitHub hesabınla giriş yap ve depoya erişim izni ver.
 2. "Apply" / "Deploy Blueprint" düğmesine bas. Kurulum birkaç dakika sürer.
 3. Site adresi `berber-randevu` servisinin sayfasında görünür (`https://berber-randevu-....onrender.com`).
+
+Platform yönetimi (`/yonetim/`) için Render'da servisin **Environment** sekmesine
+`SUPERUSER_EMAIL` ve `SUPERUSER_PASSWORD` değişkenlerini ekle ve yeniden yayınla; yönetici
+kurulum sırasında oluşturulur. Kullanıcı zaten varsa şifresi değişmez. Şifreyi sonradan
+`/yonetim/` içinden değiştirebilirsin.
 
 Bu bir tanıtım kurulumudur: SMS gitmez, doğrulama kodu ekranda gösterilir, örnek dükkân
 (`/ornek-berber/`, panel: `demo@example.com` / `demo-sifre-1`) hazır gelir ve hatırlatma
