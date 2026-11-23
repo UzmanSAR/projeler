@@ -2,7 +2,7 @@
   <div class="row">
     <span class="time">{{ a.start|time:"H:i" }}{% if show_date %}<br><small>{{ a.start|date:"d.m" }}</small>{% endif %}</span>
     <span class="grow">
-      <b>{% if a.customer %}<a href="{% url 'panel:customer' a.customer.id %}" style="color:inherit">{{ a.customer.name|default:a.customer.phone }}</a>{% else %}İsimsiz müşteri{% endif %}</b>
+      <b>{% if a.customer %}<a class="tap" href="{% url 'panel:customer' a.customer.id %}" style="color:inherit">{{ a.customer.name|default:a.customer.phone }}</a>{% else %}İsimsiz müşteri{% endif %}</b>
       {% if a.customer.no_show_count >= 2 %}<span class="badge red">{{ a.customer.no_show_count }} kez gelmedi</span>{% endif %}
       <br><small>{{ a.summary }} · {{ a.staff.name }}{% if a.customer.note %} · “{{ a.customer.note|truncatechars:40 }}”{% endif %}</small>
     </span>

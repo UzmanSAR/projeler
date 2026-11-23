@@ -12,11 +12,11 @@
   </span>
 </div></div>
 <nav class="tabs">
-  <a href="{% url 'panel:today' %}" class="{% if tab == 'today' %}on{% endif %}">Bugün</a>
-  <a href="{% url 'panel:calendar' %}" class="{% if tab == 'calendar' %}on{% endif %}">Takvim</a>
-  <a href="{% url 'panel:customers' %}" class="{% if tab == 'customers' %}on{% endif %}">Müşteriler</a>
-  <a href="{% url 'panel:report' %}" class="{% if tab == 'report' %}on{% endif %}">Raporlar</a>
-  <a href="{% url 'panel:settings' %}" class="{% if tab == 'settings' %}on{% endif %}">Ayarlar</a>
+  <a href="{% url 'panel:today' %}" class="{% if tab == 'today' %}on{% endif %}"{% if tab == 'today' %} aria-current="page"{% endif %}>Bugün</a>
+  <a href="{% url 'panel:calendar' %}" class="{% if tab == 'calendar' %}on{% endif %}"{% if tab == 'calendar' %} aria-current="page"{% endif %}>Takvim</a>
+  <a href="{% url 'panel:customers' %}" class="{% if tab == 'customers' %}on{% endif %}"{% if tab == 'customers' %} aria-current="page"{% endif %}>Müşteriler</a>
+  <a href="{% url 'panel:report' %}" class="{% if tab == 'report' %}on{% endif %}"{% if tab == 'report' %} aria-current="page"{% endif %}>Raporlar</a>
+  <a href="{% url 'panel:settings' %}" class="{% if tab == 'settings' %}on{% endif %}"{% if tab == 'settings' %} aria-current="page"{% endif %}>Ayarlar</a>
 </nav>
 <main class="wrap wide">
   {% if request.business.status == "past_due" %}<ul class="msgs"><li class="warning">Abonelik ödemesi alınamadı. Hesabın açık; yalnızca yeni online randevu durduruldu.</li></ul>{% endif %}

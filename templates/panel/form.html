@@ -1,6 +1,6 @@
 {% extends "panel/_shell.html" %}
 {% block content %}
-<p><a href="{% url 'panel:settings' %}">‹ Ayarlar</a></p>
+<p><a class="tap" href="{% url 'panel:settings' %}">‹ Ayarlar</a></p>
 <h1>{{ title }}</h1>
 <form method="post" class="card">{% csrf_token %}
   {{ form.non_field_errors }}

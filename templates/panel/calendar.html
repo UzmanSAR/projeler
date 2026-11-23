@@ -14,15 +14,15 @@
     <div class="lane" style="height:{{ height }}px">
       {% for o in col.offs %}<div class="off" style="top:{{ o.top }}px;height:{{ o.height }}px">{% if o.o %}{{ o.o.reason|default:"Kapalı" }}{% else %}Mola{% endif %}</div>{% endfor %}
       {% for e in col.appts %}
-      <a class="ev {{ e.a.status }} {{ e.a.source }}" style="top:{{ e.top }}px;height:{{ e.height }}px" {% if e.a.customer %}href="{% url 'panel:customer' e.a.customer.id %}"{% endif %} title="{{ e.a.summary }}">
-        <b>{{ e.a.start|time:"H:i" }}</b> {% if e.a.customer %}{{ e.a.customer.name|default:e.a.customer.phone }}{% else %}İsimsiz{% endif %}<br>{{ e.a.summary }}
+      <a class="ev {{ e.a.status }} {{ e.a.source }}{% if e.height < 37 %} short{% endif %}" style="top:{{ e.top }}px;height:{{ e.height }}px" {% if e.a.customer %}href="{% url 'panel:customer' e.a.customer.id %}"{% endif %} title="{{ e.a.summary }}">
+        <b>{{ e.a.start|time:"H:i" }}</b> {% if e.a.customer %}{{ e.a.customer.name|default:e.a.customer.phone }}{% else %}İsimsiz{% endif %}{% if e.height < 37 %} · {% else %}<br>{% endif %}{{ e.a.summary }}
       </a>
       {% endfor %}
     </div>
   </div>
   {% empty %}<div class="col"><div class="head">Aktif personel yok</div></div>{% endfor %}
 </div>
-<p class="muted">Mavi: onaylı · Yeşil: tamamlandı · Kırmızı: gelmedi · Kesik çizgi: randevusuz. Randevuyu kapatmak için Bugün ekranını kullan.</p>
+<p class="muted">Siyah kenar: onaylı · Yeşil: tamamlandı · Kırmızı kesik kenar: gelmedi · Noktalı kenar: randevusuz. Randevuyu kapatmak için Bugün ekranını kullan.</p>
 <div class="two">
   <form method="post" action="{% url 'panel:manual_create' %}" class="card">{% csrf_token %}
     <b>Randevu ekle</b> <small>(arayan müşteri için)</small>
