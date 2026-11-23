@@ -32,3 +32,8 @@ services:
         value: "1"
       - key: SEED_DEMO
         value: "1"
+      # Platform yöneticisi (/yonetim/). Değerler depoda tutulmaz; Render panelinde girilir.
+      - key: SUPERUSER_EMAIL
+        sync: false
+      - key: SUPERUSER_PASSWORD
+        sync: false

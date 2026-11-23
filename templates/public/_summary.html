@@ -1,6 +1,6 @@
 <div class="card"><dl class="summary" style="margin:0">
   <dt>İşlem</dt><dd>{% for s in sel.services %}{{ s.name }}{% if not forloop.last %} + {% endif %}{% endfor %} · {{ sel.duration }} dk · {{ sel.price|floatformat:"0g" }} ₺</dd>
-  <dt>Zaman</dt><dd>{{ local_start|date:"j F l" }} · {{ local_start|time:"H:i" }}</dd>
+  <dt>Zaman</dt><dd class="when">{{ local_start|date:"j F l" }} · {{ local_start|time:"H:i" }}</dd>
   <dt>Berber</dt><dd>{{ sel.staff.name|default:"İlk boş berber" }}</dd>
 </dl>
 <small>Ücretsiz iptal: randevudan {% widthratio business.cancel_limit_minutes 60 1 %} saat öncesine kadar. <a href="{{ back }}">Saati değiştir</a></small></div>

@@ -9,7 +9,7 @@
   <div class="card">Bu dükkân şu an online randevu almıyor. Lütfen telefonla arayın.</div>
 {% endif %}
 {% if known %}
-  <div class="card row between"><span>Tekrar hoş geldin{% if known.name %}, <b>{{ known.name }}</b>{% endif %}</span>
+  <div class="card row between welcome-back" data-calm><span>Tekrar hoş geldin{% if known.name %}, <b>{{ known.name }}</b>{% endif %}</span>
   <a href="{% url 'public:account' business.slug %}">Randevularım</a></div>
 {% endif %}
 <h2>Hizmetler</h2>

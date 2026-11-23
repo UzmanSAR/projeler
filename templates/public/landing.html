@@ -1,4 +1,7 @@
 {% extends "base.html" %}
+{% load static %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/public.css' %}?v={{ STATIC_V }}">{% endblock %}
+{% block extra_js %}<script src="{% static 'js/public.js' %}?v={{ STATIC_V }}"></script>{% endblock %}
 {% block body %}
 <div class="hero"><div class="inner">
   <small>Erkek kuaförleri için</small>

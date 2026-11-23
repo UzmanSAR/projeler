@@ -116,6 +116,9 @@ STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
     "staticfiles": {"BACKEND": "whitenoise.storage.CompressedStaticFilesStorage"},
 }
+# Statik adresler içerikten türeyen ?v= ile gelir (core/context.py): dosya değişince adres de değişir,
+# bu yüzden tarayıcı bir gün saklayabilir ve sayfa geçişleri yeniden doğrulama beklemez.
+WHITENOISE_MAX_AGE = 0 if DEBUG else 60 * 60 * 24
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -133,6 +136,10 @@ if not DEBUG:
 # ---- Ürün ayarları -------------------------------------------------------
 SITE_NAME = env("SITE_NAME", "Berber Randevu")
 SITE_URL = env("SITE_URL") or env("RENDER_EXTERNAL_URL") or "http://localhost:8000"
+# Hareket katmanı: full | lite | off (kapatma düğmesi). Büyük harf, boşluk ve 0/false gibi yazımlar da kapatır.
+MOTION = (env("MOTION", "full") or "full").strip().lower()
+if MOTION in {"0", "false", "no", "none", "hayir", "hayır", "kapali", "kapalı"}:
+    MOTION = "off"
 
 # SMS: geliştirmede mesajlar konsola yazılır. Yayında gerçek sağlayıcı sınıfı verilir.
 SMS_BACKEND = env("SMS_BACKEND", "core.sms.ConsoleBackend")
@@ -146,11 +153,11 @@ SMS_SHOW_CODE = SMS_BACKEND.endswith("ConsoleBackend") and (DEBUG or env("SMS_SH
 # Doğrulama kodu sınırları (rapor, Bölüm 7)
 OTP_TTL_SECONDS = 180
 OTP_MAX_ATTEMPTS = 5
-OTP_RESEND_SECONDS = 30
-OTP_PER_PHONE_HOUR = 3
-OTP_PER_PHONE_DAY = 6
-OTP_PER_IP_HOUR = 10
-OTP_PER_BUSINESS_DAY = 300
+OTP_RESEND_SECONDS = int(env("OTP_RESEND_SECONDS", "30"))
+OTP_PER_PHONE_HOUR = int(env("OTP_PER_PHONE_HOUR", "3"))
+OTP_PER_PHONE_DAY = int(env("OTP_PER_PHONE_DAY", "6"))
+OTP_PER_IP_HOUR = int(env("OTP_PER_IP_HOUR", "10"))
+OTP_PER_BUSINESS_DAY = int(env("OTP_PER_BUSINESS_DAY", "300"))
 DEVICE_REMEMBER_DAYS = 90
 
 # Cloudflare Turnstile (isteğe bağlı). İkisi de doluysa kod gönderiminden önce doğrulanır.

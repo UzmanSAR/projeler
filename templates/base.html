@@ -1,14 +1,22 @@
 {% load static %}<!doctype html>
-<html lang="tr">
+<html lang="tr" data-motion="{{ MOTION|default:'full' }}" data-flags="live-total now-line copy-link">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>{% block title %}{{ SITE_NAME }}{% endblock %}</title>
-<meta name="theme-color" content="#0f1b2d">
+<meta name="theme-color" content="#0d0e10">
+<meta name="color-scheme" content="dark">
 {% block meta %}{% endblock %}
-<link rel="stylesheet" href="{% static 'css/app.css' %}">
+{% if MOTION != "off" %}<style>@media (prefers-reduced-motion: no-preference) { @view-transition { navigation: auto; } }</style>{% endif %}
+<link rel="expect" href="#eof" blocking="render">
+<link rel="stylesheet" href="{% static 'css/app.css' %}?v={{ STATIC_V }}">
+{% block extra_css %}{% endblock %}
+<script src="{% static 'js/app.js' %}?v={{ STATIC_V }}"></script>
 </head>
 <body>
 {% block body %}{% endblock %}
+<div id="nav-status" aria-hidden="true"></div><div id="nav-live" class="sr-only" role="status"></div>
+{% block extra_js %}{% endblock %}
+<i id="eof" hidden></i>
 </body>
 </html>

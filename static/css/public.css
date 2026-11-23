@@ -1,0 +1,104 @@
+/* HAREKET, müşteri tarafı (PUBLIC), after app.css. Own keyframes: pub-. */
+
+/* foil on dark cards: soft, doubled, behind the text; off-stage at rest; full motion only */
+.welcome-back, .pick .box { position: relative; z-index: 0; overflow: hidden; }
+html[data-motion="full"] :where(.welcome-back, .pick .box, .ticket.confirmed > .summary)::after { content: ""; position: absolute; inset: 0; z-index: -1;
+  background: var(--foil-soft), var(--foil-soft); transform: translateX(-130%); }
+
+/* P1 first visit: one foil pass on the call to action, or on the welcome-back card */
+html[data-first]:not([data-enter="off"]):not(:has([data-calm])) .sticky .btn::before,
+html[data-first]:not([data-enter="off"]) div.wrap > p > .btn:not(.ghost)::before { animation: sheen 900ms var(--e-inout) 1100ms backwards; }
+html[data-first]:not([data-enter="off"]) .welcome-back::after { animation: sheen 900ms var(--e-inout) 400ms backwards; }
+
+/* P2 pick-foil: its transition exists only on :checked: never on load or untick */
+.pick, a.day, .slot { -webkit-tap-highlight-color: transparent; }
+.pick .box { transition: border-color var(--t-fast), background var(--t-fast), transform 260ms var(--e-spring); }
+.pick input:checked + .box::after { transform: translateX(130%); transition: transform 600ms var(--e-inout); }
+.pick:active .box { transform: scale(.985); transition-duration: var(--t-fast), var(--t-fast), var(--t-press); }
+.pick input:checked + .box > b:last-child { color: var(--gold-bright); }
+
+/* P4 steps-fill: the newest segment fills from the left, forward steps only */
+.steps span { position: relative; overflow: hidden; }
+html[data-nav="fwd"]:not([data-enter="off"]) .steps .on:not(:has(~ .on)) { background: var(--line); }
+html[data-nav="fwd"]:not([data-enter="off"]) .steps .on:not(:has(~ .on))::after { content: ""; position: absolute; inset: 0;
+  background: var(--gold); transform-origin: 0 50%; animation: draw-x var(--t-slow) var(--e-out) 140ms backwards; }
+
+/* P5, P7: the tapped day or hour is gold at once (the snapshot must be solid) */
+a.day, .slot { touch-action: manipulation;
+  transition: border-color var(--t-fast), background var(--t-fast), color var(--t-fast), opacity var(--t-fast), transform 260ms var(--e-spring); }
+a.day:active, .slot:active { transform: scale(.94); transition-duration: var(--t-press); }
+.day.on { scroll-initial-target: nearest; }
+.day.is-picked, .slot.is-picked { background: var(--gold); border-color: var(--gold); color: var(--on-gold); transition: transform 260ms var(--e-spring); }
+.day.is-picked small { color: #4a3a17; }
+.days:has(.is-picked) .on:not(.is-picked) { background: var(--surface); border-color: var(--line); color: var(--ink); }
+.days:has(.is-picked) .on:not(.is-picked) small { color: var(--muted); }
+.slots { transition: opacity var(--t-fast); }
+.days:has(.is-picked) ~ .slots { opacity: .45; pointer-events: none; }   /* the old day's hours: not tappable under the new day */
+.slots:has(.is-picked) .slot:not(.is-picked) { opacity: .4; }
+
+/* P6 slot-deal: a diagonal wave over six rows (four when there are five columns); the grid does not rise.
+   Under a full grid the blocks after it stand still: at most 30 elements move. */
+html:not([data-enter="off"]) :is(main.wrap > .slots, .slots:has(:nth-child(24)) ~ *) { animation: none; }
+html:not([data-enter="off"]) .slot:nth-child(-n+24) { animation: rise 220ms var(--e-out) backwards; --dx: 0px; --dy: var(--rise-sm);
+  animation-delay: calc((var(--c, 0) + var(--r, 0)) * 24ms); }
+.slot:nth-child(4n+2) { --c: 1; } .slot:nth-child(4n+3) { --c: 2; } .slot:nth-child(4n) { --c: 3; }
+.slot:nth-child(n+5) { --r: 1; } .slot:nth-child(n+9) { --r: 2; } .slot:nth-child(n+13) { --r: 3; } .slot:nth-child(n+17) { --r: 4; } .slot:nth-child(n+21) { --r: 5; }
+@media (min-width: 760px) {
+  html:not([data-enter="off"]) .slot:nth-child(n+21) { animation: none; }
+  .slot:nth-child(n) { --c: 0; --r: 0; }
+  .slot:nth-child(5n+2) { --c: 1; } .slot:nth-child(5n+3) { --c: 2; } .slot:nth-child(5n+4) { --c: 3; } .slot:nth-child(5n) { --c: 4; }
+  .slot:nth-child(n+6) { --r: 1; } .slot:nth-child(n+11) { --r: 2; } .slot:nth-child(n+16) { --r: 3; }
+}
+
+/* P7 the hour into the ticket. "pick": the tapped slot and, only while the arriving transition runs, the Zaman row.
+   Both pictures keep their size at the right end of the moving box: the gold plate lands on the row's own
+   hour (50% - 2.25ch centres them), then melts. */
+.slot.is-picked { view-transition-name: pick; }
+html[data-from="time"][data-vt="fwd"] .summary .when { view-transition-name: pick; width: fit-content; }
+html[data-from="time"]:not([data-enter="off"]) .card:has(.when) { animation: none; }
+::view-transition-old(pick), ::view-transition-new(pick) { inset: 50% 0 auto auto; width: auto; height: auto;
+  transform: translateY(-50%); font: 600 16px system-ui; }
+::view-transition-old(pick) { animation: pub-pick-lift var(--t-vt) var(--e-inout) both; }
+::view-transition-new(pick) { animation: pub-pick-land var(--t-vt) var(--e-inout) both; }
+::view-transition-old(pick):only-child { animation: fade-in 150ms var(--e-out) reverse both; }
+@keyframes pub-pick-lift { 55% { opacity: 1; } to { opacity: 0; transform: translate(calc(50% - 2.25ch), -50%); } }
+@keyframes pub-pick-land { from, 55% { opacity: 0; } }
+
+/* P8 code: a gold underline, one sixth per digit (--n, .is-full, .is-calm from public.js) */
+input.code-input { background-image: linear-gradient(90deg, var(--gold), var(--gold-bright)); background-repeat: no-repeat;
+  background-size: calc(var(--n, 0) / 6 * (100% - 28px)) 2px; background-position: 14px calc(100% - 9px);
+  transition: background-size 260ms var(--e-out), border-color var(--t-fast), box-shadow var(--t-fast); }
+input.code-input.is-full { border-color: var(--gold-bright); box-shadow: 0 0 0 3px var(--gold-soft), 0 0 22px -6px rgba(226, 192, 120, .55); }
+html[data-motion="full"] .flash:has(.error) ~ form .code-input:not(.is-calm) { animation: shake 360ms var(--e-out) 320ms; }
+.flash:has(.error) ~ form .code-input:not(.is-full, .is-calm) { border-color: var(--red); box-shadow: 0 0 0 3px var(--red-soft); }
+
+/* P9 the seal: at rest it is simply there. The card's padding moves into the list, which clips the foil;
+   the card's ::after is the seal (never clipped), ::before its ring and glint. */
+.ticket .when { font-family: var(--serif); font-size: 1.15rem; }
+.ticket.confirmed { position: relative; padding: 0; }
+.ticket.confirmed > .summary { position: relative; z-index: 1; overflow: hidden; padding: 15px 16px; border-radius: inherit; }
+.ticket.confirmed .when { padding-right: 68px; }
+.ticket.confirmed::before, .ticket.confirmed::after { content: ""; position: absolute; top: 14px; right: 14px; width: 58px; height: 58px; border-radius: 50%; }
+.ticket.confirmed::before { z-index: 2; background: var(--foil); opacity: 0; }
+.ticket.confirmed::after { transform: rotate(-8deg);
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 12.6l4.1 4.1L18.4 8' fill='none' stroke='%231a1408' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 30px no-repeat,
+    radial-gradient(circle at 34% 28%, #f7e6b6 0, #e2c078 32%, #cda85f 58%, #94722f 100%);
+  outline: 1.5px dashed rgba(26, 20, 8, .5); outline-offset: -7px;
+  box-shadow: 0 6px 16px -6px rgba(0, 0, 0, .7), inset 0 0 0 1.5px rgba(255, 243, 207, .5); }
+/* trigger: a fresh arrival from the code or details screen */
+html:is([data-from="verify"], [data-from="details"]):not([data-enter="off"]) .ticket.confirmed { animation: rise var(--t-base) var(--e-out) backwards, pub-thud 240ms var(--e-out) 540ms; }
+html:is([data-from="verify"], [data-from="details"]):not([data-enter="off"]) .ticket.confirmed::after { animation: pub-stamp 460ms 320ms backwards; }
+html:is([data-from="verify"], [data-from="details"]):not([data-enter="off"]) .ticket.confirmed > .summary::after { animation: sheen 900ms var(--e-inout) 800ms backwards; }
+html:is([data-from="verify"], [data-from="details"]):not([data-enter="off"]) .ticket.confirmed::before { animation: pub-ring 620ms 540ms backwards, pub-glint 180ms linear 1215ms; }
+@keyframes pub-stamp {   /* --e-in, --e-spring as literals: var() fails in a keyframe's timing function */
+  from { opacity: 0; transform: scale(2.1) rotate(-24deg); animation-timing-function: cubic-bezier(.5, 0, .9, .3); }
+  48% { opacity: 1; transform: scale(.92) rotate(-8deg); animation-timing-function: cubic-bezier(.34, 1.45, .5, 1); } }
+@keyframes pub-ring { from { opacity: 1; background: none; box-shadow: 0 0 0 0 rgba(226, 192, 120, .55); }
+  to { opacity: 1; background: none; box-shadow: 0 0 0 22px rgba(226, 192, 120, 0); } }
+@keyframes pub-thud { 30% { transform: translateY(2px) scale(.994); } }
+@keyframes pub-glint { 50% { opacity: 1; } }
+
+/* P10 cancelled: muted, no seal; the way forward takes the foil */
+.ticket[class*="cancelled"] .summary dd { opacity: .6; }   /* the values only: the small labels keep their contrast */
+html[data-nav="same"] .ticket[class*="cancelled"] ~ p .btn::before { animation: sheen 900ms var(--e-inout) 400ms backwards; }

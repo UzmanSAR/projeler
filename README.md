@@ -27,7 +27,7 @@ python manage.py runserver
 
 Geliştirmede SMS gönderilmez; mesajlar konsola yazılır ve doğrulama kodu ekranda gösterilir.
 
-Testler: `python manage.py test` (43 test).
+Testler: `python manage.py test` (45 test).
 
 ## Canlı tanıtım sitesi (Render)
 
@@ -37,6 +37,11 @@ Depoda `render.yaml` var; web servisini ve PostgreSQL'i birlikte kurar.
    adresini aç, Render'a GitHub hesabınla giriş yap ve depoya erişim izni ver.
 2. "Apply" / "Deploy Blueprint" düğmesine bas. Kurulum birkaç dakika sürer.
 3. Site adresi `berber-randevu` servisinin sayfasında görünür (`https://berber-randevu-....onrender.com`).
+
+Platform yönetimi (`/yonetim/`) için Render'da servisin **Environment** sekmesine
+`SUPERUSER_EMAIL` ve `SUPERUSER_PASSWORD` değişkenlerini ekle ve yeniden yayınla; yönetici
+kurulum sırasında oluşturulur. Kullanıcı zaten varsa şifresi değişmez. Şifreyi sonradan
+`/yonetim/` içinden değiştirebilirsin.
 
 Bu bir tanıtım kurulumudur: SMS gitmez, doğrulama kodu ekranda gösterilir, örnek dükkân
 (`/ornek-berber/`, panel: `demo@example.com` / `demo-sifre-1`) hazır gelir ve hatırlatma
@@ -67,6 +72,21 @@ değişkenlerini kaldır, demo kullanıcısını sil ve aşağıdaki "Yayına al
 - Mesaj kuyruğu: onay hemen, hatırlatma 24 saat önce; iptal edilen randevunun mesajı gitmez
 - Fiyat ve süre randevu kalemine kopyalanır; fiyat değişince geçmiş ciro değişmez
 - İşlem kaydı: kim, ne zaman, hangi randevuyu değiştirdi
+
+**Hareket katmanı**
+- Sayfa geçişleri, buton durumları ve bekleme göstergesi; derleme adımı ve dış kütüphane yok
+  (`static/css/app.css`, `static/js/app.js`, müşteri tarafı `public.*`, panel `panel.*`)
+- Hareket yalnızca süslemedir: JavaScript kapalıyken ya da "hareketi azalt" ayarı açıkken her sayfa
+  eksiksiz çalışır; sayfa geçişlerini desteklemeyen tarayıcıda geçiş olmadan açılır
+- `MOTION` ortam değişkeni: `full` (varsayılan), `lite` (yalnızca basma, yükleme ve geçiş), `off` (hareket
+  kapalı; `OFF`, `0`, `false` yazımları da kapatır). `off` yalnızca hareketi kapatır: gönderilen formun
+  kilitlenmesi ve bekleme göstergesi çalışmaya devam eder
+- Statik dosya adresleri içerikten türeyen bir `?v=` değeri taşır (`core/context.py`); dosya değişince
+  adres kendiliğinden değişir, sürümü elle artırmak gerekmez
+- Davranış bayrakları `templates/base.html` içindeki `data-flags` özniteliğinde: `live-total`
+  ("Devam et" butonunda süre ve tutar), `now-line` (takvimde şu an çizgisi), `copy-link` (randevu
+  bağlantısına dokununca kopyalama). `auto-code` (altıncı rakamda kodu kendiliğinden gönderme)
+  kapalıdır; özniteliğe eklenince açılır
 
 ## Rapora göre yapılan değişiklikler
 

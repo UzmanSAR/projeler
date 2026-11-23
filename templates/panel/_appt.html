@@ -1,4 +1,4 @@
-<div class="card appt {{ a.status }} {% if a.is_open and a.end < now %}past{% endif %}">
+<div class="card appt {{ a.status }} {% if a.is_open and a.end < now %}past{% endif %}" data-appt="{{ a.id }}" data-echo="off">
   <div class="row">
     <span class="time">{{ a.start|time:"H:i" }}{% if show_date %}<br><small>{{ a.start|date:"d.m" }}</small>{% endif %}</span>
     <span class="grow">
