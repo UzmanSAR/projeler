@@ -117,11 +117,11 @@
       vt.finished.then(done, done);
     } else if (M.nav === 'wipe') { M.nav = 'fwd'; root.setAttribute('data-nav', 'fwd'); }
     restore();
-    away(vt);
+    away(vt && (moved || navType !== 'push' || location.hash));   /* a fresh page stands at the top: no layout is forced to learn that */
     revealed = true; flush();
   });
   /* a scrolled page: its top bars are out of view. Unnamed (app.css), they fade in place instead of flying in */
-  function away(vt) { root.toggleAttribute('data-away', !!vt && w.scrollY > 16); }
+  function away(may) { root.toggleAttribute('data-away', !!may && w.scrollY > 16); }
   w.addEventListener('pageswap', function (e) { away(e.viewTransition); });
   d.addEventListener('DOMContentLoaded', function () { domReady = true; if (revealed) shownAt = performance.now(); words(); restore(); keptY = 0; flush(); });
   /* an impatient tap ends the transition; never forwarded */
@@ -230,7 +230,7 @@
   });
 
   /* ---- same screen returns: keep the place, say the result, echo on the button */
-  var kept = false, keptY = 0, AGE = 95000;   /* just longer than the 90s POST guard */
+  var kept = false, keptY = 0, moved = false, AGE = 95000;   /* just longer than the 90s POST guard */
   function restore() {
     if (!(domReady || d.getElementById('eof'))) return;
     if (kept) { if (keptY) w.scrollTo(0, keptY); return; }
@@ -239,8 +239,8 @@
     var err = d.querySelector('.msgs li.error, .errorlist'), flash = d.querySelector('.msgs.flash');   /* standing warnings don't count */
     if (s && s.p === here && now - s.t < AGE && navType === 'push') {
       var er = err && !err.closest('.flash') && err.getBoundingClientRect();   /* a flash error is at the top */
-      if (!err) { if (s.y > 0) { keptY = s.y; w.scrollTo(0, keptY); } }
-      else if (er && (er.top < 0 || er.bottom > w.innerHeight)) err.scrollIntoView({ block: 'center' });   /* a field error must be seen */
+      if (!err) { if (s.y > 0) { keptY = s.y; w.scrollTo(0, keptY); moved = true; } }
+      else if (er && (er.top < 0 || er.bottom > w.innerHeight)) { err.scrollIntoView({ block: 'center' }); moved = true; }   /* a field error must be seen */
     }
     M.ready(function () {
       if (flash) {
