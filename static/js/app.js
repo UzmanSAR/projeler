@@ -123,7 +123,7 @@
   /* a scrolled page: its top bars are out of view. Unnamed (app.css), they fade in place instead of flying in */
   function away(may) { root.toggleAttribute('data-away', !!may && w.scrollY > 16); }
   w.addEventListener('pageswap', function (e) { away(e.viewTransition); });
-  d.addEventListener('DOMContentLoaded', function () { domReady = true; if (revealed) shownAt = performance.now(); words(); restore(); keptY = 0; flush(); });
+  d.addEventListener('DOMContentLoaded', function () { domReady = true; if (revealed) shownAt = performance.now(); restore(); keptY = 0; flush(); });
   /* an impatient tap ends the transition; never forwarded */
   d.addEventListener('pointerdown', function () { if (liveVT) try { liveVT.skipTransition(); } catch (e) {} }, true);
   /* ghost-tap guard: bars sit at the same spot on consecutive pages. Stateless */
@@ -132,11 +132,12 @@
   }, true);
   d.addEventListener('touchstart', function () {}, { passive: true });   /* iOS: paints :active at once */
 
-  /* ---- status words: chip + polite live region (made empty at DOM ready: only a later change is spoken) */
+  /* ---- status words: chip + polite live region. Both stand empty in base.html: a screen reader speaks only
+     a change to a region that was already there (and nothing is inserted while the page arrives) */
   var chip = null, live = null, chipTimer = 0, sayTimer = 0;
   function words() {
     if (chip || !d.body) return;
-    d.body.insertAdjacentHTML('beforeend', '<div id="nav-status" aria-hidden="true"></div><div id="nav-live" class="sr-only" role="status"></div>');
+    if (!d.getElementById('nav-live')) d.body.insertAdjacentHTML('beforeend', '<div id="nav-status" aria-hidden="true"></div><div id="nav-live" class="sr-only" role="status"></div>');
     chip = d.getElementById('nav-status'); live = d.getElementById('nav-live');
   }
   M.announce = function (text) { words(); if (live) live.textContent = text || ''; };
