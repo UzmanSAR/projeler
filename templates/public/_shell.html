@@ -16,6 +16,6 @@
 <main class="wrap">
   {% include "_messages.html" %}
   {% block content %}{% endblock %}
-  <p class="foot">Bu sayfa {{ SITE_NAME }} ile hazırlandı · <a href="{% url 'feedback' %}?d={{ business.slug }}&amp;next={{ request.path|urlencode }}">Görüş bildir</a></p>
+  <p class="foot">Bu sayfa {{ SITE_NAME }} ile hazırlandı · <a href="{% url 'feedback' %}?d={{ business.slug }}&amp;next={{ request.get_full_path|urlencode }}">Görüş bildir</a></p>
 </main>
 {% endblock %}

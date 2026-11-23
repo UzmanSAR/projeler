@@ -27,7 +27,7 @@ python manage.py runserver
 
 Geliştirmede SMS gönderilmez; mesajlar konsola yazılır ve doğrulama kodu ekranda gösterilir.
 
-Testler: `python manage.py test` (70 test).
+Testler: `python manage.py test` (80 test).
 
 ## Canlı tanıtım sitesi (Render)
 
@@ -79,14 +79,17 @@ değişkenlerini kaldır, demo kullanıcısını sil ve aşağıdaki "Yayına al
   **Platform ayarları**ndan girilir; tek bir işletmeye özel ücret işletme kaydında tutulur
 - Ödeme geldiğinde yönetim panelinde işletme seçilip **"1 aylık üyelik ödemesi kaydet"** işlemi
   çalıştırılır (ya da işletme sayfasında ödeme satırı eklenir): üyelik bitişi bir ay ilerler, deneme
-  ya da ödeme bekleyen hesap aktif olur. Erken ödeyen gün kaybetmez, geç ödeyenin dönemi ödediği gün başlar
+  ya da ödeme bekleyen hesap aktif olur. Erken ödeyen gün kaybetmez, geç ödeyenin dönemi ödediği gün başlar.
+  Yanlış girilen ödeme silinerek ya da düzeltilerek geri alınır: üyelik bitişi her zaman kalan
+  ödeme kayıtlarından hesaplanır
 - Hiçbir hesap kendiliğinden kapatılmaz: "ödeme bekliyor" ve "kapalı" durumlarını yönetim verir
 - Online kart tahsilatı yoktur (`core/billing.py` yalnızca kaydı ve tarihleri yönetir)
 
 **Geri bildirim**
 - `/gorus/`: müşteri ya da işletme sahibi programla ilgili öneri ve görüşünü yazar. Bağlantısı dükkân
   sayfalarının altında, ana sayfada ve panelde Ayarlar'dadır. Gönderiler yönetim panelinde
-  **Geri bildirimler** listesinde okunur. Tuzak alan ve adres başına saatte beş gönderim sınırı vardır
+  **Geri bildirimler** listesinde okunur. Tuzak alan, adres başına saatte beş ve site geneli saatte
+  altmış gönderim sınırı vardır
 
 **Ana ekrana eklenebilen uygulama (PWA)**
 - Kuaför paneli ve her dükkânın sayfası ana ekrana eklenebilir: panel platformun adıyla, dükkân kendi

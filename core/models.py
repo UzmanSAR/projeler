@@ -7,7 +7,7 @@ from django.conf import settings
 from django.contrib.postgres.constraints import ExclusionConstraint
 from django.contrib.postgres.fields import DateTimeRangeField, RangeBoundary, RangeOperators
 from django.core.exceptions import ValidationError
-from django.core.validators import RegexValidator
+from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
 from django.db.models import Func, Q
 from django.utils import timezone
@@ -65,7 +65,10 @@ class Business(models.Model):
     paid_until = models.DateField("üyelik bitişi", null=True, blank=True)
     monthly_price = models.DecimalField(
         "özel aylık ücret (₺)", max_digits=8, decimal_places=0, null=True, blank=True,
+        validators=[MinValueValidator(0)],
         help_text="Boş bırakılırsa platformun genel aylık ücreti uygulanır.")
+    # Ödeme döngüsünün ay günü: kısa aydan sonra gün kaymasın diye tutulur (31 Oca -> 28 Şub -> 31 Mar).
+    billing_day = models.PositiveSmallIntegerField("ödeme günü (ayın kaçı)", null=True, blank=True, editable=False)
     sms_credit = models.IntegerField("SMS kredisi", default=100)
 
     # Randevu kuralları
@@ -351,7 +354,8 @@ class AuditLog(models.Model):
 
 class PlatformSettings(models.Model):
     """Platformun tek satırlık ayarları: yönetim panelinden değiştirilir."""
-    monthly_price = models.DecimalField("aylık üyelik ücreti (₺)", max_digits=8, decimal_places=0, default=499)
+    monthly_price = models.DecimalField("aylık üyelik ücreti (₺)", max_digits=8, decimal_places=0, default=499,
+                                        validators=[MinValueValidator(0)])
     payment_note = models.TextField(
         "ödeme bilgisi", blank=True, max_length=600,
         help_text="Kuaförün üyelik sayfasında 'Nasıl ödenir' başlığı altında görünür: "
@@ -384,6 +388,7 @@ class SubscriptionPayment(models.Model):
     business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name="payments",
                                  verbose_name="işletme")
     amount = models.DecimalField("tutar (₺)", max_digits=8, decimal_places=0, null=True, blank=True,
+                                 validators=[MinValueValidator(0)],
                                  help_text="Boş bırakılırsa işletmenin aylık ücreti yazılır.")
     paid_on = models.DateField("ödeme tarihi", default=timezone.localdate)
     period_start = models.DateField("dönem başı", null=True, blank=True,
@@ -402,14 +407,20 @@ class SubscriptionPayment(models.Model):
     def __str__(self):
         return f"{self.business} · {self.paid_on:%d.%m.%Y} · {self.amount} ₺"
 
+    def clean(self):
+        if self.paid_on and self.paid_on > timezone.localdate():
+            raise ValidationError({"paid_on": "Ödeme tarihi bugünden ileri olamaz."})
+        if self.period_start and self.period_end and self.period_end <= self.period_start:
+            raise ValidationError({"period_end": "Dönem sonu, dönem başından sonra olmalı."})
+
     def save(self, *args, **kwargs):
+        """Boş alanlar her kayıtta tamamlanır; üyelik bitişi kalan ödemelerden yeniden hesaplanır
+        (ödeme silinince de: core/billing.py içindeki post_delete alıcısı)."""
         from . import billing
         new = self._state.adding
-        if new:
-            billing.fill_payment(self)
+        billing.fill_payment(self)
         super().save(*args, **kwargs)
-        if new:
-            billing.apply_payment(self)
+        billing.apply_payment(self, new)
 
 
 class Feedback(models.Model):

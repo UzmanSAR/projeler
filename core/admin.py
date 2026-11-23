@@ -36,7 +36,7 @@ class BusinessAdmin(admin.ModelAdmin):
     def price(self, obj):
         return f"{billing.price_for(obj):.0f} ₺"
 
-    @admin.action(description="1 aylık üyelik ödemesi kaydet (ödendi)")
+    @admin.action(description="1 aylık üyelik ödemesi kaydet (ödendi)", permissions=["change"])
     def record_month(self, request, queryset):
         for b in queryset:
             p = billing.record_payment(b)

@@ -17,9 +17,23 @@ from .models import Business
 PAPER = "#f4f1ea"
 
 
+GENERIC = {"kuaför", "kuaförü", "kuaförler", "berber", "berberi", "salon", "salonu", "erkek", "dükkân", "dükkânı",
+           "dükkan", "dükkanı", "bakım", "evi", "the", "barber", "shop"}
+
+
 def _short(name):
-    """Ana ekrandaki etiket 12 harfi geçince kesilir: sığmıyorsa adın son sözü kullanılır."""
-    return name if len(name) <= 12 else name.split()[-1][:12]
+    """Ana ekrandaki etiket 12 harfi geçince kesilir. Sığmayan addan ayırt edici sözler kalır:
+    "Makas Erkek Kuaförü" -> "Makas", "Ahmet Usta Berber Salonu" -> "Ahmet Usta"."""
+    if len(name) <= 12:
+        return name
+    words = [w for w in name.split() if w.lower() not in GENERIC] or name.split()
+    label = ""
+    for word in words:
+        longer = f"{label} {word}".strip()
+        if len(longer) > 12:
+            break
+        label = longer
+    return label or words[0][:12]
 
 
 def _manifest(name, short_name, start, scope, description, shortcuts):

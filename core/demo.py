@@ -127,7 +127,8 @@ def _membership(business, today=None):
         paid_on = business.trial_ends
         for _ in range(3):
             paid_on = billing.record_payment(business, paid_on=paid_on).period_end - timedelta(days=2)
-    while (business.paid_until - today).days < 10:
+    billing.sync(business)   # elle boşaltılmış bitiş tarihi ödeme kayıtlarından geri gelir
+    while business.paid_until and (business.paid_until - today).days < 10:
         billing.record_payment(business, paid_on=min(today, business.paid_until - timedelta(days=2)))
 
 

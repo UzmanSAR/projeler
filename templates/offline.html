@@ -22,8 +22,21 @@
   <svg viewBox="0 0 64 120" aria-hidden="true" fill="none" stroke="#1b1915" stroke-width="3" stroke-linejoin="round"><circle cx="32" cy="10" r="7"/><rect x="18" y="20" width="28" height="8" fill="#1b1915"/><rect x="21" y="28" width="22" height="62" fill="#fdfbf6"/><path d="M21,44L43,30M21,62L43,48M21,80L43,66" stroke="#7b1e2b" stroke-width="6"/><rect x="21" y="28" width="22" height="62"/><rect x="18" y="90" width="28" height="8" fill="#1b1915"/><path d="M12,110H52M32,98V110"/></svg>
   <h1>Bağlantı yok</h1>
   <p>İnternet bağlantın kesilmiş görünüyor. Bağlantı gelince sayfa kendiliğinden yeniden açılır.</p>
-  <button type="button" onclick="location.reload()">Tekrar dene</button>
+  <button type="button" onclick="again()">Tekrar dene</button>
 </main>
-<script>addEventListener('online', function () { location.reload(); });</script>
+<script>
+/* Bağlantı gelince sayfa kendiliğinden açılır: cihaz "çevrimiçi" dediğinde ve, cihaz hiç çevrimdışı
+   olmadıysa (zayıf sinyal, sunucu yeniden başlıyor), birkaç saniyede bir sunucuya sorarak.
+   Takvim dosyası (.ics) adresinde bir üst sayfaya dönülür: dosya indirilince bu sayfa yerinde kalırdı. */
+function again() {
+  if (/\.ics$/.test(location.pathname)) location.replace(location.pathname.replace(/[^\/]+$/, ''));
+  else if (location.pathname === '{% url "offline" %}') location.replace('/');   /* bu sayfanın kendi adresi: ana sayfaya */
+  else location.reload();
+}
+addEventListener('online', again);
+setInterval(function () {
+  if (document.visibilityState === 'visible') fetch('/sw.js', { method: 'HEAD', cache: 'no-store' }).then(function (r) { if (r.ok) again(); }, function () {});
+}, 5000);
+</script>
 </body>
 </html>
