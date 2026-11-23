@@ -1,0 +1,136 @@
+/* Ana sayfa (tanıtım). app.css ve public.css'ten sonra yüklenir; kendi anahtar kareleri: lp-.
+   Durağan hal görünen haldir: animasyon yalnızca "from" tanımlar, hareket kapalıyken sayfa eksiksizdir. */
+
+/* ---- üst bölüm: metin + önizleme */
+.lp-hero { padding: 0; view-transition-name: none; }          /* uzun bölüm: sonraki sayfanın kısa başlığına dönüşmez, sayfayla birlikte geçer */
+.lp-hero + .stripe { view-transition-name: none; }
+.lp-grid { max-width: 1072px; margin: 0 auto; padding: 18px 16px 40px; display: grid; gap: 34px; }
+.lp-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.lp-top b { font-family: var(--serif); font-size: 1.12rem; font-weight: 600; letter-spacing: .01em; }
+.lp-top a { font-size: .86rem; font-weight: 600; padding: 7px 14px; border: 1px solid var(--line-strong); border-radius: 99px;
+  transition: border-color var(--t-fast), background var(--t-fast); }
+.lp-top a:hover { border-color: var(--gold); background: var(--gold-soft); }
+.lp-hero .inner { max-width: 560px; width: 100%; margin: 0 auto; }
+.lp-hero h1 { font-size: clamp(2.15rem, 8.8vw, 3.4rem); line-height: 1.07; margin: .55rem 0 .95rem; }
+.lp-hero .inner > p { font-size: 1.06rem; max-width: 33em; }
+.lp-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+.lp-hero .btn:not(.ghost) { color: var(--on-gold); }   /* .hero a altın yazar; dolu butonun yazısı koyu kalır */
+.lp-actions .btn { flex: 1 1 210px; }
+.lp-trust { list-style: none; display: flex; flex-wrap: wrap; gap: 6px 18px; padding: 0; margin: 18px 0 0; color: var(--muted); font-size: .86rem; }
+.lp-trust li::before { content: "\2713"; color: var(--gold); font-weight: 700; margin-right: 6px; }
+
+/* ---- önizleme: telefon ve panel kartı (süsleme; inert) */
+.lp-stage { position: relative; justify-self: center; width: min(300px, 80vw); }
+.lp-stage small { color: var(--muted); font-size: .8rem; font-weight: 400; letter-spacing: 0; text-transform: none; }   /* .hero small'ın başlık stili önizlemeye sızmasın */
+.lp-stage::before { content: ""; position: absolute; inset: -6% -34% 4%; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(205, 168, 95, .17), transparent 72%); }
+.lp-phone { position: relative; padding: 9px; border-radius: 38px; background: #050506; border: 1px solid var(--line-strong);
+  box-shadow: 0 34px 64px -26px rgba(0, 0, 0, .95), inset 0 0 0 1px rgba(255, 255, 255, .04); }
+.lp-screen { border-radius: 29px; background: var(--bg); padding: 20px 14px 14px; overflow: hidden; }
+.lp-stage .lp-shop small { display: block; color: var(--gold); font-size: .58rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+.lp-shop b { font-family: var(--serif); font-size: 1.28rem; font-weight: 600; }
+.lp-steps { display: flex; gap: 5px; margin: 12px 0 2px; }
+.lp-steps i { flex: 1; height: 3px; border-radius: 3px; background: var(--line); }
+.lp-steps i.on { background: var(--gold); }
+.lp-label { margin: 13px 0 7px; color: var(--gold); font-size: .64rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.lp-days { display: flex; gap: 6px; }
+.lp-days .day { flex: 1; width: auto; padding: 7px 0; border-radius: 10px; }
+.lp-days .day small { font-size: .7rem; }
+.lp-days .day.on small { color: #4a3a17; }
+.lp-days .day b { font-size: 1.05rem; }
+.lp-slots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 14px; }
+.lp-slots .slot { padding: 9px 0; font-size: .86rem; border-radius: 9px; }
+.slot.lp-pick { background: var(--gold); border-color: var(--gold); color: var(--on-gold); }
+.lp-screen .btn { padding: 11px 8px; font-size: .92rem; }
+.lp-panel { position: relative; margin: -30px -14px 0 28px; padding: 12px 13px 11px; border-radius: 16px;   /* telefonun alt kenarına biner */
+  background: var(--surface-2); border: 1px solid rgba(205, 168, 95, .38); box-shadow: 0 26px 52px -18px rgba(0, 0, 0, .95); }
+.lp-panel-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+.lp-panel-head b { font-family: var(--serif); font-size: 1.02rem; }
+.lp-stage .lp-panel-head small { color: var(--gold); font-size: .6rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.lp-kpis { display: grid; grid-template-columns: 1.35fr 1fr 1fr; gap: 6px; }
+.lp-kpis .kpi { padding: 8px 9px; border-radius: 10px; background: var(--surface); }
+.lp-stage .lp-kpis .kpi small { font-size: .54rem; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
+.lp-kpis .kpi b { font-size: .98rem; white-space: nowrap; }
+.lp-row { display: flex; align-items: center; gap: 9px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); font-size: .82rem; }
+.lp-row > span:nth-child(2) { flex: 1; min-width: 0; }
+.lp-stage .lp-row small { display: block; font-size: .72rem; }
+.lp-time { font-family: var(--serif); font-size: .95rem; font-variant-numeric: tabular-nums; }
+
+/* ---- bölümler */
+.wrap.lp { max-width: 1072px; padding: 4px 16px 56px; }
+.lp-section { margin-top: 58px; }
+.lp-eyebrow { margin: 0 0 6px; color: var(--gold); font-size: .74rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+.lp h2 { margin: 0 0 20px; font-family: var(--serif); font-size: clamp(1.55rem, 5.6vw, 2.15rem); font-weight: 600; line-height: 1.15;
+  letter-spacing: 0; text-transform: none; color: var(--ink); }
+.lp-steps-list { list-style: none; counter-reset: lp; display: grid; gap: 10px; padding: 0; margin: 0; }
+.lp-steps-list li { counter-increment: lp; position: relative; padding: 16px 16px 16px 64px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+.lp-steps-list li::before { content: counter(lp); position: absolute; left: 18px; top: 11px; font-family: var(--serif); font-size: 2.4rem; line-height: 1; color: var(--gold); }
+.lp-steps-list p { margin: 4px 0 0; color: var(--muted); font-size: .95rem; }
+.lp-features, .lp-compare { display: grid; gap: 10px; }
+.lp-features .card, .lp-compare .card { margin: 0; padding: 18px 16px; }
+.lp-features svg { display: block; width: 26px; height: 26px; margin-bottom: 11px; fill: none; stroke: var(--gold); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.lp-features p { margin: 4px 0 0; font-size: .95rem; }
+.lp-compare ul { list-style: none; padding: 0; margin: 10px 0 0; }
+.lp-compare li { position: relative; padding: 8px 0 8px 24px; border-top: 1px solid var(--line); color: var(--muted); font-size: .95rem; }
+.lp-compare li::before { content: "\2013"; position: absolute; left: 4px; color: #6f6d68; }
+.lp-mine { border-color: rgba(205, 168, 95, .45); background: linear-gradient(180deg, var(--gold-soft), transparent 62%), var(--surface); }
+.lp-mine li { color: var(--ink); }
+.lp-mine li::before { content: "\2713"; color: var(--gold); font-weight: 700; }
+.lp-narrow { max-width: 720px; margin-left: auto; margin-right: auto; }
+.lp details.card { margin-bottom: 8px; padding: 0; }
+.lp details > summary { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 15px 16px; color: var(--ink); font-size: 1rem; -webkit-tap-highlight-color: transparent; }
+.lp details > summary::after { content: "+"; flex: none; color: var(--gold); font-size: 1.3rem; font-weight: 400; line-height: 1; transition: transform var(--t-fast) var(--e-out); }
+.lp details[open] > summary { margin-bottom: 0; }
+.lp details[open] > summary::after { transform: rotate(45deg); }
+.lp details > p { margin: 0; padding: 0 16px 16px; }
+.lp-final { padding: 36px 18px; text-align: center; border: 1px solid rgba(205, 168, 95, .3); border-radius: 20px;
+  background: radial-gradient(120% 150% at 50% 0%, #25221b 0%, #131416 58%, #0f1012 100%); }
+.lp-final h2 { margin-bottom: 8px; }
+.lp-final .lp-actions { justify-content: center; }
+.lp-final .lp-actions .btn { flex: 0 1 230px; }
+
+@media (min-width: 560px) { .lp-features { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 760px) {
+  .lp-section { margin-top: 86px; }
+  .lp-steps-list, .lp-compare { grid-template-columns: repeat(3, 1fr); }
+  .lp-compare { grid-template-columns: 1fr 1fr; }
+  .lp-steps-list li { padding: 64px 18px 20px; }
+  .lp-steps-list li::before { left: 18px; top: 16px; }
+  .lp-final { padding: 56px 24px; }
+}
+@media (min-width: 900px) {
+  .lp-grid { grid-template-columns: minmax(0, 1.12fr) minmax(0, .88fr); align-items: center; gap: 26px 40px; padding: 22px 24px 64px; }
+  .lp-top { grid-column: 1 / -1; margin-bottom: 14px; }
+  .lp-hero .inner { max-width: none; margin: 0; }
+  .lp-hero .inner > p { font-size: 1.14rem; }
+  .lp-actions .btn { flex: 0 1 auto; }
+  .lp-stage { width: 300px; justify-self: start; margin-left: 6%; }
+  .lp-panel { width: 292px; margin: -38px 0 0 104px; }
+  .lp-features { grid-template-columns: repeat(3, 1fr); }
+  .wrap.lp { padding-left: 24px; padding-right: 24px; }
+}
+
+/* ---- hareket (HAREKET katmanının kapısı ve değişkenleriyle) */
+html:not([data-enter="off"]) .lp-top { animation: fade-in var(--t-slow) linear backwards; }
+html:not([data-enter="off"]) .lp-phone { animation: rise var(--t-scene) var(--e-out) 180ms backwards; --dx: 0px; --dy: 22px; }
+html:not([data-enter="off"]) .lp-panel { animation: rise var(--t-slow) var(--e-out) 620ms backwards; --dx: 0px; --dy: 14px; }
+/* önizlemede bir saat seçilir: saatler yerleştikten sonra altına döner (durağan hali zaten altın) */
+html:not([data-enter="off"]) .slot.lp-pick { animation: rise 220ms var(--e-out) calc((var(--c, 0) + var(--r, 0)) * 24ms) backwards, lp-pick 320ms var(--e-out) 1250ms backwards; }
+@keyframes lp-pick { from { background: var(--surface); border-color: var(--line); color: var(--ink); } }
+/* ilk ziyarette çağrı butonundan tek ışık geçişi */
+html[data-first]:not([data-enter="off"]) .lp-hero .btn:not(.ghost)::before { animation: sheen 900ms var(--e-inout) 1100ms backwards; }
+html[data-first]:not([data-enter="off"]) .lp-screen .btn::before { animation: none; }
+/* kaydırdıkça beliren kartlar: yalnızca destekleyen tarayıcıda ve tam harekette; yoksa kartlar yerinde durur */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    html[data-motion="full"] .lp-reveal { animation: lp-in linear both; animation-timeline: view(); animation-range: entry 0% entry 60%; }
+  }
+}
+@keyframes lp-in { from { opacity: 0; transform: translateY(22px); } }
+/* açılan sorular */
+@supports selector(::details-content) and (interpolate-size: allow-keywords) {
+  html[data-motion="full"] .lp details { interpolate-size: allow-keywords; }
+  html[data-motion="full"] .lp details::details-content { block-size: 0; overflow: clip; transition: block-size 220ms var(--e-out), content-visibility 220ms allow-discrete; }
+  html[data-motion="full"] .lp details[open]::details-content { block-size: auto; }
+}
+@media (prefers-reduced-motion: reduce) { .lp details::details-content { transition: none !important; } }

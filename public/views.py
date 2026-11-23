@@ -21,7 +21,12 @@ DAY_NAMES = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"]
 
 
 def landing(request):
-    return render(request, "public/landing.html")
+    today = timezone.localdate()
+    return render(request, "public/landing.html", {
+        # Örnek dükkân yalnızca tanıtım kurulumunda vardır; yoksa bağlantısı da gösterilmez.
+        "demo": Business.objects.filter(slug="ornek-berber").first(),
+        "days": [today + timedelta(days=i) for i in range(5)],   # telefon önizlemesindeki gün şeridi
+    })
 
 
 def _business(slug):
