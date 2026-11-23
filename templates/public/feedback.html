@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load static %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/public.css' %}?v={{ STATIC_V }}">{% endblock %}
+{% block extra_js %}<script src="{% static 'js/public.js' %}?v={{ STATIC_V }}"></script>{% endblock %}
+{% block title %}Öneri ve görüşlerin · {{ SITE_NAME }}{% endblock %}
+{% block meta %}<meta name="robots" content="noindex">{% endblock %}
+{% block body %}
+<div class="hero"><div class="inner"><small>{{ SITE_NAME }}</small><h1>Öneri ve görüşlerin</h1>{% include "_pole.html" %}</div></div>
+<div class="stripe"></div>
+<main class="wrap">
+  {% include "_messages.html" %}
+  <p>Programda beğenmediğin, eksik bulduğun ya da olmasını istediğin bir şey varsa yaz. Yazdıkların dükkâna değil, doğrudan programı yapan ekibe ulaşır.</p>
+  {% if shop and not owned %}<p class="muted">Randevunla ilgili bir konu için dükkâna ulaş{% if shop.phone %}: <a href="tel:{{ shop.phone }}">{{ shop.phone }}</a>{% else %}.{% endif %}</p>{% endif %}
+  <form method="post" action="{% url 'feedback' %}">{% csrf_token %}
+    <input type="hidden" name="next" value="{{ back }}">{% if shop %}<input type="hidden" name="d" value="{{ shop.slug }}">{% endif %}
+    {{ form.non_field_errors }}
+    <fieldset class="plain"><legend>Kimsin?</legend>
+      <div class="chips fit">
+        {% for value, label in form.fields.sender.choices %}
+        <label class="pick"><input type="radio" name="sender" value="{{ value }}" {% if form.sender.value == value %}checked{% endif %}><span class="box"><b>{% if value == "owner" %}Kuaförüm{% elif value == "customer" %}Müşteriyim{% else %}Diğer{% endif %}</b></span></label>
+        {% endfor %}
+      </div>
+    </fieldset>
+    {{ form.sender.errors }}
+    <label for="id_message">Önerin ya da görüşün</label>
+    {{ form.message }}{{ form.message.errors }}
+    <label for="id_name">Adın <small>(isteğe bağlı)</small></label>
+    <input id="id_name" type="text" name="name" maxlength="60" autocomplete="name" value="{{ form.name.value|default:'' }}">{{ form.name.errors }}
+    <label for="id_contact">Telefon ya da e-posta <small>(sana dönmemizi istersen)</small></label>
+    <input id="id_contact" type="text" name="contact" maxlength="120" value="{{ form.contact.value|default:'' }}">{{ form.contact.errors }}
+    <div class="hp" aria-hidden="true"><label for="id_website">Bu alanı boş bırak</label><input id="id_website" type="text" name="website" tabindex="-1" autocomplete="off"></div>
+    <p style="margin-top:16px"><button class="btn block">Gönder</button></p>
+  </form>
+  <p><a class="tap" href="{{ back }}">‹ Geri dön</a></p>
+</main>
+{% endblock %}

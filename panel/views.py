@@ -18,7 +18,7 @@ from core import reports
 from core.availability import business_tz, open_intervals
 from core.booking import (BookingError, cancel_appointment, close_appointment,
                           create_appointment, get_or_create_customer)
-from core.models import (Appointment, Customer, Membership, Service, Staff, TimeOff,
+from core.models import (Appointment, Customer, Membership, PlatformSettings, Service, Staff, TimeOff,
                          WorkingHours)
 from core.otp import normalize_phone
 from core.setup import create_business
@@ -385,6 +385,16 @@ def settings_view(request):
         "services": b.services.all(), "staff": b.staff.all(),
         "hours": b.hours.all(), "stale": stale,
         "page_url": f"{settings.SITE_URL}/{b.slug}/",
+    })
+
+
+@panel_view
+def membership(request):
+    """Üyelik ve ödeme: kuaför ne zaman, ne kadar ödeyeceğini ve geçmiş ödemelerini görür."""
+    b = request.business
+    return render(request, "panel/membership.html", {
+        "tab": "settings", "bill": b.billing, "payments": b.payments.all()[:24],
+        "payment_note": PlatformSettings.load().payment_note,
     })
 
 

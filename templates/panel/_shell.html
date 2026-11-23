@@ -19,7 +19,10 @@
   <a href="{% url 'panel:settings' %}" class="{% if tab == 'settings' %}on{% endif %}"{% if tab == 'settings' %} aria-current="page"{% endif %}>Ayarlar</a>
 </nav>
 <main class="wrap wide">
-  {% if request.business.status == "past_due" %}<ul class="msgs"><li class="warning">Abonelik ödemesi alınamadı. Hesabın açık; yalnızca yeni online randevu durduruldu.</li></ul>{% endif %}
+  {% with bill=request.business.billing %}
+  {% if request.business.status == "past_due" %}<ul class="msgs"><li class="warning">Üyelik ödemen bize ulaşmadı. Hesabın açık; yalnızca yeni online randevu durduruldu. <a href="{% url 'panel:membership' %}">Üyelik ve ödeme</a></li></ul>
+  {% elif bill.warn %}<ul class="msgs"><li class="warning">{% if bill.overdue %}{% if bill.in_trial %}Deneme süren bitti.{% else %}Ödeme günün {{ bill.days_over }} gün önce geçti.{% endif %}{% elif bill.days_left == 0 %}{% if bill.in_trial %}Deneme süren bugün bitiyor.{% else %}Ödeme günün bugün.{% endif %}{% else %}{% if bill.in_trial %}Deneme süren {{ bill.days_left }} gün sonra bitiyor.{% else %}Ödeme gününe {{ bill.days_left }} gün kaldı.{% endif %}{% endif %} Aylık ücret {{ bill.price|floatformat:"0g" }}&nbsp;₺. <a href="{% url 'panel:membership' %}">Üyelik ve ödeme</a></li></ul>{% endif %}
+  {% endwith %}
   {% include "_messages.html" %}
   {% block content %}{% endblock %}
 </main>

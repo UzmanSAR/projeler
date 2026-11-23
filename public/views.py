@@ -1,4 +1,5 @@
 """Müşteri tarafı: kuaförün sayfası ve dört adımda randevu."""
+import re
 from datetime import datetime, timedelta, timezone as dt_timezone
 from urllib.parse import urlencode
 
@@ -7,6 +8,7 @@ from django.contrib import messages
 from django.core import signing
 from django.http import Http404, HttpResponse, QueryDict
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
@@ -15,7 +17,8 @@ from core import otp
 from core.availability import business_tz, day_slots, merged_slots
 from core.booking import (BookingError, cancel_appointment, create_appointment, eligible_staff,
                           get_or_create_customer, totals)
-from core.models import Appointment, Business, Customer, Service, Staff, WorkingHours
+from core.models import (Appointment, Business, Customer, Feedback, Membership, Service, Staff, WorkingHours,
+                         slug_validator)
 
 DAY_NAMES = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"]
 
@@ -27,6 +30,44 @@ def landing(request):
         "demo": Business.objects.filter(slug="ornek-berber").first(),
         "days": [today + timedelta(days=i) for i in range(5)],   # telefon önizlemesindeki gün şeridi
     })
+
+
+def feedback(request):
+    """Programla ilgili öneri ve görüş: müşteri ya da işletme sahibi yazar, platform yönetimi okur.
+    ?d=<adres> hangi dükkânın sayfasından gelindiğini, ?next= gönderince dönülecek sayfayı taşır."""
+    from .forms import FeedbackForm
+    data = request.POST if request.method == "POST" else request.GET
+    slug = data.get("d", "")
+    shop = Business.objects.filter(slug=slug).first() if slug_validator.regex.fullmatch(slug) else None
+    owned = None
+    if request.user.is_authenticated:
+        membership = Membership.objects.select_related("business").filter(user=request.user).first()
+        owned = membership.business if membership else None
+    back = data.get("next", "")
+    # Dönüş adresi bu sitenin bir yolu olmalı: "/" ile başlar, "//" ile başlamaz; boşluk, denetim
+    # karakteri (tarayıcı satır sonunu siler: "/\r//site" başka siteye gider) ve ters eğik çizgi içermez.
+    if (len(back) > 200 or not back.startswith("/") or back.startswith("//") or re.search(r"[\x00-\x20\x7f\\]", back)
+            or not url_has_allowed_host_and_scheme(back, allowed_hosts={request.get_host()})):
+        back = reverse("public:business", args=[shop.slug]) if shop else (reverse("panel:settings") if owned else "/")
+    # Teşekkür iletisi dönülen sayfada görünür; ana sayfa ileti göstermez, o zaman bu sayfada kalınır.
+    after = back if back != "/" else reverse("feedback")
+    start = Feedback.Sender.OWNER if owned else (Feedback.Sender.CUSTOMER if shop else Feedback.Sender.OTHER)
+    form = FeedbackForm(request.POST or None, initial={"sender": start})
+    if request.method == "POST" and form.is_valid():
+        d = form.cleaned_data
+        if d["website"]:   # tuzak alan dolu: kaydetmeden teşekkür et
+            messages.success(request, "Teşekkürler, görüşün bize ulaştı.")
+            return redirect(after)
+        # Adres başına saatte 5; adres başlığı değiştirilerek aşılmasın diye sitenin tamamı için de saatte 60.
+        if not otp._bump(f"fb:{otp.client_ip(request)}", 3600, 5) or not otp._bump("fb:all", 3600, 60):
+            messages.error(request, "Kısa sürede çok fazla gönderim yapıldı. Biraz sonra yeniden dene.")
+        else:
+            Feedback.objects.create(
+                sender=d["sender"], message=d["message"].strip(), name=d["name"].strip(), contact=d["contact"].strip(),
+                business=owned or shop, user=request.user if request.user.is_authenticated else None, page=back[:200])
+            messages.success(request, "Teşekkürler, görüşün bize ulaştı.")
+            return redirect(after)
+    return render(request, "public/feedback.html", {"form": form, "shop": shop, "owned": owned, "back": back})
 
 
 def _business(slug):

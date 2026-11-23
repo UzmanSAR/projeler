@@ -21,6 +21,7 @@ urlpatterns = [
     path("musteriler/<int:pk>/", views.customer_detail, name="customer"),
     path("raporlar/", views.report, name="report"),
     path("ayarlar/", views.settings_view, name="settings"),
+    path("ayarlar/uyelik/", views.membership, name="membership"),
     path("ayarlar/saatler/", views.hours, name="hours"),
     path("ayarlar/hizmet/", views.service_edit, name="service_add"),
     path("ayarlar/hizmet/<int:pk>/", views.service_edit, name="service_edit"),

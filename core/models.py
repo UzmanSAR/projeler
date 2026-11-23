@@ -7,7 +7,7 @@ from django.conf import settings
 from django.contrib.postgres.constraints import ExclusionConstraint
 from django.contrib.postgres.fields import DateTimeRangeField, RangeBoundary, RangeOperators
 from django.core.exceptions import ValidationError
-from django.core.validators import RegexValidator
+from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
 from django.db.models import Func, Q
 from django.utils import timezone
@@ -15,6 +15,7 @@ from django.utils import timezone
 RESERVED_SLUGS = {
     "panel", "yonetim", "admin", "static", "media", "api", "giris", "kayit",
     "fiyatlar", "hakkinda", "destek", "kvkk", "robots.txt", "favicon.ico",
+    "gorus", "cevrimdisi", "uygulama", "sw", "manifest",
 }
 
 slug_validator = RegexValidator(
@@ -60,6 +61,14 @@ class Business(models.Model):
     plan = models.CharField(max_length=10, choices=Plan.choices, default=Plan.SOLO)
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.TRIAL)
     trial_ends = models.DateField(null=True, blank=True)
+    # Aylık üyelik: bu tarihe kadar ödenmiştir; sonraki ödeme o gün beklenir. Ödeme kaydı girildikçe ilerler.
+    paid_until = models.DateField("üyelik bitişi", null=True, blank=True)
+    monthly_price = models.DecimalField(
+        "özel aylık ücret (₺)", max_digits=8, decimal_places=0, null=True, blank=True,
+        validators=[MinValueValidator(0)],
+        help_text="Boş bırakılırsa platformun genel aylık ücreti uygulanır.")
+    # Ödeme döngüsünün ay günü: kısa aydan sonra gün kaymasın diye tutulur (31 Oca -> 28 Şub -> 31 Mar).
+    billing_day = models.PositiveSmallIntegerField("ödeme günü (ayın kaçı)", null=True, blank=True, editable=False)
     sms_credit = models.IntegerField("SMS kredisi", default=100)
 
     # Randevu kuralları
@@ -85,6 +94,12 @@ class Business(models.Model):
     def accepts_bookings(self):
         """Ödeme gecikince hesap kapanmaz; yalnızca yeni online randevu durur."""
         return self.status in (self.Status.TRIAL, self.Status.ACTIVE)
+
+    @property
+    def billing(self):
+        """Üyelik özeti (ücret, ödeme günü, kalan gün); şablonlarda request.business.billing."""
+        from . import billing
+        return billing.summary(self)
 
 
 class Membership(models.Model):
@@ -335,3 +350,103 @@ class AuditLog(models.Model):
         ordering = ["-at"]
         verbose_name = "işlem kaydı"
         verbose_name_plural = "işlem kayıtları"
+
+
+class PlatformSettings(models.Model):
+    """Platformun tek satırlık ayarları: yönetim panelinden değiştirilir."""
+    monthly_price = models.DecimalField("aylık üyelik ücreti (₺)", max_digits=8, decimal_places=0, default=499,
+                                        validators=[MinValueValidator(0)])
+    payment_note = models.TextField(
+        "ödeme bilgisi", blank=True, max_length=600,
+        help_text="Kuaförün üyelik sayfasında 'Nasıl ödenir' başlığı altında görünür: "
+                  "IBAN, alıcı adı, açıklamaya ne yazılacağı gibi.")
+
+    class Meta:
+        verbose_name = "platform ayarları"
+        verbose_name_plural = "platform ayarları"
+
+    def __str__(self):
+        return "Platform ayarları"
+
+    def save(self, *args, **kwargs):
+        self.pk = 1   # tek satır
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def load(cls):
+        return cls.objects.get_or_create(pk=1)[0]
+
+
+class SubscriptionPayment(models.Model):
+    """Kuaförün aylık üyelik ödemesi. Kayıt girilince üyelik bitişi dönem sonuna ilerler."""
+    class Method(models.TextChoices):
+        TRANSFER = "transfer", "Havale / EFT"
+        CARD = "card", "Kart"
+        CASH = "cash", "Nakit"
+        OTHER = "other", "Diğer"
+
+    business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name="payments",
+                                 verbose_name="işletme")
+    amount = models.DecimalField("tutar (₺)", max_digits=8, decimal_places=0, null=True, blank=True,
+                                 validators=[MinValueValidator(0)],
+                                 help_text="Boş bırakılırsa işletmenin aylık ücreti yazılır.")
+    paid_on = models.DateField("ödeme tarihi", default=timezone.localdate)
+    period_start = models.DateField("dönem başı", null=True, blank=True,
+                                    help_text="Boş bırakılırsa üyeliğin bittiği günden (geçtiyse bugünden) başlar.")
+    period_end = models.DateField("dönem sonu", null=True, blank=True,
+                                  help_text="Boş bırakılırsa dönem başından bir ay sonrası yazılır.")
+    method = models.CharField("yöntem", max_length=10, choices=Method.choices, default=Method.TRANSFER)
+    note = models.CharField("not", max_length=120, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-paid_on", "-id"]
+        verbose_name = "üyelik ödemesi"
+        verbose_name_plural = "üyelik ödemeleri"
+
+    def __str__(self):
+        return f"{self.business} · {self.paid_on:%d.%m.%Y} · {self.amount} ₺"
+
+    def clean(self):
+        if self.paid_on and self.paid_on > timezone.localdate():
+            raise ValidationError({"paid_on": "Ödeme tarihi bugünden ileri olamaz."})
+        if self.period_start and self.period_end and self.period_end <= self.period_start:
+            raise ValidationError({"period_end": "Dönem sonu, dönem başından sonra olmalı."})
+
+    def save(self, *args, **kwargs):
+        """Boş alanlar her kayıtta tamamlanır; üyelik bitişi kalan ödemelerden yeniden hesaplanır
+        (ödeme silinince de: core/billing.py içindeki post_delete alıcısı)."""
+        from . import billing
+        new = self._state.adding
+        billing.fill_payment(self)
+        super().save(*args, **kwargs)
+        billing.apply_payment(self, new)
+
+
+class Feedback(models.Model):
+    """Programla ilgili öneri ve görüş: müşteri ya da işletme sahibi yazar, platform yönetimi okur."""
+    class Sender(models.TextChoices):
+        CUSTOMER = "customer", "Müşteri"
+        OWNER = "owner", "Kuaför / işletme sahibi"
+        OTHER = "other", "Diğer"
+
+    sender = models.CharField("yazan", max_length=10, choices=Sender.choices, default=Sender.OTHER)
+    business = models.ForeignKey(Business, on_delete=models.SET_NULL, null=True, blank=True,
+                                 related_name="feedback", verbose_name="işletme")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                             verbose_name="kullanıcı")
+    name = models.CharField("ad", max_length=60, blank=True)
+    contact = models.CharField("iletişim", max_length=120, blank=True)
+    message = models.TextField("görüş", max_length=2000)
+    page = models.CharField("geldiği sayfa", max_length=200, blank=True)
+    is_read = models.BooleanField("okundu", default=False)
+    created_at = models.DateTimeField("tarih", auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "geri bildirim"
+        verbose_name_plural = "geri bildirimler"
+
+    def __str__(self):
+        return f"{self.get_sender_display()} · {self.created_at:%d.%m.%Y}"
+
