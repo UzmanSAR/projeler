@@ -178,7 +178,7 @@ def walkin(request):
     except BookingError as exc:
         msg = str(exc)
         if "doldu" in msg:
-            msg = "Bu berber şu an dolu görünüyor. Başka berber seçin ya da önceki randevuyu kapatın."
+            msg = "Bu kuaför şu an dolu görünüyor. Başka kuaför seçin ya da önceki randevuyu kapatın."
         messages.error(request, msg)
     return _back(request)
 

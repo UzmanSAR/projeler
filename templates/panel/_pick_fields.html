@@ -1,7 +1,7 @@
 <label>İşlem</label>
 <div class="row wrapx">{% for s in services %}<label class="check" style="margin:0"><input type="checkbox" name="h" value="{{ s.id }}"> {{ s.name }}</label>{% endfor %}</div>
 {% if staff|length > 1 %}
-<label for="{{ prefix }}b">Berber</label>
+<label for="{{ prefix }}b">Kuaför</label>
 <select id="{{ prefix }}b" name="b"><option value="0">İlk boş olan</option>{% for p in staff %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}</select>
 {% else %}<input type="hidden" name="b" value="0">{% endif %}
 <div class="cols">

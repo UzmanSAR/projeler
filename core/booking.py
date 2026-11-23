@@ -85,12 +85,12 @@ def create_appointment(business, services, start, *, staff=None, customer=None,
     if not services or any(s.business_id != business.id or not s.active for s in services):
         raise BookingError("Geçerli bir işlem seçin.")
     if staff is not None and staff.business_id != business.id:
-        raise BookingError("Geçerli bir berber seçin.")
+        raise BookingError("Geçerli bir kuaför seçin.")
     online = source == Appointment.Source.ONLINE
     duration, buffer, price = totals(services)
     candidates = eligible_staff(business, services, staff)
     if not candidates:
-        raise BookingError("Seçilen işlemleri yapabilen berber bulunamadı.")
+        raise BookingError("Seçilen işlemleri yapabilen kuaför bulunamadı.")
 
     if online:
         if not business.accepts_bookings:

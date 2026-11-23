@@ -119,7 +119,7 @@ def book_select(request, slug):
         if not sel.services:
             messages.error(request, "En az bir işlem seçin.")
         elif not eligible_staff(business, sel.services, sel.staff):
-            messages.error(request, "Seçtiğiniz berber bu işlemlerin hepsini yapmıyor. "
+            messages.error(request, "Seçtiğiniz kuaför bu işlemlerin hepsini yapmıyor. "
                                     "'Fark etmez' seçeneğini deneyin.")
         else:
             return redirect(_url("book_time", business, sel))

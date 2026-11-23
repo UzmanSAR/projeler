@@ -11,7 +11,7 @@ class SignupForm(forms.Form):
     business_name = forms.CharField(label="Dükkân adı", max_length=80)
     slug = forms.CharField(
         label="Sayfa adresi", max_length=40,
-        help_text="Müşterinin göreceği link: site.com/adres. Örn. ali-berber",
+        help_text="Müşterinin göreceği link: site.com/adres. Örn. ali-kuafor",
     )
     owner_name = forms.CharField(label="Adın (takvimde görünür)", max_length=40)
     phone = forms.CharField(label="Dükkân telefonu", max_length=20, required=False)
