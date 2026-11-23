@@ -2,8 +2,9 @@
 from django.contrib import admin
 from django.db.models import Count, Q, Sum
 
-from .models import (Appointment, AuditLog, Business, Customer, Membership, MessageLog,
-                     Service, Staff, TimeOff, WorkingHours)
+from . import billing
+from .models import (Appointment, AuditLog, Business, Customer, Feedback, Membership, MessageLog,
+                     PlatformSettings, Service, Staff, SubscriptionPayment, TimeOff, WorkingHours)
 
 admin.site.site_header = "Platform yönetimi"
 admin.site.site_title = "Platform yönetimi"
@@ -14,15 +15,33 @@ class MembershipInline(admin.TabularInline):
     extra = 0
 
 
+class PaymentInline(admin.TabularInline):
+    """Ödeme satırı eklenince üyelik bitişi kendiliğinden ilerler; tutar ve dönem boş bırakılabilir."""
+    model = SubscriptionPayment
+    extra = 0
+    fields = ("paid_on", "amount", "period_start", "period_end", "method", "note")
+
+
 @admin.register(Business)
 class BusinessAdmin(admin.ModelAdmin):
-    list_display = ("name", "slug", "plan", "status", "trial_ends", "sms_credit",
+    list_display = ("name", "slug", "plan", "status", "trial_ends", "paid_until", "price", "sms_credit",
                     "appointments_30d", "sms_sent", "sms_delivery", "created_at")
     list_filter = ("status", "plan")
     list_editable = ("status", "plan")
     search_fields = ("name", "slug", "phone")
-    inlines = [MembershipInline]
-    actions = ["add_sms_credit", "suspend", "activate"]
+    inlines = [MembershipInline, PaymentInline]
+    actions = ["record_month", "add_sms_credit", "suspend", "activate"]
+
+    @admin.display(description="Aylık ücret")
+    def price(self, obj):
+        return f"{billing.price_for(obj):.0f} ₺"
+
+    @admin.action(description="1 aylık üyelik ödemesi kaydet (ödendi)")
+    def record_month(self, request, queryset):
+        for b in queryset:
+            p = billing.record_payment(b)
+            self.message_user(request, f"{b.name}: {p.amount:.0f} ₺ kaydedildi, üyelik "
+                                       f"{p.period_end:%d.%m.%Y} tarihine kadar geçerli.")
 
     def get_queryset(self, request):
         from django.utils import timezone
@@ -90,3 +109,50 @@ class AuditLogAdmin(admin.ModelAdmin):
 
 for model in (Service, Staff, WorkingHours, TimeOff):
     admin.site.register(model)
+
+
+@admin.register(SubscriptionPayment)
+class SubscriptionPaymentAdmin(admin.ModelAdmin):
+    list_display = ("business", "paid_on", "amount", "period_start", "period_end", "method", "note")
+    list_filter = ("method",)
+    search_fields = ("business__name", "business__slug", "note")
+    autocomplete_fields = ("business",)
+    date_hierarchy = "paid_on"
+
+
+@admin.register(PlatformSettings)
+class PlatformSettingsAdmin(admin.ModelAdmin):
+    """Tek satır: aylık ücret ve kuaföre gösterilecek ödeme bilgisi."""
+    list_display = ("__str__", "monthly_price")
+
+    def has_add_permission(self, request):
+        return not PlatformSettings.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def changelist_view(self, request, extra_context=None):
+        PlatformSettings.load()   # ilk açılışta satır hazır olsun
+        return super().changelist_view(request, extra_context)
+
+
+@admin.register(Feedback)
+class FeedbackAdmin(admin.ModelAdmin):
+    list_display = ("created_at", "sender", "business", "short", "name", "contact", "is_read")
+    list_filter = ("is_read", "sender")
+    list_editable = ("is_read",)
+    search_fields = ("message", "name", "contact", "business__name")
+    readonly_fields = ("sender", "business", "user", "name", "contact", "message", "page", "created_at")
+    actions = ["mark_read"]
+
+    def has_add_permission(self, request):
+        return False
+
+    @admin.display(description="Görüş")
+    def short(self, obj):
+        return obj.message[:90] + ("…" if len(obj.message) > 90 else "")
+
+    @admin.action(description="Okundu işaretle")
+    def mark_read(self, request, queryset):
+        queryset.update(is_read=True)
+

@@ -20,6 +20,7 @@ from django.db import connection
 from django.db.models import Count, Max, Q
 from django.utils import timezone
 
+from . import billing
 from .availability import business_tz, day_slots
 from .booking import (BookingError, cancel_appointment, close_appointment, create_appointment,
                       eligible_staff, get_or_create_customer)
@@ -115,6 +116,21 @@ def _card(customer, seed):
     return customer
 
 
+def _membership(business, today=None):
+    """Örnek dükkânın üyeliği hep geçerli görünür: geçmişte üç aylık ödeme, bitişe on günden az
+    kalınca bir ay daha. Üyelik sayfasında gösterecek bir geçmiş olsun diye."""
+    today = today or timezone.localdate()
+    if not business.payments.exists():
+        business.trial_ends = today - timedelta(days=76)
+        business.paid_until = None
+        business.save(update_fields=["trial_ends", "paid_until"])
+        paid_on = business.trial_ends
+        for _ in range(3):
+            paid_on = billing.record_payment(business, paid_on=paid_on).period_end - timedelta(days=2)
+    while (business.paid_until - today).days < 10:
+        billing.record_payment(business, paid_on=min(today, business.paid_until - timedelta(days=2)))
+
+
 def _shop():
     """Dükkân, berberler ve hizmetler: yoksa oluşturur, varsa eksik olanı ekler."""
     business = Business.objects.filter(slug=SLUG).first()
@@ -130,6 +146,7 @@ def _shop():
         # Eski adla kurulmuş örnek dükkân: sahibi elle değiştirmediyse yeni ada geçer.
         business.name, business.description = SHOP_NAME, SHOP_ABOUT
         business.save(update_fields=["name", "description"])
+    _membership(business)
     services = {}
     for order, (name, duration, price, _) in enumerate(SERVICES):
         services[name], _ = Service.objects.get_or_create(

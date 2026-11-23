@@ -175,6 +175,21 @@ input[type=checkbox], input[type=radio] { accent-color: var(--gold); }
 #id_services label { display: flex; align-items: center; gap: 10px; min-height: 44px; margin: 0; font-weight: 400; }   /* Django's own checkbox list (staff form) */
 #id_services input { width: 20px; height: 20px; flex: none; }
 .ext { width: .6em; height: .6em; margin-left: .3em; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }   /* "opens in a new tab" arrow, drawn: the character can turn into an emoji on phones */
+/* "Ana ekrana ekle" çubuğu (pwa.js): sayfanın alt çubuğunun üstünde durur, yer kaplamaz */
+.install { position: fixed; z-index: 6; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); max-width: 440px; margin: 0 auto;
+  display: flex; align-items: center; gap: 12px; padding: 10px 6px 10px 12px; background: var(--surface); border: 1px solid var(--ink); border-radius: var(--radius); box-shadow: var(--shadow-paper);
+  animation: rise var(--t-base) var(--e-out) backwards; --dx: 0px; --dy: 12px; }
+.install img { flex: none; width: 44px; height: 44px; border: 1px solid var(--line-strong); border-radius: 9px; }
+.install p { flex: 1; min-width: 0; margin: 0; font-size: .84rem; line-height: 1.3; color: var(--muted); }
+.install p b { display: block; font: 400 1.05rem/1.2 var(--serif); color: var(--ink); }
+.install .btn { flex: none; }
+.install-x { flex: none; appearance: none; width: 40px; height: 44px; padding: 0; border: 0; background: none; font: 400 1.5rem/1 var(--sans); color: var(--muted); cursor: pointer; }
+.install-x:hover { color: var(--ink); }
+.install-x:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: -4px; }
+@media (min-width: 760px) { .install { left: auto; right: 20px; width: 400px; margin: 0; } }
+fieldset.plain { border: 0; margin: 0; padding: 0; min-width: 0; }
+fieldset.plain > legend { padding: 0; font-weight: 600; font-size: .84rem; margin: 13px 0 7px; }
+.hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }   /* tuzak alan: yalnızca otomatik gönderimler doldurur */
 .tap { display: inline-block; padding-block: 12px; margin-block: -12px; }   /* a text link alone on its line: 43px to touch, the line keeps its height */
 .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 /* işlem seçimi (randevusuz müşteri): onay kutuları dokunulacak kadar büyük fişlerdir */
@@ -220,6 +235,7 @@ p.muted a, small a { display: inline-block; padding: 12px 3px; margin: -12px -3p
 .chips { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0 6px 4px; margin: -4px 0 0 -4px; scroll-padding: 0 4px; }
 .chips .pick { margin: 0; flex: none; }
 .chips .pick .box { flex-direction: column; padding: 10px 16px; min-width: 88px; text-align: center; gap: 0; }
+.chips.fit { flex-wrap: wrap; overflow: visible; } .chips.fit .pick { flex: 1 1 auto; }   /* a few choices: they share the row and wrap, nothing to scroll */
 
 /* gün: yaprak takvimin bir yaprağı. Üstte cilt şeridi, küçük gün adı, büyük rakam */
 .days { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0 8px 4px; margin: -4px 0 0 -4px; scroll-padding: 0 4px; }

@@ -1,11 +1,14 @@
 from django.urls import path
 
+from core import pwa
+
 from . import views
 
 app_name = "public"
 
 urlpatterns = [
     path("<slug:slug>/", views.business_page, name="business"),
+    path("<slug:slug>/uygulama.webmanifest", pwa.shop_manifest, name="shop_manifest"),
     path("<slug:slug>/randevu/", views.book_select, name="book_select"),
     path("<slug:slug>/randevu/saat/", views.book_time, name="book_time"),
     path("<slug:slug>/randevu/bilgi/", views.book_details, name="book_details"),

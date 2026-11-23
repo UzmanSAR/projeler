@@ -7,6 +7,7 @@ from django.contrib import messages
 from django.core import signing
 from django.http import Http404, HttpResponse, QueryDict
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
@@ -15,7 +16,7 @@ from core import otp
 from core.availability import business_tz, day_slots, merged_slots
 from core.booking import (BookingError, cancel_appointment, create_appointment, eligible_staff,
                           get_or_create_customer, totals)
-from core.models import Appointment, Business, Customer, Service, Staff, WorkingHours
+from core.models import Appointment, Business, Customer, Feedback, Membership, Service, Staff, WorkingHours
 
 DAY_NAMES = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"]
 
@@ -27,6 +28,38 @@ def landing(request):
         "demo": Business.objects.filter(slug="ornek-berber").first(),
         "days": [today + timedelta(days=i) for i in range(5)],   # telefon önizlemesindeki gün şeridi
     })
+
+
+def feedback(request):
+    """Programla ilgili öneri ve görüş: müşteri ya da işletme sahibi yazar, platform yönetimi okur.
+    ?d=<adres> hangi dükkânın sayfasından gelindiğini, ?next= gönderince dönülecek sayfayı taşır."""
+    from .forms import FeedbackForm
+    data = request.POST if request.method == "POST" else request.GET
+    shop = Business.objects.filter(slug=data.get("d", "")).first() if data.get("d") else None
+    owned = None
+    if request.user.is_authenticated:
+        membership = Membership.objects.select_related("business").filter(user=request.user).first()
+        owned = membership.business if membership else None
+    back = data.get("next", "")
+    if not url_has_allowed_host_and_scheme(back, allowed_hosts={request.get_host()}, require_https=request.is_secure()) \
+            or not back.startswith("/"):
+        back = reverse("public:business", args=[shop.slug]) if shop else (reverse("panel:settings") if owned else "/")
+    start = Feedback.Sender.OWNER if owned else (Feedback.Sender.CUSTOMER if shop else Feedback.Sender.OTHER)
+    form = FeedbackForm(request.POST or None, initial={"sender": start})
+    if request.method == "POST" and form.is_valid():
+        d = form.cleaned_data
+        if d["website"]:   # tuzak alan dolu: kaydetmeden teşekkür et
+            messages.success(request, "Teşekkürler, görüşün bize ulaştı.")
+            return redirect(back)
+        if not otp._bump(f"fb:{otp.client_ip(request)}", 3600, 5):
+            messages.error(request, "Kısa sürede çok fazla gönderim yapıldı. Biraz sonra yeniden dene.")
+        else:
+            Feedback.objects.create(
+                sender=d["sender"], message=d["message"].strip(), name=d["name"].strip(), contact=d["contact"].strip(),
+                business=owned or shop, user=request.user if request.user.is_authenticated else None, page=back[:200])
+            messages.success(request, "Teşekkürler, görüşün bize ulaştı.")
+            return redirect(back)
+    return render(request, "public/feedback.html", {"form": form, "shop": shop, "owned": owned, "back": back})
 
 
 def _business(slug):

@@ -11,7 +11,7 @@ import public.urls
 RANKED = {"giris", "kayit", "takvim", "musteriler", "raporlar", "ayarlar",
           "randevu", "saat", "bilgi", "kod", "hesabim"}
 # Bilerek tabloya alınmayanlar: sayfa göstermeyen ya da kendi sırası olmayan adresler.
-IGNORED = {"cikis", "randevusuz", "r"}
+IGNORED = {"cikis", "randevusuz", "r", "uygulama.webmanifest"}
 
 
 def first_literal(route):

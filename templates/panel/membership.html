@@ -1,0 +1,52 @@
+{% extends "panel/_shell.html" %}
+{% block content %}
+<p><a class="tap" href="{% url 'panel:settings' %}">‹ Ayarlar</a></p>
+<h1>Üyelik ve ödeme</h1>
+{% with b=request.business %}
+<p>
+{% if b.status == "suspended" %}Hesabın kapalı. Yeniden açmak için bize yaz.
+{% elif not bill.due %}Ödeme günün henüz belirlenmedi.
+{% elif bill.in_trial and bill.overdue %}Deneme süren {{ bill.due|date:"j F Y" }} günü bitti. Devam etmek için aylık {{ bill.price|floatformat:"0g" }} ₺ ödemen gerekiyor.
+{% elif bill.in_trial and bill.days_left == 0 %}Deneme süren bugün bitiyor. Devam etmek için aylık {{ bill.price|floatformat:"0g" }} ₺ ödemen gerekiyor.
+{% elif bill.in_trial %}Deneme süren {{ bill.due|date:"j F Y l" }} günü bitiyor. O güne kadar ücret ödemezsin; sonrasında aylık {{ bill.price|floatformat:"0g" }} ₺.
+{% elif bill.overdue %}Ödeme günün {{ bill.days_over }} gün önce geçti ({{ bill.due|date:"j F Y" }}). Ödenecek tutar {{ bill.price|floatformat:"0g" }} ₺.
+{% elif bill.days_left == 0 %}Ödeme günün bugün. Ödenecek tutar {{ bill.price|floatformat:"0g" }} ₺.
+{% else %}Üyeliğin {{ bill.due|date:"j F Y l" }} gününe kadar ödenmiş. Sonraki ödemen o gün: {{ bill.price|floatformat:"0g" }} ₺.{% endif %}
+</p>
+<div class="kpis three">
+  <div class="kpi"><small>Aylık ücret</small><b>{{ bill.price|floatformat:"0g" }} ₺</b></div>
+  <div class="kpi"><small>{% if bill.overdue %}Geciken gün{% else %}Kalan gün{% endif %}</small><b>{% if not bill.due %}—{% elif bill.overdue %}{{ bill.days_over }}{% else %}{{ bill.days_left }}{% endif %}</b></div>
+  <div class="kpi"><small>Son gün</small><b>{% if bill.due %}{{ bill.due|date:"j M" }}{% else %}—{% endif %}</b></div>
+</div>
+<div class="two">
+<div>
+  <h2>Üyeliğin</h2>
+  <div class="card">
+    <div class="row between"><span>Durum</span><span class="badge {% if b.status == "active" %}green{% elif b.status == "trial" %}blue{% elif b.status == "past_due" %}amber{% else %}red{% endif %}">{{ b.get_status_display }}</span></div>
+    <div class="row between"><span>Paket</span><b>{{ b.get_plan_display }}</b></div>
+    <div class="row between"><span>Ödeme düzeni</span><b>Aylık</b></div>
+    <div class="row between"><span>Aylık ücret</span><b>{{ bill.price|floatformat:"0g" }} ₺</b></div>
+    {% if bill.in_trial and b.trial_ends %}<div class="row between"><span>Deneme bitişi</span><b>{{ b.trial_ends|date:"j F Y" }}</b></div>
+    <div class="row between"><span>İlk ödeme</span><b>{{ b.trial_ends|date:"j F Y" }} · {{ bill.price|floatformat:"0g" }} ₺</b></div>
+    {% elif bill.due %}<div class="row between"><span>Sonraki ödeme</span><b>{{ bill.due|date:"j F Y" }} · {{ bill.price|floatformat:"0g" }} ₺</b></div>{% endif %}
+  </div>
+  <h2>Nasıl ödenir</h2>
+  <div class="card">
+    {% if payment_note %}<p style="margin:0">{{ payment_note|linebreaksbr }}</p>
+    {% else %}<p style="margin:0">Ödeme yöntemi henüz eklenmedi. Eklendiğinde burada görünecek; sorun olursa bize yazabilirsin.</p>{% endif %}
+    <p class="muted" style="margin:10px 0 0">Ödemen işlendiğinde üyeliğin bir ay uzar ve aşağıdaki listeye eklenir. Randevu başına komisyon alınmaz.</p>
+    <p style="margin:12px 0 0"><a class="btn ghost small" href="{% url 'feedback' %}?next={{ request.path|urlencode }}">Bize yaz</a></p>
+  </div>
+</div>
+<div>
+  <h2>Ödeme geçmişi</h2>
+  {% if payments %}
+  <div class="card"><table class="plain">
+    <tr><th>Tarih</th><th>Dönem</th><th class="num">Tutar</th></tr>
+    {% for p in payments %}<tr><td>{{ p.paid_on|date:"d.m.Y" }}<br><small>{{ p.get_method_display }}</small></td><td>{{ p.period_start|date:"j M" }} – {{ p.period_end|date:"j M Y" }}</td><td class="num">{{ p.amount|floatformat:"0g" }} ₺</td></tr>{% endfor %}
+  </table></div>
+  {% else %}<div class="card"><p class="muted" style="margin:0">Henüz ödeme kaydı yok.{% if bill.in_trial %} Deneme süresinde ücret alınmaz.{% endif %}</p></div>{% endif %}
+</div>
+</div>
+{% endwith %}
+{% endblock %}

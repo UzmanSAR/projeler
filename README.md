@@ -27,7 +27,7 @@ python manage.py runserver
 
 Geliştirmede SMS gönderilmez; mesajlar konsola yazılır ve doğrulama kodu ekranda gösterilir.
 
-Testler: `python manage.py test` (52 test).
+Testler: `python manage.py test` (70 test).
 
 ## Canlı tanıtım sitesi (Render)
 
@@ -71,6 +71,30 @@ değişkenlerini kaldır, demo kullanıcısını sil ve aşağıdaki "Yayına al
 - Müşteriler: ziyaret, harcama, gelmeme sayısı, not, kaybedilme riski olanlar, kayıt silme
 - Raporlar: beş temel rakam ve önceki aya göre değişim, yoğunluk haritası, hizmete ve berbere göre ciro
 - Ayarlar: hizmetler, personel, çalışma saatleri ve mola, randevu kuralları
+- Üyelik ve ödeme (`/panel/ayarlar/uyelik/`): aylık ücret, deneme ya da ödeme günü, kalan gün,
+  nasıl ödeneceği ve ödeme geçmişi. Ödeme gününe beş gün kala panelin üstünde hatırlatma çıkar
+
+**Üyelik (aylık)**
+- Aylık ücret ve kuaföre gösterilecek ödeme bilgisi (IBAN gibi) yönetim panelinde
+  **Platform ayarları**ndan girilir; tek bir işletmeye özel ücret işletme kaydında tutulur
+- Ödeme geldiğinde yönetim panelinde işletme seçilip **"1 aylık üyelik ödemesi kaydet"** işlemi
+  çalıştırılır (ya da işletme sayfasında ödeme satırı eklenir): üyelik bitişi bir ay ilerler, deneme
+  ya da ödeme bekleyen hesap aktif olur. Erken ödeyen gün kaybetmez, geç ödeyenin dönemi ödediği gün başlar
+- Hiçbir hesap kendiliğinden kapatılmaz: "ödeme bekliyor" ve "kapalı" durumlarını yönetim verir
+- Online kart tahsilatı yoktur (`core/billing.py` yalnızca kaydı ve tarihleri yönetir)
+
+**Geri bildirim**
+- `/gorus/`: müşteri ya da işletme sahibi programla ilgili öneri ve görüşünü yazar. Bağlantısı dükkân
+  sayfalarının altında, ana sayfada ve panelde Ayarlar'dadır. Gönderiler yönetim panelinde
+  **Geri bildirimler** listesinde okunur. Tuzak alan ve adres başına saatte beş gönderim sınırı vardır
+
+**Ana ekrana eklenebilen uygulama (PWA)**
+- Kuaför paneli ve her dükkânın sayfası ana ekrana eklenebilir: panel platformun adıyla, dükkân kendi
+  adıyla yerleşir (`/uygulama.webmanifest`, `/<adres>/uygulama.webmanifest`, `core/pwa.py`)
+- Tarayıcı izin verdiği anda "Ana ekrana ekle" çubuğu çıkar (`static/js/pwa.js`): panelde Bugün
+  ekranında, müşteride dükkân sayfasında ve onay fişinde. iPhone'da ekleme adımını anlatır
+- Hizmet betiği (`/sw.js`) hiçbir sayfayı ve veriyi saklamaz; yalnızca bağlantı yokken
+  "Bağlantı yok" sayfasını gösterir
 
 **Altyapı**
 - Çok kiracılı yapı: tek veritabanı, her kayıtta işletme kimliği; yalıtım otomatik testle doğrulanır
@@ -130,8 +154,8 @@ değişkenlerini kaldır, demo kullanıcısını sil ve aşağıdaki "Yayına al
 
 ## Henüz yok
 
-Fotoğraf galerisi, abonelik tahsilatı ve fatura, SMS kredisi satışı, bekleme listesi, yorum daveti,
-düzenli randevu, PWA, kapora, personelin kendi girişi ve yetki ayrımı, panel girişinde ikinci adım,
+Fotoğraf galerisi, online abonelik tahsilatı (kart) ve fatura, SMS kredisi satışı, bekleme listesi,
+yorum daveti, düzenli randevu, anlık bildirim, kapora, personelin kendi girişi ve yetki ayrımı, panel girişinde ikinci adım,
 takvimde sürükle-bırak, kampanya mesajı gönderimi ve İYS kaydı.
 
 ## Dizin yapısı

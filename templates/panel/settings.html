@@ -30,7 +30,11 @@
   </form>
   <div class="card"><div class="row between"><span>Paket</span><b>{{ request.business.get_plan_display }} · {{ request.business.get_status_display }}</b></div>
   {% if request.business.status == "trial" and request.business.trial_ends %}<div class="row between"><span>Deneme bitişi</span><b>{{ request.business.trial_ends|date:"d.m.Y" }}</b></div>{% endif %}
-  <div class="row between"><span>Kalan SMS kredisi</span><b>{{ request.business.sms_credit }}</b></div></div>
+  <div class="row between"><span>Kalan SMS kredisi</span><b>{{ request.business.sms_credit }}</b></div>
+  <p style="margin:12px 0 0"><a class="btn ghost small" href="{% url 'panel:membership' %}">Üyelik ve ödeme</a></p></div>
+  <div class="card"><b>Öneri ve görüşlerin</b>
+  <p class="muted" style="margin:4px 0 0">Programda eksik bulduğun ya da değişmesini istediğin bir şey varsa yaz; doğrudan bize ulaşır.</p>
+  <p style="margin:12px 0 0"><a class="btn ghost small" href="{% url 'feedback' %}?next={{ request.path|urlencode }}">Görüş bildir</a></p></div>
 </div>
 </div>
 {% endblock %}

@@ -29,6 +29,7 @@
     [/^\/panel\/raporlar\//, 'report', 130],
     [/^\/panel\/ayarlar\/$/, 'settings', 140], [/^\/panel\/ayarlar\/./, 'settings-sub', 145],
     [/^\/panel\//, 'other', 100],
+    [/^\/gorus\/$/, 'feedback', 12], [/^\/cevrimdisi\/$/, 'other', 10],   /* platform pages that look like a shop address */
     [/^\/[^/]+\/$/, 'shop', 10], [/^\/[^/]+\/hesabim\/$/, 'account', 15],
     [/^\/[^/]+\/randevu\/$/, 'select', 20], [/^\/[^/]+\/randevu\/saat\/$/, 'time', 30],
     [/^\/[^/]+\/randevu\/bilgi\/$/, 'details', 40], [/^\/[^/]+\/randevu\/kod\/$/, 'verify', 50],
