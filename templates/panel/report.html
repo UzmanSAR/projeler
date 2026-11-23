@@ -17,7 +17,7 @@
     <b>En yoğun zamanlar</b> <small>(randevu sayısı)</small>
     <table class="heat" style="margin-top:8px">
       <tr><th></th>{% for h in r.hours %}<th>{{ h }}</th>{% endfor %}</tr>
-      {% for row in r.heat %}<tr><th>{{ row.day }}</th>{% for c in row.cells %}<td class="h{{ c.level }}" title="{{ c.n }} randevu"></td>{% endfor %}</tr>{% endfor %}
+      {% for row in r.heat %}<tr><th>{{ row.day }}</th>{% for c in row.cells %}<td class="h{{ c.level }}" title="{{ c.n }} randevu"><span class="sr-only">{{ c.n }}</span></td>{% endfor %}</tr>{% endfor %}
     </table>
     <div class="row between" style="margin-top:8px">
       <span class="legend">az {% for l in levels %}<i class="h{{ l }}"></i>{% endfor %} çok</span>

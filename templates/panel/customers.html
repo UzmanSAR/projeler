@@ -8,14 +8,14 @@
 <h2 style="margin-top:0">Kaybedilme riski olanlar</h2>
 <div class="card"><table class="plain">
   <tr><th>Müşteri</th><th class="num">Normalde</th><th class="num">Son geliş</th></tr>
-  {% for r in at_risk %}<tr><td><a href="{% url 'panel:customer' r.customer.id %}">{{ r.customer }}</a></td><td class="num">{{ r.usual }} günde bir</td><td class="num">{{ r.since }} gün önce</td></tr>{% endfor %}
+  {% for r in at_risk %}<tr><td><a class="tap" href="{% url 'panel:customer' r.customer.id %}">{{ r.customer }}</a></td><td class="num">{{ r.usual }} günde bir</td><td class="num">{{ r.since }} gün önce</td></tr>{% endfor %}
 </table></div>
 {% endif %}
 <h2>Müşteriler <small>({{ total }})</small></h2>
 <div class="card"><table class="plain">
   <tr><th>Müşteri</th><th class="num">Ziyaret</th><th class="num">Harcama</th><th class="num">Son geliş</th></tr>
   {% for c in customers %}
-  <tr><td><a href="{% url 'panel:customer' c.id %}"><b>{{ c.name|default:"—" }}</b></a><br><small>{{ c.phone }}</small>
+  <tr><td><a class="tap" href="{% url 'panel:customer' c.id %}"><b>{{ c.name|default:"—" }}</b></a><br><small>{{ c.phone }}</small>
       {% if c.no_show_count >= 2 %}<span class="badge red">{{ c.no_show_count }} kez gelmedi</span>{% endif %}</td>
       <td class="num">{{ c.visits }}</td><td class="num">{{ c.spent|default:0|floatformat:"0g" }} ₺</td><td class="num">{{ c.last|date:"d.m.Y"|default:"—" }}</td></tr>
   {% empty %}<tr><td colspan="4">Kayıt bulunamadı.</td></tr>{% endfor %}

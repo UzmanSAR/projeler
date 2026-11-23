@@ -1,6 +1,6 @@
 {% extends "panel/_shell.html" %}
 {% block content %}
-<p><a href="{% url 'panel:settings' %}">‹ Ayarlar</a></p>
+<p><a class="tap" href="{% url 'panel:settings' %}">‹ Ayarlar</a></p>
 <h1>Çalışma saatleri</h1>
 <p class="muted">Mola boş bırakılabilir. Tek seferlik kapalı gün ya da izin için Takvim'deki "Saat kapat" bölümünü kullan.</p>
 <form method="post">{% csrf_token %}

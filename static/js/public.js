@@ -39,14 +39,17 @@
       doc.setAttribute('data-loops', off ? 'off' : 'on');
       each('.loop-toggle', function (b) {
         b.textContent = off ? 'Oynat' : 'Durdur';
-        b.setAttribute('aria-label', off ? 'Çizimlerin hareketini başlat' : 'Çizimlerin hareketini durdur');
+        b.setAttribute('aria-label', off ? 'Çizimlerin hareketini oynat' : 'Çizimlerin hareketini durdur');   /* the visible word is in the name */
       });
     };
     [].forEach.call(loops, function (el) {
       seen.observe(el);
       var fig = el.closest('figure'), cap = fig && fig.querySelector('figcaption');
       if (!cap) return;
-      fig.removeAttribute('aria-hidden'); el.setAttribute('aria-hidden', 'true');   /* the drawing stays decorative, the button does not */
+      /* the drawing and its caption stay decorative, the button does not */
+      var text = d.createElement('span'); text.setAttribute('aria-hidden', 'true');
+      while (cap.firstChild) text.appendChild(cap.firstChild);
+      cap.appendChild(text); fig.removeAttribute('aria-hidden'); el.setAttribute('aria-hidden', 'true');
       var b = d.createElement('button'); b.type = 'button'; b.className = 'loop-toggle'; cap.appendChild(b);
       b.addEventListener('click', function () {
         var off = doc.getAttribute('data-loops') !== 'off';

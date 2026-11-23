@@ -88,10 +88,11 @@
 
 /* ===== TEMEL ===== */
 * { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; background: var(--bg); overflow-x: clip; }
+html { -webkit-text-size-adjust: 100%; background: var(--bg); overflow-x: clip;
+  scroll-padding-bottom: calc(76px + env(safe-area-inset-bottom)); }   /* a focused field never ends up under the fixed bottom bar */
 body {
   margin: 0; color: var(--ink); background: var(--bg);
-  font: 400 16px/1.55 var(--sans); font-feature-settings: "kern", "liga";
+  font: 400 1rem/1.55 var(--sans); font-feature-settings: "kern", "liga";   /* rem: the reader's own text size counts */
   -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
 }
 a { color: var(--gold); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .18em; }
@@ -164,12 +165,16 @@ input[type=date], input[type=time], input[type=url], input[type=search], select,
   border: 1px solid var(--line-strong); border-bottom: 2px solid var(--ink); border-radius: var(--radius-sm);
 }
 input::placeholder, textarea::placeholder { color: #6f695e; }
-input:focus, select:focus, textarea:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-soft); }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold), 0 0 0 4px var(--gold-soft); }
+input:is([type=checkbox], [type=radio]):focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 2px; box-shadow: none; }   /* no border to colour there */
 input[type=checkbox], input[type=radio] { accent-color: var(--gold); }
 .field-help, .helptext { color: var(--muted); font-size: .82rem; display: block; margin-top: 4px; }
 .errorlist { list-style: none; padding: 0; margin: 4px 0; color: var(--red); font-size: .85rem; }
 .check { display: flex; gap: 10px; align-items: flex-start; font-weight: 400; color: var(--ink); min-height: 44px; padding: 10px 0; }
 .check input { margin-top: 2px; width: 20px; height: 20px; flex: none; }
+#id_services label { display: flex; align-items: center; gap: 10px; min-height: 44px; margin: 0; font-weight: 400; }   /* Django's own checkbox list (staff form) */
+#id_services input { width: 20px; height: 20px; flex: none; }
+.tap { display: inline-block; padding-block: 12px; margin-block: -12px; }   /* a text link alone on its line: 43px to touch, the line keeps its height */
 .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 /* işlem seçimi (randevusuz müşteri): onay kutuları dokunulacak kadar büyük fişlerdir */
 .row.wrapx > .check { flex: 1 1 calc(50% - 5px); align-items: center; padding: 8px 10px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--surface); font-size: .92rem; }
@@ -281,13 +286,13 @@ h2:has(+ .ticket)::after { content: none; }
 .topbar b { font: 400 1.22rem/1.2 var(--serif); }
 .topbar a, .topbar button { display: inline-flex; align-items: center; min-height: 44px; padding: 0 4px; color: var(--gold); background: none; border: 0; font: 600 .86rem var(--sans); cursor: pointer; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .2em; }
 .tabs { position: fixed; bottom: 0; left: 0; right: 0; z-index: 5; display: flex; background: var(--bg); border-top: 1px solid var(--ink); box-shadow: var(--shadow-bar); padding-bottom: env(safe-area-inset-bottom); }
-.tabs a { position: relative; flex: 1; display: flex; align-items: center; justify-content: center; min-height: 56px; padding: 0 2px; text-align: center; text-decoration: none; color: var(--muted); font: 600 .78rem var(--sans); -webkit-tap-highlight-color: transparent; touch-action: manipulation; transition: transform 260ms var(--e-spring); }
+.tabs a { position: relative; flex: 1; min-width: 0; overflow-wrap: anywhere; display: flex; align-items: center; justify-content: center; min-height: 56px; padding: 0 2px; text-align: center; text-decoration: none; color: var(--muted); font: 600 .78rem var(--sans); -webkit-tap-highlight-color: transparent; touch-action: manipulation; transition: transform 260ms var(--e-spring); }
 .tabs a.on, .tabs a.is-picked { color: var(--ink); }
 .tabs a.on::before { content: ""; position: absolute; top: -1px; left: 50%; width: 34px; height: 4px; margin-left: -17px; background: var(--gold); }
 /* kasa: üç kutu değil, tek bir defter satırı; aralarında kıl cetvel */
 .kpis { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--line); border-top: 2px solid var(--ink); border-bottom: 1px solid var(--ink); margin-bottom: 14px; }
 .kpis.three { grid-template-columns: 1.5fr 1fr 1fr; }
-@media (max-width: 350px) { .kpis.three { grid-template-columns: 1fr 1fr; } .kpis.three > :first-child { grid-column: 1 / -1; } }
+@media (max-width: 379.98px) { .kpis.three { grid-template-columns: 1fr 1fr; } .kpis.three > :first-child { grid-column: 1 / -1; } }   /* 360px: "Tamamlanan" does not fit a third */
 @media (max-width: 759.98px) { .kpis:not(.three) > :last-child:nth-child(odd) { grid-column: 1 / -1; } }   /* tek kalan kutu satırı doldurur */
 .kpi { background: var(--bg); padding: 12px 12px 10px; min-width: 0; }
 .kpi:first-child { padding-left: 0; }
@@ -372,11 +377,13 @@ details[open] > summary { margin-bottom: 4px; }
 .cal { display: flex; overflow-x: auto; background: var(--surface); border: 1px solid var(--ink); border-radius: var(--radius); }
 .cal .axis { width: 48px; flex: none; position: relative; border-right: 1px solid var(--line-strong); }
 .cal .axis span { position: absolute; right: 6px; font: 400 .8rem/1 var(--serif); color: var(--muted); transform: translateY(-50%); }
+.cal .axis span:first-child { transform: translateY(3px); }   /* below the header rule, not through it */
 .cal .col { flex: 1; min-width: 150px; border-right: 1px solid var(--line); }
 .cal .col:last-child { border-right: 0; }
 .cal .head { text-align: center; font: 400 1.1rem/1.2 var(--serif); padding: 9px 4px; border-bottom: 1px solid var(--ink); height: 40px; }
 .cal .lane { position: relative; background-image: linear-gradient(var(--line) 1px, transparent 1px); background-size: 100% 90px; }
-.cal .ev { position: absolute; left: 4px; right: 4px; padding: 2px 6px; overflow: hidden; font-size: .78rem; line-height: 1.25; color: var(--ink); text-decoration: none;
+.cal .ev { position: absolute; left: 4px; right: 4px; padding: 2px 6px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;   /* whole lines only: a long name ends in …, never a sliced line */
+  font-size: .78rem; line-height: 1.25; color: var(--ink); text-decoration: none;
   background: var(--bg); border: 1px solid var(--line-strong); border-left: 3px solid var(--ink); border-radius: var(--radius-sm); }
 .cal .ev.completed { background: var(--green-soft); border-left-color: var(--green); }
 .cal .ev.no_show { background: var(--red-soft); border-left: 3px dashed var(--red); }
@@ -550,7 +557,13 @@ html[data-first]:not(:has([data-calm])) :where(main.wrap > :not(.sticky, .msgs, 
 }
 /* busy: never with the disabled attribute */
 .btn.is-busy { box-shadow: inset 0 0 0 99px rgba(0, 0, 0, .1); }
-@media (forced-colors: active) { .btn.is-busy { outline: 2px dashed ButtonText; outline-offset: -5px; } }   /* gradients and shadows are gone there */
+@media (forced-colors: active) {   /* gradients, shadows and background colours are gone there: selection and focus get an outline */
+  .btn.is-busy { outline: 2px dashed ButtonText; outline-offset: -5px; }
+  .pick input:checked + .box, .day.on, .slot.on, .slot.is-picked { outline: 3px solid Highlight; outline-offset: -4px; }
+  .tabs a.on, .steps span.on { outline: 2px solid Highlight; outline-offset: -3px; }
+  :is(input, select, textarea):focus-visible { outline: 2px solid Highlight; outline-offset: 2px; }
+  .heat td { forced-color-adjust: none; }
+}
 .btn.is-busy, form[data-busy] .btn { pointer-events: none; }
 form[data-busy] .btn:not(.is-busy) { opacity: .45; }
 .btn.is-done { animation: done-ring 800ms var(--e-out) 200ms; }

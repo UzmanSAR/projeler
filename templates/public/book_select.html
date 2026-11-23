@@ -13,7 +13,7 @@
   <div class="chips">
     <label class="pick"><input type="radio" name="b" value="0" {% if not sel.staff %}checked{% endif %}><span class="box"><b>Fark etmez</b><small>ilk boş olan</small></span></label>
     {% for p in staff %}
-    <label class="pick"><input type="radio" name="b" value="{{ p.id }}" {% if sel.staff.id == p.id %}checked{% endif %}><span class="box"><b>{{ p.name }}</b><small>{{ p.title|default:"berber" }}</small></span></label>
+    <label class="pick"><input type="radio" name="b" value="{{ p.id }}" {% if sel.staff.id == p.id %}checked{% endif %}><span class="box"><b>{{ p.name }}</b><small>{{ p.title|default:"kuaför" }}</small></span></label>
     {% endfor %}
   </div>
   {% else %}<input type="hidden" name="b" value="0">{% endif %}

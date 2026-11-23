@@ -5,7 +5,7 @@
 <h2>Gün</h2>
 <div class="days">
 {% for d in days %}
-  {% if d.free %}<a class="day {% if d.date == picked %}on{% endif %}" href="{{ d.url }}"><small>{{ d.name }}</small><b>{{ d.date.day }}</b></a>
+  {% if d.free %}<a class="day {% if d.date == picked %}on{% endif %}" href="{{ d.url }}"{% if d.date == picked %} aria-current="date"{% endif %}><small>{{ d.name }}</small><b>{{ d.date.day }}</b></a>
   {% else %}<span class="day off" title="Boş saat yok"><small>{{ d.name }}</small><b>{{ d.date.day }}</b></span>{% endif %}
 {% endfor %}
 </div>

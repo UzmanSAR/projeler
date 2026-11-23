@@ -48,6 +48,11 @@
 .lp-kpis .kpi:first-child { padding-left: 0; }
 .lp-stage .lp-kpis .kpi small { font: 600 .5rem var(--sans); letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
 .lp-kpis .kpi b { font-size: 1.06rem; }
+@media (max-width: 399.98px) {   /* "Tamamlanan" fits its tile down to 320px */
+  .lp-kpis { grid-template-columns: minmax(0, 1fr) auto auto; }
+  .lp-kpis .kpi + .kpi { padding-left: 6px; padding-right: 6px; }
+  .lp-stage .lp-kpis .kpi small { letter-spacing: .03em; }
+}
 .lp-row { display: flex; align-items: center; gap: 9px; padding: 8px 0 7px; border-bottom: 1px solid var(--line); font-size: .82rem; }
 .lp-row:last-child { border-bottom: 0; padding-bottom: 2px; }
 .lp-row > span:nth-child(2) { flex: 1; min-width: 0; }
@@ -80,12 +85,14 @@
 .lp-fig-comb .plate { width: 100%; }
 .lp-fig-scissors { margin: 30px -18% 4px 22%; }
 .lp-fig-scissors figcaption { margin-top: -8px; }
+@media (max-width: 959.98px) { .lp-fig-scissors figcaption { margin-right: 19%; } }   /* the figure runs past the gutter: the caption and its button do not */
 /* kapanış: kesilip alınacak bir kupon */
 .lp-final { position: relative; margin-top: 56px; padding: 30px 20px 26px; background: var(--surface); border: 1.5px dashed var(--ink); border-radius: var(--radius); --paper: var(--surface); }
 .lp-final .cut { position: absolute; left: 18px; right: 18px; top: -14px; }
 .lp-final .cut::before, .lp-final .cut::after, .lp-final .cut-line { display: none; }
 .lp-final .cut-sc { --paper: var(--bg); }
-.lp-final-body { display: grid; grid-template-columns: 54px 1fr; gap: 0 18px; align-items: start; }
+.lp-final-body { display: grid; grid-template-columns: 54px minmax(0, 1fr); gap: 0 18px; align-items: start; }
+.lp-final-body h2, .lp-steps-list b { overflow-wrap: anywhere; }   /* 200% zoom on a phone: the long word breaks instead of leaving the page */
 .lp-final .plate { width: 54px; margin-top: 4px; }
 .lp-final h2 { margin-bottom: 10px; font-size: clamp(1.7rem, 6.9vw, 3rem); }
 .lp-final .lp-actions { grid-column: 1 / -1; margin-top: 20px; }
@@ -189,6 +196,7 @@ html[data-first]:not([data-enter="off"]) .lp-hero .lp-actions .btn:not(.ghost)::
 .cb-back { fill: var(--bg); }                                   /* the page colour inside the drawing: the band blends against it */
 .cb-gap { fill: var(--gold-bright); mix-blend-mode: lighten; }   /* lighter than ink, darker than paper: only the teeth take the colour */
 .plate.loop { pointer-events: none; }
+@media (forced-colors: active) { .cb-back, .cb-gap { display: none; } }   /* no page colour to blend against there */
 .lp .fig figcaption { position: relative; z-index: 1; }   /* above the swaying drawing */
 .loop-toggle { appearance: none; background: none; border: 0; border-radius: 0; padding: 14px 8px; margin: -14px 0 -14px .4em; cursor: pointer;
   font: 600 .66rem var(--sans); letter-spacing: var(--track-label); text-transform: uppercase; color: var(--muted);
