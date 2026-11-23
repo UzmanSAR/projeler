@@ -89,7 +89,7 @@
 /* ===== TEMEL ===== */
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; background: var(--bg); overflow-x: clip;
-  scroll-padding-bottom: calc(76px + env(safe-area-inset-bottom)); }   /* a focused field never ends up under the fixed bottom bar */
+  scroll-padding-bottom: calc(4.75rem + env(safe-area-inset-bottom)); }   /* a focused field never ends up under the fixed bottom bar */
 body {
   margin: 0; color: var(--ink); background: var(--bg);
   font: 400 1rem/1.55 var(--sans); font-feature-settings: "kern", "liga";   /* rem: the reader's own text size counts */
@@ -174,6 +174,7 @@ input[type=checkbox], input[type=radio] { accent-color: var(--gold); }
 .check input { margin-top: 2px; width: 20px; height: 20px; flex: none; }
 #id_services label { display: flex; align-items: center; gap: 10px; min-height: 44px; margin: 0; font-weight: 400; }   /* Django's own checkbox list (staff form) */
 #id_services input { width: 20px; height: 20px; flex: none; }
+.ext { width: .6em; height: .6em; margin-left: .3em; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }   /* "opens in a new tab" arrow, drawn: the character can turn into an emoji on phones */
 .tap { display: inline-block; padding-block: 12px; margin-block: -12px; }   /* a text link alone on its line: 43px to touch, the line keeps its height */
 .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 /* işlem seçimi (randevusuz müşteri): onay kutuları dokunulacak kadar büyük fişlerdir */
@@ -209,7 +210,7 @@ p.muted a, small a { display: inline-block; padding: 12px 3px; margin: -12px -3p
 
 /* hizmet satırı (seçim) */
 .pick { display: block; position: relative; cursor: pointer; margin: 0 0 8px; font-weight: 400; color: var(--ink); -webkit-tap-highlight-color: transparent; }
-.pick input { position: absolute; opacity: 0; }
+.pick input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; }   /* the card's own box: focus scrolls the whole card clear of the bottom bar */
 .pick .box { display: flex; justify-content: space-between; align-items: center; gap: 10px; min-height: 60px; background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--radius-sm); padding: 11px 15px; transition: transform 260ms var(--e-spring); }
 .pick input:checked + .box { border-color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold), inset 4px 0 0 0 var(--gold); background: var(--surface); }
 .pick input:checked + .box > b:last-child { color: var(--gold); }
@@ -286,7 +287,8 @@ h2:has(+ .ticket)::after { content: none; }
 .topbar b { font: 400 1.22rem/1.2 var(--serif); }
 .topbar a, .topbar button { display: inline-flex; align-items: center; min-height: 44px; padding: 0 4px; color: var(--gold); background: none; border: 0; font: 600 .86rem var(--sans); cursor: pointer; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .2em; }
 .tabs { position: fixed; bottom: 0; left: 0; right: 0; z-index: 5; display: flex; background: var(--bg); border-top: 1px solid var(--ink); box-shadow: var(--shadow-bar); padding-bottom: env(safe-area-inset-bottom); }
-.tabs a { position: relative; flex: 1; min-width: 0; overflow-wrap: anywhere; display: flex; align-items: center; justify-content: center; min-height: 56px; padding: 0 2px; text-align: center; text-decoration: none; color: var(--muted); font: 600 .78rem var(--sans); -webkit-tap-highlight-color: transparent; touch-action: manipulation; transition: transform 260ms var(--e-spring); }
+.tabs a { position: relative; flex: 1; min-width: 0; overflow-wrap: anywhere; display: flex; align-items: center; justify-content: center; min-height: 56px; padding: 0; text-align: center; text-decoration: none; color: var(--muted); font: 600 .78rem var(--sans); font-size: min(.78rem, 3.6vw);   /* five labels fit a 320px screen on one line; breaking a word is the last resort */
+  -webkit-tap-highlight-color: transparent; touch-action: manipulation; transition: transform 260ms var(--e-spring); }
 .tabs a.on, .tabs a.is-picked { color: var(--ink); }
 .tabs a.on::before { content: ""; position: absolute; top: -1px; left: 50%; width: 34px; height: 4px; margin-left: -17px; background: var(--gold); }
 /* kasa: üç kutu değil, tek bir defter satırı; aralarında kıl cetvel */
@@ -561,8 +563,9 @@ html[data-first]:not(:has([data-calm])) :where(main.wrap > :not(.sticky, .msgs, 
   .btn.is-busy { outline: 2px dashed ButtonText; outline-offset: -5px; }
   .pick input:checked + .box, .day.on, .slot.on, .slot.is-picked { outline: 3px solid Highlight; outline-offset: -4px; }
   .tabs a.on, .steps span.on { outline: 2px solid Highlight; outline-offset: -3px; }
+  .pick input:checked:focus-visible + .box, :is(.day.on, .slot.on, .slot.is-picked, .tabs a.on):focus-visible { outline: 6px double Highlight; outline-offset: -2px; }   /* chosen and focused: a third look */
   :is(input, select, textarea):focus-visible { outline: 2px solid Highlight; outline-offset: 2px; }
-  .heat td { forced-color-adjust: none; }
+  .heat td, .legend i { forced-color-adjust: none; }
 }
 .btn.is-busy, form[data-busy] .btn { pointer-events: none; }
 form[data-busy] .btn:not(.is-busy) { opacity: .45; }

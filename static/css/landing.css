@@ -10,6 +10,9 @@
 .lp-hero .inner { max-width: none; margin: 0; padding-top: 26px; }
 .lp-hero .inner > small { display: flex; justify-content: space-between; align-items: baseline; }
 .hero.lp-hero h1 { font-size: var(--fs-display); line-height: .98; letter-spacing: -.012em; margin: 14px 0 0; padding: 0; text-wrap: balance; }
+/* The headline is three lines at these widths (two in between). The space is held from the first paint, so the text
+   and buttons below do not jump when the display font arrives after a narrower fallback. Re-measure if the words change. */
+@media (max-width: 338px), (min-width: 1270px) { .hero.lp-hero h1 { min-height: 2.94em; } }
 .lp-hero h1 em { font-style: normal; color: var(--gold); }
 .lp-fig-razor { margin: 4px -26% 0 -3%; }
 .lp-fig-razor figcaption { margin: -52px 0 0 3%; }
