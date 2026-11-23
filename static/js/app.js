@@ -260,6 +260,19 @@
   M.hint = function (name, data) { store.set('h:' + name, { d: data, p: location.pathname, t: Date.now() }); };
   M.takeHint = function (name, maxAge) { var h = store.take('h:' + name); return h && Date.now() - h.t < (maxAge || 20000) ? { data: h.d, path: h.p } : null; };
 
+  /* ---- ustura bir sıra köpüğü siler: el is a positioned wrapper (.shave); nothing is left behind when it is done */
+  M.shave = function (el, delay) {
+    if (!M.full || !el || el.querySelector('.lather')) return;
+    var l = d.createElement('i'), r = d.createElement('span');
+    l.className = 'lather'; r.className = 'shave-run';
+    r.innerHTML = '<svg class="shave-razor" viewBox="0 0 202 236" aria-hidden="true"><use href="#m-razor-shave"/></svg>';
+    if (delay) { l.style.setProperty('--shave-delay', delay + 'ms'); r.style.setProperty('--shave-delay', delay + 'ms'); }
+    el.classList.add('shave'); el.appendChild(l); el.appendChild(r);
+    var gone = function () { l.remove(); r.remove(); };
+    r.addEventListener('animationend', function (e) { if (e.target === r) gone(); });
+    setTimeout(gone, (delay || 0) + 1600);   /* an animation that never ran still leaves nothing */
+  };
+
   /* ---- numbers: Turkish format in ("1.600 ₺", "%42,8"), the server's exact string out */
   M.parse = function (text) {
     var m = /^(\D*?)(\d[\d.]*)(?:,(\d+))?(.*)$/.exec(String(text).trim()); if (!m) return null;

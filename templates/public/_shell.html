@@ -7,6 +7,7 @@
 <div class="hero"><div class="inner">
   <small>{% if business.district %}{{ business.district }} · {% endif %}Erkek kuaförü</small>
   <h1><a href="{% url 'public:business' business.slug %}">{{ business.name }}</a></h1>
+  {% include "_pole.html" %}
   {% block hero %}{% endblock %}
 </div></div>
 <div class="stripe"></div>

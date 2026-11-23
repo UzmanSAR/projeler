@@ -4,7 +4,7 @@
 {% block extra_js %}<script src="{% static 'js/panel.js' %}?v={{ STATIC_V }}"></script>{% endblock %}
 {% block title %}Kuaför girişi{% endblock %}
 {% block body %}
-<div class="hero"><div class="inner"><small>{{ SITE_NAME }}</small><h1>Kuaför girişi</h1></div></div>
+<div class="hero"><div class="inner"><small>{{ SITE_NAME }}</small><h1>Kuaför girişi</h1>{% include "_pole.html" %}</div></div>
 <div class="stripe"></div>
 <main class="wrap">
   {% if form.errors %}<ul class="msgs"><li class="error">E-posta ya da şifre hatalı.</li></ul>{% endif %}
