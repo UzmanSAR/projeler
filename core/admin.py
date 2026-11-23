@@ -31,6 +31,9 @@ class BusinessAdmin(admin.ModelAdmin):
     search_fields = ("name", "slug", "phone")
     inlines = [MembershipInline, PaymentInline]
     actions = ["record_month", "add_sms_credit", "suspend", "activate"]
+    # Üyelik bitişi ödeme satırlarından hesaplanır; ücretsiz süre vermek için aşağıya 0 ₺'lik,
+    # dönem sonu yazılmış bir ödeme satırı eklenir.
+    readonly_fields = ("paid_until",)
 
     @admin.display(description="Aylık ücret")
     def price(self, obj):

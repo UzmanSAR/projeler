@@ -7,6 +7,7 @@ bittiği günden başlar; gün geçtiyse ödeme gününden. Burada hiçbir hesap
 "ödeme bekliyor" ve "kapalı" durumlarını yönetim verir.
 """
 import calendar
+import logging
 from datetime import date
 
 from django.conf import settings
@@ -16,6 +17,7 @@ from django.dispatch import receiver
 from django.utils import timezone
 
 WARN_DAYS = 5   # ödeme gününe bu kadar kala panelde hatırlatma çıkar
+log = logging.getLogger(__name__)
 
 
 def _on_day(year, month, day):
@@ -67,21 +69,29 @@ def summary(business, today=None):
     }
 
 
+def period_start_for(payment):
+    """Dönem başı boş bırakılmış ödemenin başlayacağı gün. Erken ödeyen gün kaybetmez: dönem,
+    üyeliğin (ya da denemenin) bittiği günden başlar; o gün geçtiyse ödeme gününden."""
+    current_end = due_date(payment.business)
+    return max(current_end, payment.paid_on) if current_end else payment.paid_on
+
+
 def fill_payment(payment):
-    """Boş bırakılan alanları tamamlar: tutar, dönem başı ve dönem sonu."""
+    """Boş bırakılan alanları tamamlar: tutar, dönem başı ve dönem sonu. Dönem hiçbir zaman bir
+    takvim ayından kısa yazılmaz."""
     business = payment.business
     if payment.amount is None:
         payment.amount = price_for(business)
     if payment.period_start is None:
-        current_end = due_date(business)
-        # Erken ödeyen gün kaybetmez: dönem, üyeliğin (ya da denemenin) bittiği günden başlar.
-        payment.period_start = max(current_end, payment.paid_on) if current_end else payment.paid_on
+        payment.period_start = period_start_for(payment)
     if payment.period_end is None:
-        # Kesintisiz süren döngüde ödeme günü aynı kalır; ara verildiyse yeni dönemin günü geçerlidir.
-        continues = business.billing_day and business.paid_until == payment.period_start
-        anchor = business.billing_day if continues else payment.period_start.day
-        payment.period_end = add_months(payment.period_start, anchor=anchor)
-        payment.cycle_day = anchor
+        start, day = payment.period_start, business.billing_day
+        # Döngü gününe dönüş (28 Şub -> 31 Mar) yalnızca kesintisiz süren döngüde: dönem tam üyeliğin
+        # bittiği gün başlıyorsa ve o gün gerçekten döngü günüyse (o ay kısa olduğu için kırpılmış hali
+        # dahil). Elle uzatılmış, araya girilmiş ya da geç başlayan dönem kendi gününden bir ay sürer.
+        continues = bool(day) and business.paid_until == start and start == _on_day(start.year, start.month, day)
+        payment.period_end = add_months(start, anchor=day if continues else start.day)
+        payment.cycle_day = day if continues else start.day
 
 
 def sync(business):
@@ -95,15 +105,18 @@ def sync(business):
 
 def apply_payment(payment, new):
     """Kayıttan sonra: üyelik bitişi yeniden hesaplanır; yeni ödeme deneme ya da ödeme bekleyen
-    hesabı aktif yapar. Kapalı hesabı yalnızca yönetim açar."""
+    hesabı aktif yapar (önceki durum ödemeye not edilir). Kapalı hesabı yalnızca yönetim açar."""
     business = payment.business
     sync(business)
     fields = []
     cycle_day = getattr(payment, "cycle_day", None)
-    if cycle_day and business.billing_day != cycle_day:
+    # Döngü gününü yalnızca üyeliğin sonunu belirleyen kayıt değiştirir (araya girilen eski kayıt değil).
+    if cycle_day and payment.period_end == business.paid_until and business.billing_day != cycle_day:
         business.billing_day = cycle_day
         fields.append("billing_day")
     if new and business.status in (business.Status.TRIAL, business.Status.PAST_DUE):
+        type(payment).objects.filter(pk=payment.pk).update(status_before=business.status)
+        payment.status_before = business.status
         business.status = business.Status.ACTIVE
         fields.append("status")
     if fields:
@@ -112,8 +125,21 @@ def apply_payment(payment, new):
 
 @receiver(post_delete, sender="core.SubscriptionPayment")
 def _payment_deleted(sender, instance, **kwargs):
-    """Silinen ödeme üyeliği geri alır (yanlış girilen kayıt silinerek düzeltilebilsin)."""
-    sync(instance.business)
+    """Silinen ödeme üyeliği geri alır (yanlış girilen kayıt silinerek düzeltilebilsin). Hesabı aktif
+    yapan ödeme silinir ve başka ödeme kalmazsa hesap önceki durumuna (deneme / ödeme bekliyor) döner;
+    başka ödeme varsa bu not en eski kayda devredilir."""
+    from .models import Business, SubscriptionPayment
+    business = instance.business
+    sync(business)
+    if not instance.status_before:
+        return
+    oldest = SubscriptionPayment.objects.filter(business_id=business.pk).order_by("id").first()
+    if oldest:
+        if not oldest.status_before:
+            SubscriptionPayment.objects.filter(pk=oldest.pk).update(status_before=instance.status_before)
+    elif Business.objects.filter(pk=business.pk, status=Business.Status.ACTIVE).update(
+            status=instance.status_before, billing_day=None):
+        business.status, business.billing_day = instance.status_before, None
 
 
 def record_payment(business, amount=None, paid_on=None, method="transfer", note=""):

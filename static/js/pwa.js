@@ -12,13 +12,13 @@
   var href = link ? link.getAttribute('href') : '', shop = !!href && href !== '/uygulama.webmanifest';
   var where = !shop && screen === 'today' ? 'panel' : shop && (screen === 'shop' || screen === 'ticket') ? 'shop' : '';
   var standalone = n.standalone === true || !!(w.matchMedia && w.matchMedia('(display-mode: standalone)').matches);
-  var KEY = 'pwa:later:' + (shop ? href : 'panel'), until = 0, bar = null, deferred = null, pad = '';
+  var KEY = 'pwa:later:' + (shop ? href : 'panel'), until = 0, bar = null, deferred = null, pad = '', base = 0, extra = 0;
   try { until = +w.localStorage.getItem(KEY) || 0; } catch (e) {}
   var offer = !!where && !standalone && Date.now() >= until;
 
   function later(days) { try { w.localStorage.setItem(KEY, String(Date.now() + days * 864e5)); } catch (e) {} }
   function hide(days) {
-    if (bar) { bar.remove(); bar = null; d.body.style.paddingBottom = pad; }
+    if (bar) { bar.remove(); bar = null; extra = 0; d.body.style.paddingBottom = pad; }
     if (days) { later(days); offer = false; }
   }
   /* above the fixed bottom bar of the page, if it has one (panel tabs on a phone, the booking button);
@@ -28,9 +28,14 @@
     bar.style.bottom = '';
     var fixed = d.querySelector('.sticky, .tabs');
     if (fixed) { var r = fixed.getBoundingClientRect(); if (w.getComputedStyle(fixed).position === 'fixed' && r.bottom >= w.innerHeight - 2) bar.style.bottom = (r.height + 12) + 'px'; }
-    /* room at the end of the page: the last buttons and links can be scrolled clear of the bar */
-    d.body.style.paddingBottom = pad;
-    d.body.style.paddingBottom = (parseFloat(w.getComputedStyle(d.body).paddingBottom) + bar.offsetHeight + 12) + 'px';
+    /* Room at the end of the page, so the last buttons and links can be scrolled clear of the bar.
+       Only where something can end up under it: the page scrolls, or its content reaches down to the bar.
+       The page's own padding was read once (base); here only the final value is written, and only when it
+       changes: taking the room away to measure would shorten the page and pull a reader at the end back up. */
+    var main = d.querySelector('main') || d.body, block = bar.offsetHeight + 12 + (parseFloat(bar.style.bottom) || 12);
+    var end = main.getBoundingClientRect().bottom + w.scrollY, natural = root.scrollHeight - extra;
+    var next = natural > w.innerHeight + 1 || end > w.innerHeight - block ? bar.offsetHeight + 12 : 0;
+    if (next !== extra) { extra = next; d.body.style.paddingBottom = extra ? (base + extra) + 'px' : pad; }
   }
 
   function show(ios) {
@@ -57,7 +62,7 @@
     var x = d.createElement('button'); x.type = 'button'; x.className = 'install-x'; x.setAttribute('aria-label', 'Şimdi değil'); x.textContent = '×';
     x.addEventListener('click', function () { hide(14); });
     bar.appendChild(x);
-    pad = d.body.style.paddingBottom;
+    pad = d.body.style.paddingBottom; base = parseFloat(w.getComputedStyle(d.body).paddingBottom) || 0; extra = 0;
     d.body.appendChild(bar); place();
   }
 

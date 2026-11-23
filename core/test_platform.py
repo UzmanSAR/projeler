@@ -1,5 +1,6 @@
 """Üyelik ve ödeme, geri bildirim ve ana ekrana eklenebilen uygulama (PWA)."""
 from datetime import date, timedelta
+from unittest import mock
 
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
@@ -62,6 +63,51 @@ class BillingTests(TestCase):
         ends = [billing.record_payment(b, paid_on=date(2027, 1, 31)).period_end for _ in range(4)]
         self.assertEqual(ends, [date(2027, 2, 28), date(2027, 3, 31), date(2027, 4, 30), date(2027, 5, 31)])
 
+    def test_a_month_is_never_shorter_than_a_month(self):
+        """Döngü günü yalnızca kesintisiz döngüde kullanılır: elle uzatılan ya da araya girilen dönem
+        sonraki ödemeyi kısaltmaz."""
+        b = self.business
+        b.trial_ends = date(2026, 10, 20)
+        b.save()
+        first = billing.record_payment(b, paid_on=date(2026, 10, 20))          # 20 Eki - 20 Kas
+        first.period_end = date(2026, 11, 30)                                  # on gün hediye
+        first.save()
+        second = billing.record_payment(b, paid_on=date(2026, 11, 22))
+        self.assertEqual((second.period_start, second.period_end), (date(2026, 11, 30), date(2026, 12, 30)))
+        # unutulmuş eski bir ödeme sonradan girilir: döngü günü değişmez, sıradaki ödeme tam bir ay sürer
+        b.refresh_from_db()
+        day = b.billing_day
+        SubscriptionPayment.objects.create(business=b, paid_on=date(2026, 7, 5), period_start=date(2026, 7, 5))
+        b.refresh_from_db()
+        self.assertEqual((b.billing_day, b.paid_until), (day, date(2026, 12, 30)))
+        third = billing.record_payment(b, paid_on=date(2026, 12, 28))
+        self.assertEqual((third.period_start, third.period_end), (date(2026, 12, 30), date(2027, 1, 30)))
+        for payment in SubscriptionPayment.objects.filter(business=b):
+            self.assertGreaterEqual(payment.period_end, billing.add_months(payment.period_start), payment)
+
+    def test_deleting_the_only_payment_puts_a_trial_shop_back_on_trial(self):
+        """Yanlış dükkâna girilen ödeme silinince dükkân denemeye döner; hatırlatması yeniden çalışır."""
+        b = self.business
+        trial_end = b.trial_ends
+        first = billing.record_payment(b)
+        second = billing.record_payment(b)
+        self.assertEqual((first.status_before, second.status_before), ("trial", ""))
+        first.delete()                                    # başka ödeme var: hesap aktif kalır
+        b.refresh_from_db()
+        self.assertEqual(b.status, "active")
+        second.refresh_from_db()
+        self.assertEqual(second.status_before, "trial")   # not kalan kayda devredildi
+        second.delete()
+        b.refresh_from_db()
+        self.assertEqual((b.status, b.paid_until, b.billing_day), ("trial", None, None))
+        self.assertEqual(b.billing["due"], trial_end)
+        # elle aktif yapılmış hesap, ödemesi silinince aktif kalır
+        b.status = "active"
+        b.save()
+        billing.record_payment(b).delete()
+        b.refresh_from_db()
+        self.assertEqual(b.status, "active")
+
     def test_deleting_or_correcting_a_payment_moves_the_membership_back(self):
         b = self.business
         first = billing.record_payment(b)
@@ -95,6 +141,21 @@ class BillingTests(TestCase):
         with self.assertRaises(ValidationError) as caught:
             payment.full_clean()
         self.assertEqual(set(caught.exception.message_dict), {"amount", "period_end"})
+        # dönem başı boş, dönem sonu doldurulacak başlangıçtan önce: yine reddedilir
+        billing.record_payment(self.business)
+        self.business.refresh_from_db()
+        payment = SubscriptionPayment(business=self.business, paid_on=self.today,
+                                      period_end=self.business.paid_until - timedelta(days=5))
+        with self.assertRaises(ValidationError) as caught:
+            payment.full_clean()
+        self.assertEqual(set(caught.exception.message_dict), {"period_end"})
+
+    def test_membership_end_is_not_typed_by_hand_in_the_admin(self):
+        from django.contrib import admin
+        from core.models import Business as Shop
+        model_admin = admin.site._registry[Shop]
+        self.assertIn("paid_until", model_admin.get_readonly_fields(None))
+        self.assertNotIn("paid_until", model_admin.get_form(None).base_fields)
 
     def test_a_shop_made_active_by_hand_is_not_called_overdue(self):
         """Ödeme kaydı olmadan aktif yapılmış hesap: eski deneme tarihinden gecikme sayılmaz."""
@@ -267,11 +328,12 @@ class FeedbackTests(TestCase):
         self.assertIn(f"next=/ali/randevu/saat/%3Fh%3D{service.id}%26b%3D0", html)
 
     @override_settings(DEBUG=False)
-    def test_changing_the_address_header_does_not_lift_the_limit(self):
-        for i in range(70):
-            self.client.post("/gorus/", {"sender": "other", "message": f"sahte adresli görüş {i}"},
-                             HTTP_X_FORWARDED_FOR=f"10.9.{i}.1, 203.0.113.7")
-        self.assertEqual(Feedback.objects.count(), 60)   # site geneli saatlik sınır
+    def test_changing_the_address_header_does_not_fill_the_database(self):
+        with mock.patch("public.views.FEEDBACK_HOURLY_CAP", 20):
+            for i in range(30):
+                self.client.post("/gorus/", {"sender": "other", "message": f"sahte adresli görüş {i}"},
+                                 HTTP_X_FORWARDED_FOR=f"10.9.{i}.1, 203.0.113.7")
+        self.assertEqual(Feedback.objects.count(), 20)   # site geneli saatlik tavan
 
     def test_new_addresses_cannot_be_taken_as_shop_addresses(self):
         from core.models import RESERVED_SLUGS

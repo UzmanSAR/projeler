@@ -1,4 +1,5 @@
 """Müşteri tarafı: kuaförün sayfası ve dört adımda randevu."""
+import logging
 import re
 from datetime import datetime, timedelta, timezone as dt_timezone
 from urllib.parse import urlencode
@@ -32,6 +33,9 @@ def landing(request):
     })
 
 
+FEEDBACK_HOURLY_CAP = 300
+
+
 def feedback(request):
     """Programla ilgili öneri ve görüş: müşteri ya da işletme sahibi yazar, platform yönetimi okur.
     ?d=<adres> hangi dükkânın sayfasından gelindiğini, ?next= gönderince dönülecek sayfayı taşır."""
@@ -58,9 +62,13 @@ def feedback(request):
         if d["website"]:   # tuzak alan dolu: kaydetmeden teşekkür et
             messages.success(request, "Teşekkürler, görüşün bize ulaştı.")
             return redirect(after)
-        # Adres başına saatte 5; adres başlığı değiştirilerek aşılmasın diye sitenin tamamı için de saatte 60.
-        if not otp._bump(f"fb:{otp.client_ip(request)}", 3600, 5) or not otp._bump("fb:all", 3600, 60):
+        # Adres başına saatte 5. Adres başlığı değiştirilerek bu sınır aşılabildiği için sitenin tamamına
+        # da bir tavan var (saatte 300): veritabanı dolmasın. Tavan gerçek kullanımın çok üstündedir.
+        if not otp._bump(f"fb:{otp.client_ip(request)}", 3600, 5):
             messages.error(request, "Kısa sürede çok fazla gönderim yapıldı. Biraz sonra yeniden dene.")
+        elif not otp._bump("fb:all", 3600, FEEDBACK_HOURLY_CAP):
+            logging.getLogger(__name__).warning("Geri bildirim tavanı aşıldı: saatte %s gönderim", FEEDBACK_HOURLY_CAP)
+            messages.error(request, "Şu an çok fazla gönderim var. Biraz sonra yeniden dene.")
         else:
             Feedback.objects.create(
                 sender=d["sender"], message=d["message"].strip(), name=d["name"].strip(), contact=d["contact"].strip(),
