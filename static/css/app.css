@@ -186,7 +186,7 @@ input[type=checkbox], input[type=radio] { accent-color: var(--gold); }
 .install-x { flex: none; appearance: none; width: 40px; height: 44px; padding: 0; border: 0; background: none; font: 400 1.5rem/1 var(--sans); color: var(--muted); cursor: pointer; }
 .install-x:hover { color: var(--ink); }
 .install-x:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: -4px; }
-@media (max-width: 400px) { .install img, .install p span { display: none; } .install p b { font-size: .98rem; } }   /* dar ekranda kısa kalır */
+@media (max-width: 479.98px) { .install img, .install p span { display: none; } .install p b { font-size: .98rem; } }   /* telefonda kısa kalır */
 @media (min-width: 760px) { .install { left: auto; right: 20px; width: 400px; margin: 0; } }
 fieldset.plain { border: 0; margin: 0; padding: 0; min-width: 0; }
 fieldset.plain > legend { padding: 0; font-weight: 600; font-size: .84rem; margin: 13px 0 7px; }

@@ -61,8 +61,9 @@ class Business(models.Model):
     plan = models.CharField(max_length=10, choices=Plan.choices, default=Plan.SOLO)
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.TRIAL)
     trial_ends = models.DateField(null=True, blank=True)
-    # Aylık üyelik: bu tarihe kadar ödenmiştir; sonraki ödeme o gün beklenir. Ödeme kaydı girildikçe ilerler.
-    paid_until = models.DateField("üyelik bitişi", null=True, blank=True)
+    # Aylık üyelik: bu tarihe kadar ödenmiştir; sonraki ödeme o gün beklenir. Elle yazılmaz: her zaman
+    # ödeme kayıtlarından hesaplanır (core/billing.py sync). Ücretsiz süre 0 ₺'lik ödeme satırıyla verilir.
+    paid_until = models.DateField("üyelik bitişi", null=True, blank=True, editable=False)
     monthly_price = models.DecimalField(
         "özel aylık ücret (₺)", max_digits=8, decimal_places=0, null=True, blank=True,
         validators=[MinValueValidator(0)],
@@ -397,6 +398,8 @@ class SubscriptionPayment(models.Model):
                                   help_text="Boş bırakılırsa dönem başından bir ay sonrası yazılır.")
     method = models.CharField("yöntem", max_length=10, choices=Method.choices, default=Method.TRANSFER)
     note = models.CharField("not", max_length=120, blank=True)
+    # Bu ödeme hesabı aktif yaptıysa önceki durum (deneme / ödeme bekliyor): kayıt silinirse geri dönülür.
+    status_before = models.CharField(max_length=10, blank=True, editable=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -408,9 +411,14 @@ class SubscriptionPayment(models.Model):
         return f"{self.business} · {self.paid_on:%d.%m.%Y} · {self.amount} ₺"
 
     def clean(self):
+        from . import billing
         if self.paid_on and self.paid_on > timezone.localdate():
             raise ValidationError({"paid_on": "Ödeme tarihi bugünden ileri olamaz."})
-        if self.period_start and self.period_end and self.period_end <= self.period_start:
+        # Dönem başı boşsa kayıtta doldurulacak olan başlangıçla karşılaştırılır.
+        start = self.period_start
+        if start is None and self.paid_on and self.business_id:
+            start = billing.period_start_for(self)
+        if start and self.period_end and self.period_end <= start:
             raise ValidationError({"period_end": "Dönem sonu, dönem başından sonra olmalı."})
 
     def save(self, *args, **kwargs):
