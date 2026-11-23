@@ -2,9 +2,9 @@
    Durağan hal görünen haldir: animasyon yalnızca "from" tanımlar, hareket kapalıyken sayfa eksiksizdir. */
 
 /* ---- üst bölüm: metin + önizleme */
-.lp-hero { padding: 0; view-transition-name: none; }          /* uzun bölüm: sonraki sayfanın kısa başlığına dönüşmez, sayfayla birlikte geçer */
+.lp-hero { padding: 0; overflow-x: clip; view-transition-name: none; }   /* uzun bölüm: sonraki sayfanın kısa başlığına dönüşmez, sayfayla birlikte geçer; önizlemenin ışığı sayfayı genişletmez */
 .lp-hero + .stripe { view-transition-name: none; }
-.lp-grid { max-width: 1072px; margin: 0 auto; padding: 18px 16px 40px; display: grid; gap: 34px; }
+.lp-grid { max-width: 1120px; margin: 0 auto; padding: 18px 16px 40px; display: grid; gap: 34px; }
 .lp-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .lp-top b { font-family: var(--serif); font-size: 1.12rem; font-weight: 600; letter-spacing: .01em; }
 .lp-top a { font-size: .86rem; font-weight: 600; padding: 7px 14px; border: 1px solid var(--line-strong); border-radius: 99px;
@@ -57,7 +57,7 @@
 .lp-time { font-family: var(--serif); font-size: .95rem; font-variant-numeric: tabular-nums; }
 
 /* ---- bölümler */
-.wrap.lp { max-width: 1072px; padding: 4px 16px 56px; }
+.wrap.lp { max-width: 1120px; padding: 4px 16px 56px; }
 .lp-section { margin-top: 58px; }
 .lp-eyebrow { margin: 0 0 6px; color: var(--gold); font-size: .74rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
 .lp h2 { margin: 0 0 20px; font-family: var(--serif); font-size: clamp(1.55rem, 5.6vw, 2.15rem); font-weight: 600; line-height: 1.15;
@@ -99,13 +99,13 @@
   .lp-final { padding: 56px 24px; }
 }
 @media (min-width: 900px) {
-  .lp-grid { grid-template-columns: minmax(0, 1.12fr) minmax(0, .88fr); align-items: center; gap: 26px 40px; padding: 22px 24px 64px; }
+  .lp-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 26px 40px; padding: 22px 24px 64px; }
   .lp-top { grid-column: 1 / -1; margin-bottom: 14px; }
   .lp-hero .inner { max-width: none; margin: 0; }
   .lp-hero .inner > p { font-size: 1.14rem; }
   .lp-actions .btn { flex: 0 1 auto; }
-  .lp-stage { width: 300px; justify-self: start; margin-left: 6%; }
-  .lp-panel { width: 292px; margin: -38px 0 0 104px; }
+  .lp-stage { width: 300px; justify-self: start; margin-left: max(0px, calc((100% - 388px) / 2)); }   /* telefon + taşan kart (388px) sütunda ortalanır */
+  .lp-panel { width: 292px; margin: -38px 0 0 96px; }
   .lp-features { grid-template-columns: repeat(3, 1fr); }
   .wrap.lp { padding-left: 24px; padding-right: 24px; }
 }
@@ -118,8 +118,7 @@ html:not([data-enter="off"]) .lp-panel { animation: rise var(--t-slow) var(--e-o
 html:not([data-enter="off"]) .slot.lp-pick { animation: rise 220ms var(--e-out) calc((var(--c, 0) + var(--r, 0)) * 24ms) backwards, lp-pick 320ms var(--e-out) 1250ms backwards; }
 @keyframes lp-pick { from { background: var(--surface); border-color: var(--line); color: var(--ink); } }
 /* ilk ziyarette çağrı butonundan tek ışık geçişi */
-html[data-first]:not([data-enter="off"]) .lp-hero .btn:not(.ghost)::before { animation: sheen 900ms var(--e-inout) 1100ms backwards; }
-html[data-first]:not([data-enter="off"]) .lp-screen .btn::before { animation: none; }
+html[data-first]:not([data-enter="off"]) .lp-hero .lp-actions .btn:not(.ghost)::before { animation: sheen 900ms var(--e-inout) 1100ms backwards; }
 /* kaydırdıkça beliren kartlar: yalnızca destekleyen tarayıcıda ve tam harekette; yoksa kartlar yerinde durur */
 @supports (animation-timeline: view()) {
   @media (prefers-reduced-motion: no-preference) {
