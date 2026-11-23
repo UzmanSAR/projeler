@@ -73,6 +73,17 @@ değişkenlerini kaldır, demo kullanıcısını sil ve aşağıdaki "Yayına al
 - Fiyat ve süre randevu kalemine kopyalanır; fiyat değişince geçmiş ciro değişmez
 - İşlem kaydı: kim, ne zaman, hangi randevuyu değiştirdi
 
+**Hareket katmanı**
+- Sayfa geçişleri, buton durumları ve bekleme göstergesi; derleme adımı ve dış kütüphane yok
+  (`static/css/app.css`, `static/js/app.js`, müşteri tarafı `public.*`, panel `panel.*`)
+- Hareket yalnızca süslemedir: JavaScript kapalıyken ya da "hareketi azalt" ayarı açıkken her sayfa
+  eksiksiz çalışır; sayfa geçişlerini desteklemeyen tarayıcıda geçiş olmadan açılır
+- `MOTION` ortam değişkeni: `full` (varsayılan), `lite` (yalnızca basma, yükleme ve geçiş), `off` (kapalı)
+- Davranış bayrakları `templates/base.html` içindeki `data-flags` özniteliğinde: `live-total`
+  ("Devam et" butonunda süre ve tutar), `now-line` (takvimde şu an çizgisi), `copy-link` (randevu
+  bağlantısına dokununca kopyalama). `auto-code` (altıncı rakamda kodu kendiliğinden gönderme)
+  kapalıdır; özniteliğe eklenince açılır
+
 ## Rapora göre yapılan değişiklikler
 
 - Randevu kapatma, randevusuz müşteri kaydı ve iptal linki ilk sürüme alındı

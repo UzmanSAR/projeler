@@ -109,10 +109,10 @@ input[type=checkbox], input[type=radio] { accent-color: var(--gold); }
 .pick input:checked + .box { border-color: var(--gold); background: var(--gold-soft); }
 .pick input:focus-visible + .box { outline: 2px solid var(--gold-bright); outline-offset: 2px; }
 .pick b { display: block; }
-.chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; }
+.chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; margin: -4px 0 0 -4px; padding-top: 4px; padding-left: 4px; scroll-padding: 0 4px; }   /* 4px of room: a scroller clips the focus ring */
 .chips .pick { margin: 0; flex: none; }
 .chips .pick .box { flex-direction: column; padding: 10px 16px; min-width: 88px; text-align: center; gap: 0; }
-.days { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; }
+.days { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin: -4px 0 0 -4px; padding-top: 4px; padding-left: 4px; scroll-padding: 0 4px; }
 .day { flex: none; width: 60px; text-align: center; padding: 9px 0; border-radius: 12px; background: var(--surface); border: 1.5px solid var(--line); color: var(--ink); }
 .day:hover { border-color: var(--gold); color: var(--ink); }
 .day small { display: block; }
@@ -330,10 +330,10 @@ html[data-first]:not(:has([data-calm])) :where(main.wrap > :not(.sticky, .msgs, 
 }
 .btn:active { transform: scale(.97) translateY(1px); box-shadow: none; transition-duration: var(--t-press); transition-timing-function: ease-out; }
 .btn.small:active { transform: scale(.96); }
-/* clips the two bands, keeps the baseline. Not contain: paint: it shifts the label half a pixel at rest */
+/* clips both bands, keeps the baseline (contain: paint shifts the label half a pixel) */
 @supports (overflow: clip) {
-  .btn { position: relative; overflow: clip; }
-  .btn::before { content: ""; position: absolute; inset: 0; background: var(--foil); transform: translateX(-130%); }   /* foil */
+  .btn { position: relative; z-index: 0; overflow: clip; }
+  .btn::before { content: ""; position: absolute; z-index: -1; inset: 0; background: var(--foil); transform: translateX(-130%); }   /* foil behind the label */
   .btn.ghost::before, .btn.danger::before { background: var(--foil-soft); }
   .btn::after { content: ""; position: absolute; left: -32px; right: -32px; bottom: 0; height: 3px; opacity: 0;   /* pole */
     background: repeating-linear-gradient(90deg, rgba(26, 20, 8, .7) 0 10px, transparent 10px 16px); transform: skewX(-35deg); }
@@ -343,7 +343,7 @@ html[data-first]:not(:has([data-calm])) :where(main.wrap > :not(.sticky, .msgs, 
   .btn.is-done::before { animation: sheen var(--t-scene) var(--e-inout) 200ms backwards; }
   html:not([data-motion="full"]) .btn::before { content: none; }
 }
-/* busy: never combined with the disabled attribute */
+/* busy: never with the disabled attribute */
 .btn.is-busy { box-shadow: inset 0 0 0 99px rgba(0, 0, 0, .08); }
 .btn.is-busy, form[data-busy] .btn { pointer-events: none; }
 form[data-busy] .btn:not(.is-busy) { opacity: .45; }

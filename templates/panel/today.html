@@ -13,7 +13,7 @@
 <div>
   <h2 style="margin-top:0">Bugün · {{ now|date:"j F l" }}</h2>
   {% for a in appts %}{% include "panel/_appt.html" %}
-  {% empty %}<div class="card">Bugün için randevu yok. Linkini paylaş:<div class="linkbox" style="margin-top:8px">{{ page_url }}</div></div>{% endfor %}
+  {% empty %}<div class="card">Bugün için randevu yok. Linkini paylaş:<div class="linkbox" style="margin-top:8px" data-copy>{{ page_url }}</div></div>{% endfor %}
 </div>
 <div>
   <h2 style="margin-top:0">Randevusuz müşteri</h2>

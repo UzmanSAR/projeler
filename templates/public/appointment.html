@@ -5,8 +5,8 @@
 {% elif appt.status == "completed" %}<h2 style="margin-top:0">Randevu tamamlandı</h2>
 {% elif appt.status == "no_show" %}<h2 style="margin-top:0">Randevuya gelinmedi</h2>
 {% else %}<h2 style="margin-top:0">Randevu iptal edildi</h2>{% endif %}
-<div class="card"><dl class="summary" style="margin:0">
-  <dt>Zaman</dt><dd>{{ local_start|date:"j F Y l" }} · {{ local_start|time:"H:i" }}</dd>
+<div class="card ticket {{ appt.status }}"><dl class="summary" style="margin:0">
+  <dt>Zaman</dt><dd class="when">{{ local_start|date:"j F Y l" }} · {{ local_start|time:"H:i" }}</dd>
   <dt>İşlem</dt><dd>{{ appt.summary }} · {{ appt.planned_total|floatformat:"0g" }} ₺</dd>
   <dt>Berber</dt><dd>{{ appt.staff.name }}</dd>
   {% if business.address %}<dt>Adres</dt><dd>{{ business.address }}</dd>{% endif %}

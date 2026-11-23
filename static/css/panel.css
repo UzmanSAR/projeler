@@ -1,0 +1,130 @@
+/* Hareket katmanı, PANEL (panel, giriş, kayıt). After app.css; own keyframes: pan-.
+   Resting state = visible state (keyframes: "from" only). Arrivals: behind CORE's gate html:not([data-enter="off"]).
+   Answers to the barber's own action: classes set by panel.js when Motion.full. */
+
+/* N1 tab ink. The label answers at tap time (.is-picked; CORE clears it) */
+.tabs a { -webkit-tap-highlight-color: transparent; touch-action: manipulation; transition: color var(--t-fast), transform 260ms var(--e-spring); }
+.tabs a:active { transform: scale(.94); transition-duration: var(--t-press); }
+.tabs a.is-picked { color: var(--gold); }
+.tabs:has(.is-picked) a.on:not(.is-picked) { color: var(--muted); }
+@media (max-width: 759.98px) {
+  /* phone: one line slides to the tapped tab. No :has(): the inset line stays. Five tabs */
+  @supports selector(:has(a)) {
+    .tabs a.on { box-shadow: none; }
+    .tabs::before { content: ""; position: absolute; top: 0; left: 0; width: 20%; height: 2px; pointer-events: none;
+      background: linear-gradient(90deg, transparent, var(--gold-bright) 28%, var(--gold-bright) 72%, transparent);
+      transform: translateX(calc(var(--tab, 0) * 100%)); transition: transform 300ms var(--e-soft); }
+    .tabs:has(a:nth-child(2).on) { --tab: 1; } .tabs:has(a:nth-child(3).on) { --tab: 2; }
+    .tabs:has(a:nth-child(4).on) { --tab: 3; } .tabs:has(a:nth-child(5).on) { --tab: 4; }
+    /* the tapped tab wins */
+    .tabs:has(a:nth-child(1).is-picked) { --tab: 0; } .tabs:has(a:nth-child(2).is-picked) { --tab: 1; }
+    .tabs:has(a:nth-child(3).is-picked) { --tab: 2; } .tabs:has(a:nth-child(4).is-picked) { --tab: 3; }
+    .tabs:has(a:nth-child(5).is-picked) { --tab: 4; }
+    .tabs:not(:has(a.on, a.is-picked))::before { display: none; }
+  }
+}
+@media (min-width: 760px) {
+  /* wide: a pill glides inside the transition */
+  .tabs a { position: relative; z-index: 0; }
+  .tabs a.on { background: none; box-shadow: none; }
+  .tabs a.on::before { content: ""; position: absolute; z-index: -1; inset: 0; border-radius: 8px; background: var(--gold-soft);
+    box-shadow: inset 0 0 0 1px rgba(205, 168, 95, .35); view-transition-name: tab-pill; }
+  ::view-transition-old(tab-pill), ::view-transition-new(tab-pill) { height: 100%; }
+}
+
+/* varak: one band of light, clipped by its carrier */
+@supports (overflow: clip) {
+  :where(.kpi.is-up, .appt.just-done, .appt.just-added, .linkbox.is-copied, .till) { overflow: clip; }
+  :where(.kpi.is-up, .appt.just-done, .appt.just-added, .linkbox.is-copied) { position: relative; }
+  :where(.kpi.is-up, .appt.just-done, .appt.just-added, .linkbox.is-copied, .till)::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: var(--foil); transform: translateX(-130%); animation: sheen 900ms var(--e-inout) 150ms backwards; }
+  .appt.just-done::after { background: linear-gradient(105deg, transparent 36%, rgba(94, 199, 149, .22) 50%, transparent 64%); }
+  .appt.just-added::after { background: var(--foil-soft); }
+  .appt:is(.just-done, .just-added)::after { animation-duration: 800ms; animation-delay: 200ms; }
+  .linkbox.is-copied::after { animation-duration: var(--t-scene); animation-delay: 0s; }
+  .till::after { animation-delay: 500ms; }
+  /* N3: a gold bar beside the edge drains */
+  .appt.just-done::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--gold);
+    transform: scaleY(0); transform-origin: 50% 100%; animation: pan-drain 460ms var(--e-inout) 120ms backwards; }
+}
+@keyframes pan-drain { from { transform: scaleY(1); } }
+
+/* N6 KPI tiles settle one by one in the block's cascade slot */
+html:not([data-enter="off"]) main.wrap > .kpis { animation: none; }
+html:not([data-enter="off"]) .kpis > .kpi { animation: rise var(--t-base) var(--e-out) backwards; --dx: 0px; --dy: var(--rise-sm);
+  animation-delay: calc(min(var(--i, 0) + var(--k, 0), 5) * var(--stagger)); }
+.kpis > .kpi:nth-child(2) { --k: 1; } .kpis > .kpi:nth-child(3) { --k: 2; } .kpis > .kpi:nth-child(4) { --k: 3; } .kpis > .kpi:nth-child(5) { --k: 4; }
+/* report deltas at 400ms: ▲ from below, ▼ from above */
+.kpi .up, .kpi .down { display: inline-block; --dx: 0px; --dy: var(--rise-sm); }
+.kpi .down { --dy: calc(var(--rise-sm) * -1); }
+:is(html:not([data-enter="off"]), .is-drawn) .kpi :is(.up, .down) { animation: rise 300ms var(--e-out) 400ms backwards; }
+
+/* N2 kasa: after "Tamamlandı", only upward (panel.js) */
+.kpi.is-up b { animation: pan-gold-flash 1200ms var(--e-out); }
+@keyframes pan-gold-flash { 0%, 55% { color: var(--gold-bright); } }
+/* tile scrolled away: a slip at the top, about 2s */
+.till { position: fixed; z-index: 20; top: calc(10px + env(safe-area-inset-top)); left: 50%; pointer-events: none;
+  display: flex; align-items: baseline; gap: 10px; padding: 9px 18px; border-radius: 99px; white-space: nowrap;
+  background: var(--surface-2); border: 1px solid rgba(205, 168, 95, .45); box-shadow: 0 14px 34px -12px rgba(0, 0, 0, .8);
+  transform: translate(-50%, 0); animation: pan-till-in 320ms var(--e-out) backwards, pan-till-out 260ms var(--e-in) 2100ms forwards; }
+.till small { font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; }
+.till b { font-family: var(--serif); font-size: 1.15rem; color: var(--gold-bright); font-variant-numeric: tabular-nums; text-align: right; }
+@keyframes pan-till-in { from { opacity: 0; transform: translate(-50%, -160%); } }
+@keyframes pan-till-out { to { opacity: 0; transform: translate(-50%, -160%); } }
+
+/* N3: under the finger the edge takes the pressed button's colour (CORE's .is-busy). N4 new card */
+.appt { transition: border-color var(--t-fast); }
+.appt:has(.is-busy[value="completed"]) { border-left-color: var(--green); }
+.appt:has(.is-busy[value="no_show"]) { border-left-color: var(--red); }
+.appt.just-done .badge.green { animation: pop 380ms var(--e-spring) 120ms backwards; }
+.appt.just-added { animation: rise var(--t-base) var(--e-out) backwards; --dx: 0px; --dy: var(--rise); }
+
+/* N5 details */
+details > summary, .linkbox { -webkit-tap-highlight-color: transparent; }
+details > summary:active { opacity: .7; }
+details > summary::after { content: "\203A"; display: inline-block; margin-left: 6px; transition: transform var(--t-fast) var(--e-out); }
+details[open] > summary::after { transform: rotate(90deg); }
+details[open] > :not(summary) { animation: rise 200ms var(--e-out) backwards; --dx: 0px; --dy: calc(var(--rise-sm) * -1); }
+@supports selector(::details-content) and (interpolate-size: allow-keywords) {
+  details { interpolate-size: allow-keywords; }
+  details::details-content { block-size: 0; overflow-y: clip; transition: block-size 220ms var(--e-out), content-visibility 220ms allow-discrete; }
+  details[open]::details-content { block-size: auto; }
+}
+
+/* N7 calendar: events settle. 7 per lane in 3 lanes, the line in 4: 30-element budget */
+html:not([data-enter="off"]) .cal .col:nth-child(-n+4) .ev:nth-of-type(-n+7) { animation: rise var(--t-base) var(--e-out) backwards;
+  --dx: 0px; --dy: var(--rise-sm); animation-delay: calc(60ms + var(--e, 0) * 24ms); }
+.cal .ev:nth-of-type(2) { --e: 1; } .cal .ev:nth-of-type(3) { --e: 2; } .cal .ev:nth-of-type(4) { --e: 3; }
+.cal .ev:nth-of-type(5) { --e: 4; } .cal .ev:nth-of-type(6) { --e: 5; } .cal .ev:nth-of-type(n+7) { --e: 6; }
+@media (hover: hover) and (pointer: fine) {
+  .cal a.ev { transition: box-shadow var(--t-fast), transform 260ms var(--e-spring); }
+  .cal a.ev[href]:hover { box-shadow: 0 0 0 1px var(--gold); transform: translateX(2px); }
+}
+/* now-line: frozen at load, one stroke (panel.js shares out the 520ms) */
+.cal .now { position: absolute; left: 0; right: 0; height: 0; border-top: 1.5px solid var(--gold-bright); z-index: 2; pointer-events: none; transform-origin: 0 50%; }
+.cal .col:nth-child(2) .now::before { content: ""; position: absolute; left: -4px; top: -5px; width: 8px; height: 8px; border-radius: 50%; background: var(--gold-bright); }
+html:not([data-enter="off"]) .cal .col:nth-child(-n+5) .now { animation: draw-x 520ms linear 300ms backwards; }
+
+/* N8 report: first view of a URL (gate) or a filter change to a new one (.is-drawn). 5 bars: budget */
+:is(html:not([data-enter="off"]), .is-drawn) .heat tr:nth-child(n+2) { animation: fade-in 300ms var(--e-out) backwards; animation-delay: calc(100ms + var(--hr, 0) * 30ms); }
+.heat tr:nth-child(3) { --hr: 1; } .heat tr:nth-child(4) { --hr: 2; } .heat tr:nth-child(5) { --hr: 3; }
+.heat tr:nth-child(6) { --hr: 4; } .heat tr:nth-child(7) { --hr: 5; } .heat tr:nth-child(n+8) { --hr: 6; }
+:is(html:not([data-enter="off"]), .is-drawn) .card > div:nth-of-type(-n+5) > .bar i { animation: pan-bar-in 500ms var(--e-out) backwards; animation-delay: calc(100ms + var(--b, 0) * 50ms); }
+@keyframes pan-bar-in { from { transform: translateX(-101%); } }
+.card > div:nth-of-type(2) > .bar i { --b: 1; } .card > div:nth-of-type(3) > .bar i { --b: 2; }
+.card > div:nth-of-type(4) > .bar i { --b: 3; } .card > div:nth-of-type(n+5) > .bar i { --b: 4; }
+
+/* N9 copy link */
+.linkbox[role="button"] { cursor: pointer; transition: border-color var(--t-fast); }
+.linkbox[role="button"]:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 2px; }
+.linkbox.is-copied { border-color: var(--gold-bright); }
+
+/* N10 auth and form errors */
+html[data-screen="auth"] .msgs li.error { animation: msg-in var(--t-base) var(--e-out) 80ms backwards, shake 360ms var(--e-out) 320ms; }
+.errorlist { animation: msg-in var(--t-base) var(--e-out) 120ms backwards; }
+
+/* lite: press, loading, cross-fade only */
+html:not([data-motion="full"]) :is(.errorlist, .msgs li.error, details[open] > :not(summary)) { animation: none; }
+html:not([data-motion="full"]) .linkbox.is-copied::after { content: none; }
+html:not([data-motion="full"]) details::details-content { transition: none; }
+@media (prefers-reduced-motion: reduce) { details::details-content { transition: none; } }   /* beyond the kill switch's reach */

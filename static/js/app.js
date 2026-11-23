@@ -1,5 +1,5 @@
-/* Hareket katmanı (motion layer), core. Classic blocking script in <head>: never defer, async or type=module.
-   If this file never runs, every page is still complete; it never adds a class that hides anything. */
+/* Motion layer, core. Classic blocking script in <head>: never defer, async or type=module.
+   Without it every page is complete; it never adds a class that hides anything. */
 (function () {
   'use strict';
   var w = window, d = document, root = d.documentElement, ss = null;
@@ -10,7 +10,7 @@
     take: function (k) { var v = store.get(k); try { if (ss) ss.removeItem('m:' + k); } catch (e) {} return v; }
   };
 
-  /* ---- level: off | lite | full; the server's value is only ever lowered here ---- */
+  /* ---- level: off | lite | full; the server's value is only ever lowered here */
   var level = root.getAttribute('data-motion'), pref = null, con = navigator.connection;
   if (level !== 'lite' && level !== 'off') level = 'full';
   try { pref = w.localStorage.getItem('motion'); } catch (e) {}
@@ -21,7 +21,7 @@
   var M = w.Motion = { store: store, reduced: reduced, lite: level === 'lite', full: !reduced && level === 'full', nav: 'rise', from: null, screen: 'other', entering: false };
   M.flag = function (name) { return (' ' + (root.getAttribute('data-flags') || '') + ' ').indexOf(' ' + name + ' ') > -1; };
 
-  /* ---- screens and ranks, first match wins. Mirrors the urls.py files (core/test_motion.py guards it) ---- */
+  /* ---- screens and ranks, first match wins; core/test_motion.py keeps them in step with urls.py */
   var SCREENS = [
     [/^\/$/, 'landing', 0], [/^\/panel\/(giris|kayit)\/$/, 'auth', 5],
     [/^\/panel\/$/, 'today', 100], [/^\/panel\/takvim\//, 'calendar', 110],
@@ -60,7 +60,7 @@
           fromS = prev[0];
           if (u.pathname === location.pathname) {
             /* only the calendar day and the report month have an order: a booking day change is "same" */
-            var k = cur[0] === 'calendar' ? 'g' : cur[0] === 'report' ? 'ay' : '', x = k && param(u.search, k), y = k && param(location.search, k);
+            var k = cur[0] === 'calendar' ? 'g' : cur[0] === 'report' ? 'ay' : '', x = k && (param(u.search, k) || (store.get('scroll') || {}).g), y = k && param(location.search, k);
             nav = x && y && x !== y ? (y > x ? 'fwd' : 'back') : 'same';
           } else if ((prev[0] === 'shop' && cur[0] === 'select') || (prev[0] === 'auth' && cur[1] >= 100)) nav = 'wipe';
           else if (prev[1] >= 100 && cur[1] >= 100 && Math.floor(prev[1] / 10) !== Math.floor(cur[1] / 10)) nav = 'tab';
@@ -68,7 +68,7 @@
         }
       } catch (e) {}
     }
-    /* the razor exists only while a transition runs: pagereveal confirms or downgrades it */
+    /* the razor exists only while a transition runs: pagereveal confirms it */
     if (nav === 'wipe' && (!M.full || !('onpagereveal' in w))) nav = 'fwd';
     M.nav = nav; M.from = fromS; M.screen = cur[0];
     root.setAttribute('data-screen', cur[0]);
@@ -92,12 +92,12 @@
   if (enterOff) root.setAttribute('data-enter', 'off');
   M.entering = !enterOff && !reduced;
 
-  /* ---- reveal: transition state, M.ready, tap policy ---- */
+  /* ---- reveal: transition state, M.ready, tap policy */
   var shownAt = performance.now(), liveVT = null, revealed = !('onpagereveal' in w), domReady = d.readyState !== 'loading', queue = [];
   function flush() {
     if (!revealed || !domReady) return;
     var q = queue; queue = [];
-    q.forEach(function (fn) { try { fn(M); } catch (e) { setTimeout(function () { throw e; }); } });   /* a bad callback does not stop the rest */
+    q.forEach(function (fn) { try { fn(M); } catch (e) { setTimeout(function () { throw e; }); } });
   }
   M.ready = function (fn) { queue.push(fn); flush(); };
   w.addEventListener('pagereveal', function (e) {
@@ -116,15 +116,15 @@
     revealed = true; flush();
   });
   d.addEventListener('DOMContentLoaded', function () { domReady = true; if (revealed) shownAt = performance.now(); restore(); keptY = 0; flush(); });
-  /* an impatient tap ends the transition and is never forwarded */
+  /* an impatient tap ends the transition; never forwarded */
   d.addEventListener('pointerdown', function () { if (liveVT) try { liveVT.skipTransition(); } catch (e) {} }, true);
-  /* ghost-tap guard: the bars sit at the same spot on consecutive pages. Stateless */
+  /* ghost-tap guard: bars sit at the same spot on consecutive pages. Stateless */
   d.addEventListener('click', function (e) {
     if (performance.now() - shownAt < 300 && e.target.closest && e.target.closest('.sticky, .btn, button')) { e.preventDefault(); e.stopImmediatePropagation(); }
   }, true);
   d.addEventListener('touchstart', function () {}, { passive: true });   /* iOS: paints :active at once */
 
-  /* ---- status words: chip + polite live region ---- */
+  /* ---- status words: chip + polite live region */
   var chip = null, live = null, chipTimer = 0;
   function words() {
     if (chip || !d.body) return;
@@ -138,7 +138,7 @@
     if (text && ms) chipTimer = setTimeout(function () { chip.textContent = ''; live.textContent = ''; }, ms);
   };
 
-  /* ---- waiting: busy at once, pole at 300ms, words at 4s and 12s; one timer set ---- */
+  /* ---- waiting: busy at once, pole at 300ms, words at 4s and 12s; one timer set */
   var timers = [];
   function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
   function each(sel, fn) { [].forEach.call(d.querySelectorAll(sel), fn); }
@@ -165,10 +165,11 @@
     d.dispatchEvent(new CustomEvent('motion:reset', { detail: { persisted: !!e.persisted } }));
   });
   function emit(name, target, detail) { target.dispatchEvent(new CustomEvent(name, { bubbles: true, detail: detail })); }
-  function keepScroll() { store.set('scroll', { p: location.pathname, y: w.scrollY, t: Date.now() }); }
+  /* g: the day or month shown here; the default URL carries none */
+  function keepScroll() { store.set('scroll', { p: location.pathname, y: w.scrollY, t: Date.now(), g: (d.querySelector('input[name=g], [name=ay] [selected]') || root).getAttribute('value') }); }
   function formsOf(action) { return [].filter.call(d.forms, function (f) { return f.getAttribute('action') === action; }); }
 
-  /* ---- links (bubble phase: whoever cancels the click has done so) ---- */
+  /* ---- links (bubble phase: whoever cancels the click has done so) */
   var lastSubmit = null, SUBMITS = 'button, input[type="submit"]';
   d.addEventListener('click', function (e) {
     var t = e.target; if (!t.closest) return;
@@ -183,7 +184,7 @@
     waiting(false);
     emit('motion:go', a, { link: a });
   });
-  /* ---- forms (bubble phase: an inline onsubmit="return confirm()" has already answered) ---- */
+  /* ---- forms (bubble phase: an inline confirm() has already answered) */
   d.addEventListener('submit', function (e) {
     var f = e.target, tg = f.getAttribute('target');
     if (e.defaultPrevented || (tg && tg !== '_self')) return;
@@ -194,7 +195,7 @@
     if (b) busy(b);
     if (post) {
       keepScroll();
-      var a = f.getAttribute('action');   /* found again by action + order: cards that come or go don't shift it */
+      var a = f.getAttribute('action');   /* found again by action + order */
       if (b) store.set('btn', { p: location.pathname, a: a, f: formsOf(a).indexOf(f), b: [].indexOf.call(f.querySelectorAll(SUBMITS), b), x: b.textContent, t: Date.now() });
     }
     waiting(post);
@@ -206,7 +207,7 @@
     keepScroll(); waiting(false); emit('motion:go', t, { link: null });
   });
 
-  /* ---- same screen returns: keep the place, say the result, echo on the button ---- */
+  /* ---- same screen returns: keep the place, say the result, echo on the button */
   var kept = false, keptY = 0, AGE = 95000;   /* just longer than the 90s POST guard */
   function restore() {
     if (!(domReady || d.getElementById('eof'))) return;
@@ -226,11 +227,11 @@
     });
   }
 
-  /* ---- one-shot hints for the next page ---- */
+  /* ---- one-shot hints for the next page */
   M.hint = function (name, data) { store.set('h:' + name, { d: data, p: location.pathname, t: Date.now() }); };
   M.takeHint = function (name, maxAge) { var h = store.take('h:' + name); return h && Date.now() - h.t < (maxAge || 20000) ? { data: h.d, path: h.p } : null; };
 
-  /* ---- numbers: Turkish format in ("1.600 ₺", "%42,8"), the server's exact string out ---- */
+  /* ---- numbers: Turkish format in ("1.600 ₺", "%42,8"), the server's exact string out */
   M.parse = function (text) {
     var m = /^(\D*?)(\d[\d.]*)(?:,(\d+))?(.*)$/.exec(String(text).trim()); if (!m) return null;
     return { pre: m[1], val: parseFloat(m[2].replace(/\./g, '') + (m[3] ? '.' + m[3] : '')), dec: m[3] ? m[3].length : 0, post: m[4] };
@@ -239,14 +240,15 @@
     if (el._mEnd) el._mEnd();   /* a roll in progress: restore the server's string first */
     var final = el.textContent, n = M.parse(final); ms = ms || 600;
     if (!n || !M.full || !(from < n.val)) return false;   /* never downward, only with full motion */
-    var fmt = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: n.dec, maximumFractionDigits: n.dec }), t0 = 0, over = false;
+    var t0 = 0, over = false;   /* tr-TR by hand: Intl's first use costs a frame */
+    function fmt(v) { var p = v.toFixed(n.dec).split('.'); return p[0].replace(/\B(?=(\d{3})+$)/g, '.') + (p[1] ? ',' + p[1] : ''); }
     var end = el._mEnd = function () { if (!over) { over = true; el._mEnd = null; el.textContent = final; } };
     function step(t) {
       if (over) return; if (!t0) t0 = t;
       var k = Math.min(1, (t - t0) / ms), eased = 1 - Math.pow(1 - k, 4);
-      if (k < 1) { el.textContent = n.pre + fmt.format(from + (n.val - from) * eased) + n.post; requestAnimationFrame(step); } else end();
+      if (k < 1) { el.textContent = n.pre + fmt(from + (n.val - from) * eased) + n.post; requestAnimationFrame(step); } else end();
     }
-    el.textContent = n.pre + fmt.format(from) + n.post;
+    el.textContent = n.pre + fmt(from) + n.post;
     requestAnimationFrame(step); setTimeout(end, ms + 400);   /* rAF may stall in a background tab */
     return true;
   };

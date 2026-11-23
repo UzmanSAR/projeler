@@ -9,9 +9,9 @@
 {% block meta %}{% endblock %}
 {% if MOTION != "off" %}<style>@media (prefers-reduced-motion: no-preference) { @view-transition { navigation: auto; } }</style>{% endif %}
 <link rel="expect" href="#eof" blocking="render">
-<link rel="stylesheet" href="{% static 'css/app.css' %}?v=1">
+<link rel="stylesheet" href="{% static 'css/app.css' %}?v=2">
 {% block extra_css %}{% endblock %}
-<script src="{% static 'js/app.js' %}?v=1"></script>
+<script src="{% static 'js/app.js' %}?v=2"></script>
 </head>
 <body>
 {% block body %}{% endblock %}
