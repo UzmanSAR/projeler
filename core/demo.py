@@ -1,0 +1,329 @@
+"""Örnek dükkân: tanıtım sitesinde müşteri sayfası, panel ve raporlar dolu görünsün diye üretilen veri.
+
+ensure_demo() tekrar tekrar çalıştırılabilir; eksik olanı tamamlar, var olana dokunmaz:
+
+- Dükkân, berberler, hizmetler ve müşteriler yoksa oluşturulur.
+- Her günün hedef randevu sayısı tarihten türetilir. O gün için oluşmuş randevu hedefin altındaysa
+  aradaki fark eklenir. Böylece ilk kurulumda geçmiş dolar, zaman geçtikçe de yeni günler eklenir.
+- Geçmişe düşmüş örnek randevular kapatılır (tamamlandı ya da gelmedi); ziyaretçilerin kendi
+  aldığı deneme randevularına dokunulmaz.
+
+Müşteriler kendi düzenlerine göre gelir (iki ile altı hafta arası), çoğu aynı berbere gider. Her gün
+bir iki yeni müşteri eklenir; her müşteri belli sayıda ziyaretten sonra gelmeyi bırakır. Panelde
+"kaybedilme riski olanlar" listesi ve raporda "yeni müşteri" rakamı bu yüzden dolu görünür.
+"""
+import random
+from datetime import datetime, time, timedelta
+
+from django.contrib.auth import get_user_model
+from django.db import connection
+from django.db.models import Count, Max, Q
+from django.utils import timezone
+
+from .availability import business_tz, day_slots
+from .booking import (BookingError, cancel_appointment, close_appointment, create_appointment,
+                      eligible_staff, get_or_create_customer)
+from .models import Appointment, Business, Customer, Service, Staff, TimeOff
+from .setup import create_business
+
+SLUG = "ornek-berber"
+EMAIL, PASSWORD = "demo@example.com", "demo-sifre-1"
+HISTORY_DAYS, AHEAD_DAYS, CUSTOMERS = 84, 21, 360
+LOCK_ID = 7270001   # pg_advisory_lock anahtarı
+
+# (ad, unvan, yapmadığı işlemler, seçilme ağırlığı)
+STAFF = [
+    ("Ali", "usta", (), 32),
+    ("Mert", "usta", (), 30),
+    ("Kaan", "kalfa", ("Damat tıraşı", "Saç boyama"), 23),
+    ("Emir", "kalfa", ("Damat tıraşı", "Saç boyama", "Cilt bakımı", "İple yüz temizliği", "Saç + sakal"), 15),
+]
+# (ad, süre dk, fiyat ₺, seçilme ağırlığı). İlk üçü kurulum şablonundan gelir.
+SERVICES = [
+    ("Saç kesimi", 30, 400, 30),
+    ("Sakal tıraşı", 20, 250, 12),
+    ("Saç + sakal", 45, 600, 30),
+    ("Cilt bakımı", 30, 500, 5),
+    ("Çocuk tıraşı", 20, 250, 7),
+    ("Yıkama ve fön", 15, 150, 5),
+    ("İple yüz temizliği", 15, 200, 4),
+    ("Saç boyama", 45, 900, 3),
+    ("Damat tıraşı", 90, 2500, 1),
+]
+ADDONS = ("Yıkama ve fön", "İple yüz temizliği")
+WEEKDAY_TARGET = (22, 24, 24, 27, 34, 42, 0)   # pazartesi ... pazar
+
+# İlk otuz ad eski örnek veriyle aynıdır: kurulu sitedeki kayıtların adı değişmesin.
+FIRST_30 = ["Ahmet Yılmaz", "Mehmet Kaya", "Mustafa Demir", "Emre Şahin", "Burak Çelik", "Can Yıldız",
+            "Oğuz Aydın", "Serkan Arslan", "Hakan Doğan", "Kerem Kılıç", "Onur Aslan", "Tolga Çetin",
+            "Volkan Kara", "Barış Koç", "Deniz Kurt", "Efe Özkan", "Furkan Polat", "Gökhan Öztürk",
+            "Halil Şimşek", "İsmail Korkmaz", "Kaan Erdoğan", "Levent Yavuz", "Murat Can", "Nihat Acar",
+            "Okan Güneş", "Selim Bulut", "Taner Aksoy", "Ufuk Tekin", "Yusuf Bozkurt", "Zafer Özdemir"]
+FIRST = ["Ahmet", "Mehmet", "Mustafa", "Emre", "Burak", "Can", "Oğuz", "Serkan", "Hakan", "Kerem", "Onur",
+         "Tolga", "Volkan", "Barış", "Deniz", "Efe", "Furkan", "Gökhan", "Halil", "İsmail", "Levent", "Murat",
+         "Nihat", "Okan", "Selim", "Taner", "Ufuk", "Yusuf", "Zafer", "Berk", "Cem", "Doğan", "Eren", "Fatih",
+         "Görkem", "Hasan", "İlker", "Koray", "Mert", "Orhan", "Özgür", "Recep", "Sinan", "Tuna", "Umut"]
+LAST = ["Yılmaz", "Kaya", "Demir", "Şahin", "Çelik", "Yıldız", "Aydın", "Arslan", "Doğan", "Kılıç", "Aslan",
+        "Çetin", "Kara", "Koç", "Kurt", "Özkan", "Polat", "Öztürk", "Şimşek", "Korkmaz", "Erdoğan", "Yavuz",
+        "Acar", "Güneş", "Bulut", "Aksoy", "Tekin", "Bozkurt", "Özdemir", "Uçar", "Sarı", "Keskin", "Turan",
+        "Avcı", "Ateş", "Yiğit", "Duman", "Işık", "Çakır", "Erdem", "Güler", "Tunç", "Başaran"]
+NOTES = ["Yanlar kısa, üst uzun kalsın.", "Sakal üç numara.", "Ense jiletle alınmasın.",
+         "Cumartesi öğleden sonra gelir.", "Çayı şekersiz içer.", "Oğluyla birlikte gelir.",
+         "Her seferinde yıkama ister.", "Favoriler düz kesilsin."]
+
+
+def _phone(i):
+    return f"0532{1000000 + i:07d}"
+
+
+def _is_demo(phone):
+    """Örnek müşteri numaraları: baştan gelenler 05321..., sonradan katılanlar 0533..."""
+    return phone.startswith(("05321", "0533"))
+
+
+def _name(i):
+    if i < len(FIRST_30):
+        return FIRST_30[i]
+    return f"{FIRST[i % len(FIRST)]} {LAST[(i * 7 + i // len(FIRST)) % len(LAST)]}"
+
+
+def _profile(phone):
+    """Müşterinin düzeni: kaç günde bir gelir, hangi berbere gider, ne yaptırır. Numarasından türer."""
+    key = int(phone[4:])
+    rnd = random.Random(f"musteri-{key}")
+    short = key % 31 == 7         # üç ziyaretten sonra bırakan düzenli müşteri
+    return {
+        "interval": 14 if short else rnd.choices((14, 21, 28, 35, 42), (10, 30, 35, 15, 10))[0],
+        "staff": rnd.choices(range(len(STAFF)), [s[3] for s in STAFF])[0],
+        "service": rnd.choices(range(5), [s[3] for s in SERVICES[:5]])[0],   # gündelik işlemlerden biri
+        "visits": 3 if short else rnd.randint(6, 40),   # bu kadar ziyaretten sonra gelmeyi bırakır
+        "flaky": key % 57 == 5,   # sık sık gelmeyen müşteri
+        "phase": rnd.random(),
+    }
+
+
+def _card(customer, seed):
+    """Müşteri kartına berber notu ve kampanya izni (bazılarında)."""
+    rnd = random.Random(f"kart-{seed}")
+    if rnd.random() < .12:
+        customer.note = rnd.choice(NOTES)
+    if rnd.random() < .35:
+        customer.marketing_consent, customer.marketing_consent_at = True, timezone.now()
+    customer.save(update_fields=["note", "marketing_consent", "marketing_consent_at"])
+    return customer
+
+
+def _shop():
+    """Dükkân, berberler ve hizmetler: yoksa oluşturur, varsa eksik olanı ekler."""
+    business = Business.objects.filter(slug=SLUG).first()
+    if business is None:
+        User = get_user_model()
+        user = User.objects.filter(username=EMAIL).first() or User.objects.create_user(EMAIL, EMAIL, PASSWORD)
+        business = create_business(user, "Örnek Berber Salonu", SLUG, STAFF[0][0], phone="05320000000")
+        business.description = "Mahallenin berberi. Saç, sakal ve cilt bakımı."
+        business.address = "Örnek Mah. Çarşı Cad. No: 12"
+        business.district = "Örnek Mahallesi"
+        business.save()
+    services = {}
+    for order, (name, duration, price, _) in enumerate(SERVICES):
+        services[name], _ = Service.objects.get_or_create(
+            business=business, name=name, defaults={"duration": duration, "price": price, "order": order})
+    staff = []
+    for order, (name, title, cannot, _) in enumerate(STAFF):
+        person, created = Staff.objects.get_or_create(
+            business=business, name=name, defaults={"title": title, "order": order})
+        if created or not person.services.exists():
+            person.services.set(s for n, s in services.items() if n not in cannot)
+        elif not cannot:   # ustalar sonradan eklenen işlemleri de yapar
+            person.services.add(*services.values())
+        staff.append(person)
+    return business, staff, [services[s[0]] for s in SERVICES]
+
+
+def _customers(business):
+    """Baştan beri gelen müşteriler yoksa oluşturulur; sonradan katılanlarla birlikte hepsi döner."""
+    pool = Customer.objects.filter(business=business).filter(
+        Q(phone__startswith="05321") | Q(phone__startswith="0533"))
+    have = set(pool.values_list("phone", flat=True))
+    for i in range(CUSTOMERS):
+        if _phone(i) not in have:
+            _card(get_or_create_customer(business, _phone(i), _name(i), verified=True), i)
+    return list(pool.order_by("phone"))
+
+
+def _close(appt, rnd, flaky=False):
+    if appt.customer_id and appt.source != Appointment.Source.WALKIN and rnd.random() < (.4 if flaky else .05):
+        close_appointment(appt, Appointment.Status.NO_SHOW)
+    else:
+        close_appointment(appt, Appointment.Status.COMPLETED,
+                          amount=appt.planned_total + rnd.choice((0, 0, 0, 50)),
+                          payment=rnd.choice(("cash", "cash", "card")))
+
+
+def _close_past(business, now):
+    """Geçmişe düşmüş örnek randevuları kapatır. Ziyaretçinin kendi numarasıyla aldığı randevu kalır."""
+    stale = Appointment.objects.filter(business=business, status=Appointment.Status.CONFIRMED,
+                                       end__lt=now).select_related("customer")
+    closed = 0
+    for appt in stale:
+        if appt.customer is None or _is_demo(appt.customer.phone):
+            _close(appt, random.Random(f"kapat-{appt.id}"))
+            closed += 1
+    return closed
+
+
+def _time_off(business, staff, today, tz):
+    """Takvimde örnek bir izin: önümüzdeki günlerde yoksa bir tane ekler."""
+    if TimeOff.objects.filter(business=business, end__gt=datetime.combine(today, time(0), tz)).exists():
+        return
+    day = today + timedelta(days=3)
+    while day.weekday() != 2:   # çarşamba
+        day += timedelta(days=1)
+    TimeOff.objects.create(business=business, staff=staff[1], reason="İzin",
+                           start=datetime.combine(day, time(14), tz), end=datetime.combine(day, time(17), tz))
+
+
+def ensure_demo(history_days=HISTORY_DAYS, ahead_days=AHEAD_DAYS, now=None):
+    """Örnek dükkânı güncel tutar; oluşturduğu ve kapattığı randevu sayısını döndürür.
+
+    Aynı anda yalnızca bir kez çalışır (veritabanı kilidi): yayın sırasındaki kurulum adımı ile
+    uyanan sunucu süreci aynı günleri iki kez doldurmasın.
+    """
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT pg_try_advisory_lock(%s)", [LOCK_ID])
+        if not cursor.fetchone()[0]:
+            return {"created": 0, "closed": 0, "business": Business.objects.filter(slug=SLUG).first(), "busy": True}
+    try:
+        return _ensure_demo(history_days, ahead_days, now or timezone.now())
+    finally:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT pg_advisory_unlock(%s)", [LOCK_ID])
+
+
+def _ensure_demo(history_days, ahead_days, now):
+    business, staff, services = _shop()
+    customers = _customers(business)
+    profiles = [_profile(c.phone) for c in customers]
+    tz = business_tz(business)
+    today = now.astimezone(tz).date()
+    first_day = today - timedelta(days=history_days)
+    closed = _close_past(business, now)
+    _time_off(business, staff, today, tz)
+
+    # Müşterinin bir sonraki gelişi: son randevusundan düzeni kadar sonra; hiç gelmediyse dönemin başında.
+    seen_before = {row[0]: row[1:] for row in Appointment.objects.filter(business=business, customer__in=customers)
+                   .exclude(status__startswith="cancelled").values_list("customer_id")
+                   .annotate(Max("start"), Count("id"))}
+    due, visits = {}, {}
+    for c, p in zip(customers, profiles):
+        if c.id in seen_before:
+            due[c.id] = seen_before[c.id][0].astimezone(tz).date() + timedelta(days=p["interval"])
+            visits[c.id] = seen_before[c.id][1]
+        else:
+            due[c.id] = first_day + timedelta(days=int(p["phase"] * p["interval"]))
+            visits[c.id] = 0
+
+    counts = {}
+    for start in Appointment.objects.filter(
+            business=business, start__gte=datetime.combine(first_day, time(0), tz),
+    ).exclude(status__startswith="cancelled").values_list("start", flat=True):
+        day = start.astimezone(tz).date()
+        counts[day] = counts.get(day, 0) + 1
+
+    weights = [s[3] for s in SERVICES]
+    addons = [s for s in services if s.name in ADDONS]
+    created = 0
+    for offset in range(-history_days, ahead_days + 1):
+        day = today + timedelta(days=offset)
+        existing = counts.get(day, 0)
+        rnd = random.Random(f"gun-{day.isoformat()}")
+        target = WEEKDAY_TARGET[day.weekday()] + rnd.randint(-3, 3) if WEEKDAY_TARGET[day.weekday()] else 0
+        if offset > 0:   # ileriki günler yaklaştıkça dolar
+            target = round(target * (.75 if offset <= 2 else .5 if offset <= 7 else .3 if offset <= 14 else .15))
+        need = target - existing
+        if need <= 0:
+            continue
+        rnd = random.Random(f"gun-{day.isoformat()}-{existing}")   # tamamlama turu aynı çekilişi yinelemesin
+        booked_at = datetime.combine(day, time(6), tz) - timedelta(days=1)
+        coming = [(c, p) for c, p in zip(customers, profiles) if visits[c.id] < p["visits"]]
+        waiting = [cp for cp in coming if due[cp[0].id] <= day]
+        # Günün ilk doldurulmasında bir iki yeni müşteri de gelir (numarası tarihten türer).
+        newcomers = random.Random(f"yeni-{day.isoformat()}").choices((0, 1, 2), (45, 40, 15))[0] if existing == 0 else 0
+        rnd.shuffle(waiting)
+        waiting.sort(key=lambda cp: due[cp[0].id], reverse=True)   # günü en çok geçen sonda: önce o gelir
+        seen = set()
+        made = tries = 0
+        while made < need and tries < need * 3:
+            tries += 1
+            kind = rnd.choices(("online", "manual", "walkin"), (50, 22, 28))[0]
+            if kind == "walkin" and offset > 0:   # randevusuz müşteri ileri bir güne yazılamaz
+                kind = "manual"
+            customer = profile = None
+            if newcomers and kind != "walkin":
+                newcomers -= 1
+                phone = f"0533{day:%y%j}{newcomers:02d}"
+                customer = _card(get_or_create_customer(
+                    business, phone, _name(len(FIRST_30) + (day.toordinal() * 3 + newcomers) % 1900), verified=True), phone)
+                profile = _profile(phone)
+                customers.append(customer)
+                profiles.append(profile)
+                due[customer.id], visits[customer.id] = day, 0
+            elif waiting and (kind != "walkin" or rnd.random() < .4):
+                customer, profile = waiting.pop()
+            elif kind != "walkin":   # sırası gelmiş kimse kalmadıysa biri erken gelir
+                customer, profile = rnd.choice(coming)
+            if customer and customer.id in seen:
+                continue
+            if profile and rnd.random() < .8:
+                chosen = [services[profile["service"]]]
+            else:
+                chosen = [rnd.choices(services, weights)[0]]
+            if chosen[0].name == "Damat tıraşı" and day.weekday() != 5:
+                chosen = [services[2]]
+            if chosen[0].duration >= 30 and chosen[0].name != "Damat tıraşı" and rnd.random() < .15:
+                chosen.append(rnd.choice(addons))
+            able = eligible_staff(business, chosen)
+            if not able:
+                continue
+            favourite = staff[profile["staff"]] if profile else None
+            person = favourite if favourite in able and rnd.random() < .75 else rnd.choices(
+                able, [STAFF[staff.index(s)][3] if s in staff else 10 for s in able])[0]
+            duration = sum(s.duration for s in chosen)
+            times = day_slots(business, [person], day, duration, now=booked_at, enforce_rules=False)[person.id]
+            if kind == "walkin":   # bugün içinde de ileri bir saate yazılamaz
+                times = [t for t in times if t <= now]
+            if not times:
+                continue
+            # Akşam saatleri ve cumartesi öğleden sonrası daha yoğun
+            start = rnd.choices(times, [1 + 2 * (t.astimezone(tz).hour >= 16) for t in times])[0]
+            try:
+                appt = create_appointment(business, chosen, start, staff=person, customer=customer,
+                                          source="manual" if kind == "walkin" else kind,
+                                          now=booked_at, notify=False)
+            except BookingError:
+                continue
+            if kind == "walkin":
+                appt.source = Appointment.Source.WALKIN
+                appt.save(update_fields=["source"])
+            made += 1
+            if customer:
+                seen.add(customer.id)
+                visits[customer.id] += 1
+                due[customer.id] = day + timedelta(days=profile["interval"] + rnd.randint(-3, 4))
+            if appt.end < now:
+                _close(appt, rnd, flaky=bool(profile and profile["flaky"]))
+        # Günün ilk doldurulmasında bir iki iptal de olur (hedefe sayılmaz).
+        if existing == 0 and waiting and rnd.random() < .5:
+            customer, profile = waiting.pop()
+            person = staff[profile["staff"]]
+            chosen = [services[0]]
+            times = day_slots(business, [person], day, 30, now=booked_at, enforce_rules=False)[person.id]
+            if times:
+                try:
+                    appt = create_appointment(business, chosen, rnd.choice(times), staff=person,
+                                              customer=customer, now=booked_at, notify=False)
+                    cancel_appointment(appt, by_customer=True, now=booked_at)
+                except BookingError:
+                    pass
+        created += made
+    return {"created": created, "closed": closed, "business": business}

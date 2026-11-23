@@ -14,7 +14,7 @@ pip install -r requirements.txt
 createuser berber --pwprompt --createdb   # şifre: berber (geliştirme varsayılanı)
 createdb berber --owner berber
 python manage.py migrate
-python manage.py seed_demo                # isteğe bağlı: örnek dükkân ve 7 haftalık veri
+python manage.py seed_demo                # isteğe bağlı: örnek dükkân ve 12 haftalık veri
 python manage.py runserver
 ```
 
@@ -27,7 +27,7 @@ python manage.py runserver
 
 Geliştirmede SMS gönderilmez; mesajlar konsola yazılır ve doğrulama kodu ekranda gösterilir.
 
-Testler: `python manage.py test` (45 test).
+Testler: `python manage.py test` (52 test).
 
 ## Canlı tanıtım sitesi (Render)
 
@@ -45,10 +45,17 @@ kurulum sırasında oluşturulur. Kullanıcı zaten varsa şifresi değişmez. �
 
 Bu bir tanıtım kurulumudur: SMS gitmez, doğrulama kodu ekranda gösterilir, örnek dükkân
 (`/ornek-berber/`, panel: `demo@example.com` / `demo-sifre-1`) hazır gelir ve hatırlatma
-mesajları gönderilmez. Gerçek müşteriyle kullanmadan önce `SMS_SHOW_CODE` ve `SEED_DEMO`
+mesajları gönderilmez. Örnek dükkânda dört berber, dokuz hizmet, birkaç yüz müşteri ve on iki
+haftalık randevu geçmişi vardır (`core/demo.py`). `SEED_DEMO=1` iken veri her yayında ve sunucu
+her uyandığında tazelenir: yeni günler eklenir, geçmişe düşen örnek randevular kapatılır;
+ziyaretçilerin kendi aldığı deneme randevularına dokunulmaz. Gerçek müşteriyle kullanmadan önce `SMS_SHOW_CODE` ve `SEED_DEMO`
 değişkenlerini kaldır, demo kullanıcısını sil ve aşağıdaki "Yayına almadan önce" listesini uygula.
 
 ## Neler var
+
+**Ana sayfa**
+- Tanıtım sayfası (`templates/public/landing.html`, `static/css/landing.css`): ürün önizlemesi, nasıl
+  çalışır, özellikler, sık sorulanlar. Örnek dükkân kuruluysa "Örnek dükkânı gez" bağlantısı görünür
 
 **Müşteri tarafı**
 - Kuaföre özel sayfa: hizmetler, süre, fiyat, çalışma saatleri, arama ve WhatsApp butonu

@@ -1,20 +1,105 @@
 {% extends "base.html" %}
 {% load static %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'css/public.css' %}?v={{ STATIC_V }}">{% endblock %}
+{% block title %}{{ SITE_NAME }} · Berberin kendi randevu sayfası{% endblock %}
+{% block meta %}<meta name="description" content="Erkek kuaförleri için online randevu: pazar yeri yok, komisyon yok. Müşterin üye olmadan 30 saniyede randevu alır; sen takvimini, müşterilerini ve cironu tek ekranda görürsün.">
+<meta property="og:title" content="{{ SITE_NAME }} · Berberin kendi randevu sayfası">
+<meta property="og:description" content="Pazar yeri yok, komisyon yok. Kendi linkin, kendi müşterin. İlk 14 gün ücretsiz.">
+<meta property="og:type" content="website">{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/public.css' %}?v={{ STATIC_V }}">
+<link rel="stylesheet" href="{% static 'css/landing.css' %}?v={{ STATIC_V }}">{% endblock %}
 {% block extra_js %}<script src="{% static 'js/public.js' %}?v={{ STATIC_V }}"></script>{% endblock %}
 {% block body %}
-<div class="hero"><div class="inner">
-  <small>Erkek kuaförleri için</small>
-  <h1>Berberin kendi randevu sayfası</h1>
-  <p>Pazar yeri yok, komisyon yok. Müşterin üye olmadan 30 saniyede randevu alır; sen cironu ve boş saatlerini tek ekranda görürsün.</p>
+<div class="hero lp-hero"><div class="lp-grid">
+  <div class="lp-top"><b>{{ SITE_NAME }}</b><a href="{% url 'panel:login' %}">Kuaför girişi</a></div>
+  <div class="inner">
+    <small>Erkek kuaförleri için</small>
+    <h1>Berberin kendi randevu sayfası</h1>
+    <p>Pazar yeri yok, komisyon yok. Müşterin üye olmadan 30 saniyede randevu alır; sen takvimini, müşterilerini ve cironu tek ekranda görürsün.</p>
+    <div class="lp-actions">
+      <a class="btn" href="{% url 'panel:signup' %}">Dükkânını 5 dakikada kur</a>
+      {% if demo %}<a class="btn ghost" href="{% url 'public:business' demo.slug %}">Örnek dükkânı gez</a>{% endif %}
+    </div>
+    <ul class="lp-trust"><li>İlk 14 gün ücretsiz</li><li>Kart istemez</li><li>Komisyon yok</li></ul>
+  </div>
+  {# Önizleme: gerçek ekranların küçük bir örneği. Süslemedir; ekran okuyucuya ve klavyeye kapalıdır. #}
+  <div class="lp-stage" aria-hidden="true" inert>
+    <div class="lp-phone"><div class="lp-screen">
+      <div class="lp-shop"><small>Örnek Mahallesi · Erkek kuaförü</small><b>Örnek Berber Salonu</b></div>
+      <div class="lp-steps"><i class="on"></i><i class="on"></i><i></i><i></i></div>
+      <div class="lp-label">Gün</div>
+      <div class="lp-days">{% for d in days %}<span class="day{% if forloop.counter == 2 %} on{% endif %}"><small>{{ d|date:"D" }}</small><b>{{ d|date:"j" }}</b></span>{% endfor %}</div>
+      <div class="lp-label">Saat</div>
+      <div class="lp-slots"><span class="slot">10:00</span><span class="slot">11:30</span><span class="slot">13:15</span><span class="slot">14:00</span><span class="slot">15:30</span><span class="slot lp-pick">16:15</span><span class="slot">17:45</span><span class="slot">19:00</span></div>
+      <span class="btn block">Devam et · 30 dk · 400 ₺</span>
+    </div></div>
+    <div class="lp-panel">
+      <div class="lp-panel-head"><b>Bugün</b><small>Kuaför paneli</small></div>
+      <div class="lp-kpis"><div class="kpi"><small>Ciro</small><b>5.250 ₺</b></div><div class="kpi"><small>Tamamlanan</small><b>15</b></div><div class="kpi"><small>Bekleyen</small><b>6</b></div></div>
+      <div class="lp-row"><b class="lp-time">14:30</b><span><b>Ahmet Y.</b><small>Saç + sakal · Ali</small></span><span class="badge green">Tamamlandı</span></div>
+      <div class="lp-row"><b class="lp-time">16:15</b><span><b>Kerem K.</b><small>Saç kesimi · Mert</small></span><span class="badge">Sırada</span></div>
+    </div>
+  </div>
 </div></div>
 <div class="stripe"></div>
-<div class="wrap">
-  <div class="card"><b>Kendi linkin</b><p class="muted">Instagram profiline ve WhatsApp durumuna koyacağın tek adres. Sayfanda başka dükkân ya da reklam görünmez.</p></div>
-  <div class="card"><b>Dükkân kapalıyken de randevu</b><p class="muted">Müşteri boş saati görür, SMS koduyla onaylar. Hatırlatma mesajı kendiliğinden gider.</p></div>
-  <div class="card"><b>Randevusuz gelen de aynı takvimde</b><p class="muted">İki dokunuşla işlenir; raporların eksiksiz çıkar.</p></div>
-  <div class="card"><b>Sabit aylık ücret</b><p class="muted">Komisyon yok. İlk 14 gün ücretsiz, kart istemeden.</p></div>
-  <p><a class="btn block" href="{% url 'panel:signup' %}">Dükkânını 5 dakikada kur</a></p>
-  <p><a class="btn ghost block" href="{% url 'panel:login' %}">Kuaför girişi</a></p>
+<div class="wrap lp">
+  <section class="lp-section">
+    <p class="lp-eyebrow">Nasıl çalışır</p>
+    <h2>Üç adımda randevu almaya başla</h2>
+    <ol class="lp-steps-list">
+      <li class="lp-reveal"><b>Dükkânını kur</b><p>Adını, çalışma saatlerini ve fiyatlarını gir. Saç, sakal ve saç + sakal hizmetleri hazır gelir; beş dakika sürer.</p></li>
+      <li class="lp-reveal"><b>Linkini paylaş</b><p>Instagram profiline ve WhatsApp durumuna koyacağın tek adres. Sayfanda başka dükkân ya da reklam görünmez.</p></li>
+      <li class="lp-reveal"><b>Randevular takvimine düşsün</b><p>Müşteri boş saati görür, telefonuna gelen kodla onaylar. Dükkân kapalıyken de randevu alırsın.</p></li>
+    </ol>
+  </section>
+
+  <section class="lp-section">
+    <p class="lp-eyebrow">Neler var</p>
+    <h2>Müşterin için kolay, senin için düzenli</h2>
+    <div class="lp-features">
+      <div class="card lp-reveal"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>
+        <b>Kendi linkin, kendi müşterin</b><p class="muted">Müşteri yalnızca senin sayfanı görür. Kayıtlar dükkânına aittir; başka dükkânla paylaşılmaz.</p></div>
+      <div class="card lp-reveal"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></svg>
+        <b>Üyelik yok, uygulama yok</b><p class="muted">Dört adımda randevu: işlem, saat, ad ve telefon, SMS kodu. Aynı telefondan 90 gün tekrar kod istenmez.</p></div>
+      <div class="card lp-reveal"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 7 2.5 7h-17S6 15 6 9M10 19.5a2 2 0 0 0 4 0"/></svg>
+        <b>Hatırlatma kendiliğinden gider</b><p class="muted">Onay mesajı hemen, hatırlatma bir gün önce. Müşteri gelemeyecekse tek dokunuşla iptal eder, saat yeniden açılır.</p></div>
+      <div class="card lp-reveal"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4M12 13v4.5M9.75 15.25h4.5"/></svg>
+        <b>Randevusuz gelen de aynı takvimde</b><p class="muted">Kapıdan giren müşteriyi iki dokunuşla işlersin. Ciron ve doluluğun eksiksiz çıkar.</p></div>
+      <div class="card lp-reveal"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20.5h16M7 17v-5M12 17V6.5M17 17v-8"/></svg>
+        <b>Gün sonunda rakamlar hazır</b><p class="muted">Ciro, doluluk, en yoğun saatler; hizmete ve berbere göre kazanç. Bir süredir gelmeyen düzenli müşterilerin ayrı listelenir.</p></div>
+      <div class="card lp-reveal"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.5 3.5H20.5V11.5L11.5 20.5a2 2 0 0 1-2.8 0L3.5 15.3a2 2 0 0 1 0-2.8Z"/><circle cx="16" cy="8" r="1.4"/></svg>
+        <b>Sabit aylık ücret</b><p class="muted">Randevu başına komisyon yok. İlk 14 gün ücretsiz, kart istemeden denersin.</p></div>
+    </div>
+  </section>
+
+  <section class="lp-section">
+    <p class="lp-eyebrow">Fark</p>
+    <h2>Pazar yeri değil, senin sayfan</h2>
+    <div class="lp-compare">
+      <div class="card lp-reveal"><b>Pazar yeri uygulamalarında</b>
+        <ul><li>Müşteri seni rakiplerinle aynı listede görür</li><li>Randevu başına komisyon ödersin</li><li>Müşteri uygulamanın müşterisidir</li></ul></div>
+      <div class="card lp-mine lp-reveal"><b>{{ SITE_NAME }} ile</b>
+        <ul><li>Sayfanda yalnızca sen varsın</li><li>Ücret sabit, komisyon yok</li><li>Müşteri kaydı dükkânına aittir</li></ul></div>
+    </div>
+  </section>
+
+  <section class="lp-section lp-narrow">
+    <p class="lp-eyebrow">Sık sorulanlar</p>
+    <h2>Aklına takılanlar</h2>
+    <details class="card"><summary>Müşterim uygulama indirmek zorunda mı?</summary><p class="muted">Hayır. Linke dokunur, sayfa tarayıcıda açılır. Üyelik ve şifre yoktur; telefonuna gelen kodla randevusunu onaylar.</p></details>
+    <details class="card"><summary>Randevusuz gelen müşteriyi nasıl işlerim?</summary><p class="muted">Bugün ekranından iki dokunuşla eklersin. Ciro ve doluluk raporlarına o da girer.</p></details>
+    <details class="card"><summary>Müşteri randevusuna gelmezse ne olur?</summary><p class="muted">Randevuyu "gelmedi" olarak kapatırsın. Kaç kez gelmediği müşteri kartında görünür.</p></details>
+    <details class="card"><summary>Telefonla kullanabilir miyim?</summary><p class="muted">Evet. Panel telefonda rahat kullanılacak şekilde tasarlandı; bilgisayarda da açılır.</p></details>
+    <details class="card"><summary>Ücreti ne kadar?</summary><p class="muted">Sabit aylık ücret alınır, randevu başına komisyon yoktur. İlk 14 gün ücretsizdir ve kart istenmez.</p></details>
+  </section>
+
+  <section class="lp-section lp-final">
+    <h2>Dükkânın bu akşam randevu almaya başlasın</h2>
+    <p class="muted">Kurulum beş dakika sürer. İlk 14 gün ücretsiz, kart istemez.</p>
+    <div class="lp-actions">
+      <a class="btn" href="{% url 'panel:signup' %}">Dükkânını kur</a>
+      <a class="btn ghost" href="{% url 'panel:login' %}">Kuaför girişi</a>
+    </div>
+  </section>
+  <p class="foot">{{ SITE_NAME }} · Erkek kuaförleri için online randevu</p>
 </div>
 {% endblock %}
