@@ -20,7 +20,7 @@ html[data-nav="fwd"]:not([data-enter="off"]) .steps .on:not(:has(~ .on)) { anima
 
 /* P5, P7: the tapped day or hour answers at once (the snapshot must be solid) */
 a.day:active, .slot:active { transform: scale(.94); transition-duration: var(--t-press); }
-.day.on { scroll-initial-target: nearest; }
+.days > .day.on { scroll-initial-target: nearest; }   /* only the real strip: a .day.on elsewhere (the home page preview) would pull the whole page to it */
 .days:has(.is-picked) .on:not(.is-picked) { background: var(--surface); border-color: var(--line-strong); color: var(--ink); }
 .days:has(.is-picked) .on:not(.is-picked) small { color: var(--muted); }
 .slots { transition: opacity var(--t-fast); }
