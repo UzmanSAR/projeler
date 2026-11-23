@@ -284,7 +284,9 @@ class OtpTests(Base):
 @override_settings(SMS_SHOW_CODE=True)
 class PublicFlowTests(Base):
     def first_slot(self):
-        page = self.client.get(f"/ornek/randevu/saat/?h={self.cut.id}&b=0")
+        # Gün açıkça verilir (en az bir gün sonrası): "ilk boş saat" bugüne düşerse iptal süresi
+        # dolmuş olabilir ve test günün saatine göre kalır ya da geçer.
+        page = self.client.get(f"/ornek/randevu/saat/?h={self.cut.id}&b=0&g={self.day:%Y-%m-%d}")
         self.assertEqual(page.status_code, 200)
         return int(re.search(r"t=(\d+)", page.content.decode()).group(1))
 

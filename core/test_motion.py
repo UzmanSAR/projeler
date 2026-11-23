@@ -35,6 +35,27 @@ class MotionWiringTests(TestCase):
         self.assertIn('data-motion="off"', html)
         self.assertNotIn("@view-transition", html)
 
+    def test_static_urls_carry_a_content_version(self):
+        from core.context import static_version
+        html = self.client.get("/").content.decode()
+        version = static_version()
+        self.assertRegex(version, r"^[0-9a-f]{10}$")
+        for name in ("css/app.css", "js/app.js", "css/public.css", "js/public.js"):
+            self.assertIn(f"{name}?v={version}", html)
+
+    def test_kill_switch_spellings(self):
+        """MOTION değeri ayar dosyasında sadeleşir: OFF, Off, 'off ', 0, false hepsi kapatır."""
+        import os
+        import subprocess
+        import sys
+        code = "from django.conf import settings; print(settings.MOTION)"
+        for raw, want in (("OFF", "off"), ("Off ", "off"), ("0", "off"), ("false", "off"), ("kapalı", "off"),
+                          ("Lite", "lite"), ("FULL", "full"), ("", "full")):
+            env = dict(os.environ, MOTION=raw, DJANGO_SETTINGS_MODULE="config.settings")
+            out = subprocess.run([sys.executable, "-c", code], env=env, cwd=settings.BASE_DIR,
+                                 capture_output=True, text=True, check=True).stdout.strip()
+            self.assertEqual(out, want, f"MOTION={raw!r}")
+
     def test_rank_table_mirrors_urls(self):
         js = (Path(settings.BASE_DIR) / "static" / "js" / "app.js").read_text(encoding="utf-8")
         for literal in sorted(RANKED):

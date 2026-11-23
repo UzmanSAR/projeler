@@ -45,12 +45,15 @@ small, .muted { color: var(--muted); font-size: .875rem; }
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 15px 16px; margin-bottom: 10px; }
 .row { display: flex; align-items: center; gap: 10px; }
 .row.between { justify-content: space-between; }
+.row.between > form { min-width: 0; }   /* Takvim: the date field gives way, the two buttons keep their labels on one line */
+.row.between:has(> form) > .btn { flex: none; }
 .row.wrapx { flex-wrap: wrap; }
 .grow { flex: 1; min-width: 0; }
 .btn {
   display: inline-block; border: 1px solid var(--gold); border-radius: 10px; background: var(--gold); color: var(--on-gold);
   font: inherit; font-weight: 700; letter-spacing: .01em; padding: 12px 18px; cursor: pointer; text-align: center;
   transition: background var(--t-fast), border-color var(--t-fast), color var(--t-fast), box-shadow var(--t-base), transform 260ms var(--e-spring);
+  overflow-wrap: break-word;
 }
 .btn:hover { background: var(--gold-bright); border-color: var(--gold-bright); color: var(--on-gold); }
 .btn:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 2px; }
@@ -120,7 +123,7 @@ input[type=checkbox], input[type=radio] { accent-color: var(--gold); }
 .day.on { background: var(--gold); border-color: var(--gold); color: var(--on-gold); }
 .day.on small { color: #4a3a17; }
 .day.off { opacity: .35; }
-.slots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(max(3.6em, 22%), 1fr)); gap: 8px; }   /* four across; fewer when the text is set large */
 .slot { text-align: center; padding: 12px 0; background: var(--surface); border: 1.5px solid var(--line); border-radius: 10px; color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; transition: border-color .15s, background .15s; }
 .slot:hover { border-color: var(--gold); background: var(--gold-soft); color: var(--gold-bright); }
 .summary dt { color: var(--muted); font-size: .74rem; letter-spacing: .08em; text-transform: uppercase; }
@@ -134,6 +137,15 @@ table.plain td, table.plain th { padding: 9px 4px; border-bottom: 1px solid var(
 table.plain tr:last-child td { border-bottom: 0; }
 table.plain th { color: var(--muted); font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; font-weight: 600; }
 table.plain td.num, table.plain th.num { text-align: right; font-variant-numeric: tabular-nums; }
+/* the page does not pan sideways (HAREKET below clips it): narrow screens get a tighter table, and what is
+   still too wide scrolls inside its own card */
+.card:has(> table.plain) { overflow-x: auto; }
+@media (max-width: 380px) {
+  .card:has(> table.plain) { padding-left: 10px; padding-right: 10px; }
+  table.plain td, table.plain th { padding: 9px 3px; }
+  table.plain td { font-size: .86rem; }
+  table.plain th { letter-spacing: .02em; }
+}
 .linkbox { background: var(--gold-soft); border: 1px dashed rgba(205, 168, 95, .45); color: var(--gold-bright); border-radius: 10px; padding: 10px 12px; font-size: .9rem; word-break: break-all; }
 
 /* Panel */
@@ -147,6 +159,7 @@ table.plain td.num, table.plain th.num { text-align: right; font-variant-numeric
 .tabs a.on { color: var(--gold); box-shadow: inset 0 2px 0 var(--gold); }
 .kpis { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }
 .kpis.three { grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 350px) { .kpis.three { grid-template-columns: 1fr 1fr; } .kpis.three > :last-child { grid-column: 1 / -1; } }
 .kpi { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 13px 14px; }
 .kpi small { display: block; font-size: .72rem; letter-spacing: .07em; text-transform: uppercase; }
 .kpi b { font-family: var(--serif); font-weight: 600; font-size: 1.45rem; display: block; line-height: 1.35; font-variant-numeric: tabular-nums; }
@@ -226,7 +239,7 @@ html[data-nav="back"] { --dx: calc(var(--slide) * -1); --dy: 0px; --vt-out-x: va
 /* a sideways entrance must not widen the page: on a phone that aborts the transition */
 html { background: var(--bg); overflow-x: clip; }
 .wrap { overflow-x: clip; }
-.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.sr-only { position: absolute; top: 0; left: 0; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }   /* top: adds no pixel to the page's height */
 
 /* shared keyframes */
 @keyframes rise { from { opacity: 0; transform: translate(var(--dx), var(--dy)); } }
@@ -242,6 +255,10 @@ html { background: var(--bg); overflow-x: clip; }
    scene · pick (public) · tab-pill (panel). A duplicate name on a page cancels the whole transition. */
 .hero { view-transition-name: hero; } .stripe { view-transition-name: stripe; } .steps { view-transition-name: steps; }
 .sticky { view-transition-name: bar; } .topbar { view-transition-name: topbar; } .tabs { view-transition-name: tabs; }
+/* a scrolled page (data-away, app.js): its top bars are out of view. Unnamed, they fade in place on the other
+   side instead of flying in from beyond the screen. The fixed bars keep their names */
+html[data-away] :is(.hero, .stripe, .steps, .topbar) { view-transition-name: none; }
+@media (min-width: 760px) { html[data-away] .tabs, html[data-away] .tabs a.on::before { view-transition-name: none; } }
 ::view-transition-group(*) { animation-duration: var(--t-vt); animation-timing-function: var(--e-inout); }
 ::view-transition-old(*), ::view-transition-new(*) { animation-duration: var(--t-vt); }
 ::view-transition-group(hero) { overflow: clip; }
@@ -345,6 +362,7 @@ html[data-first]:not(:has([data-calm])) :where(main.wrap > :not(.sticky, .msgs, 
 }
 /* busy: never with the disabled attribute */
 .btn.is-busy { box-shadow: inset 0 0 0 99px rgba(0, 0, 0, .08); }
+@media (forced-colors: active) { .btn.is-busy { outline: 2px dashed ButtonText; outline-offset: -5px; } }   /* gradients and shadows are gone there */
 .btn.is-busy, form[data-busy] .btn { pointer-events: none; }
 form[data-busy] .btn:not(.is-busy) { opacity: .45; }
 .btn.is-done { animation: done-ring 800ms var(--e-out) 200ms; }
@@ -374,10 +392,10 @@ label:has(+ :is(input, select, textarea):focus) { color: var(--gold-bright); }
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after { animation-duration: .01ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important;
     transition-duration: .01ms !important; transition-delay: 0s !important; }
-  .btn:is(:active, :hover) { transform: none !important; }
+  :is(.btn, a.day, .slot, .tabs a, .cal a.ev):is(:active, :hover), .pick:active .box { transform: none !important; }
 }
 html[data-motion="off"] *, html[data-motion="off"] ::before, html[data-motion="off"] ::after {
   animation-duration: .01ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important;
   transition-duration: .01ms !important; transition-delay: 0s !important; }
-html[data-motion="off"] .btn:is(:active, :hover) { transform: none !important; }
+html[data-motion="off"] :is(.btn, a.day, .slot, .tabs a, .cal a.ev):is(:active, :hover), html[data-motion="off"] .pick:active .box { transform: none !important; }
 /* ===== /HAREKET ===== */

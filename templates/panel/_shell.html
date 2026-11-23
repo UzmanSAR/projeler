@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'css/panel.css' %}?v=2">{% endblock %}
-{% block extra_js %}<script src="{% static 'js/panel.js' %}?v=2"></script>{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/panel.css' %}?v={{ STATIC_V }}">{% endblock %}
+{% block extra_js %}<script src="{% static 'js/panel.js' %}?v={{ STATIC_V }}"></script>{% endblock %}
 {% block title %}{{ request.business.name }} · Panel{% endblock %}
 {% block body %}
 <div class="topbar"><div class="inner">

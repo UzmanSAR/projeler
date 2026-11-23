@@ -33,7 +33,7 @@ a.day:active, .slot:active { transform: scale(.94); transition-duration: var(--t
 .days:has(.is-picked) .on:not(.is-picked) { background: var(--surface); border-color: var(--line); color: var(--ink); }
 .days:has(.is-picked) .on:not(.is-picked) small { color: var(--muted); }
 .slots { transition: opacity var(--t-fast); }
-.days:has(.is-picked) ~ .slots { opacity: .45; }
+.days:has(.is-picked) ~ .slots { opacity: .45; pointer-events: none; }   /* the old day's hours: not tappable under the new day */
 .slots:has(.is-picked) .slot:not(.is-picked) { opacity: .4; }
 
 /* P6 slot-deal: a diagonal wave over six rows (four when there are five columns); the grid does not rise.
@@ -100,5 +100,5 @@ html:is([data-from="verify"], [data-from="details"]):not([data-enter="off"]) .ti
 @keyframes pub-glint { 50% { opacity: 1; } }
 
 /* P10 cancelled: muted, no seal; the way forward takes the foil */
-.ticket[class*="cancelled"] .summary { opacity: .6; }
+.ticket[class*="cancelled"] .summary dd { opacity: .6; }   /* the values only: the small labels keep their contrast */
 html[data-nav="same"] .ticket[class*="cancelled"] ~ p .btn::before { animation: sheen 900ms var(--e-inout) 400ms backwards; }

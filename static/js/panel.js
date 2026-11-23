@@ -88,9 +88,10 @@
       navigator.clipboard.writeText(box.textContent.trim()).then(function () {
         box.classList.remove('is-copied'); void box.offsetWidth; box.classList.add('is-copied'); M.status('Kopyalandı', 1600);
         clearTimeout(timer); timer = setTimeout(function () { box.classList.remove('is-copied'); }, 1600);
-      }, function () {});
+      }, function () { M.status('Kopyalanamadı', 1600); });
     };
     box.setAttribute('role', 'button'); box.setAttribute('tabindex', '0');
+    box.setAttribute('aria-label', 'Randevu linkini kopyala: ' + box.textContent.trim());
     box.addEventListener('click', copy);
     box.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); copy(); } });
   });

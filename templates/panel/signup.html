@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'css/panel.css' %}?v=2">{% endblock %}
-{% block extra_js %}<script src="{% static 'js/panel.js' %}?v=2"></script>{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/panel.css' %}?v={{ STATIC_V }}">{% endblock %}
+{% block extra_js %}<script src="{% static 'js/panel.js' %}?v={{ STATIC_V }}"></script>{% endblock %}
 {% block title %}Dükkânını kur{% endblock %}
 {% block body %}
 <div class="hero"><div class="inner"><small>{{ SITE_NAME }} · 14 gün ücretsiz</small><h1>Dükkânını 5 dakikada kur</h1><p>Saç, sakal ve saç + sakal hizmetleri hazır gelir; fiyatları sonra değiştirirsin.</p></div></div>

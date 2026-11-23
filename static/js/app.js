@@ -64,6 +64,7 @@
             nav = x && y && x !== y ? (y > x ? 'fwd' : 'back') : 'same';
           } else if ((prev[0] === 'shop' && cur[0] === 'select') || (prev[0] === 'auth' && cur[1] >= 100)) nav = 'wipe';
           else if (prev[1] >= 100 && cur[1] >= 100 && Math.floor(prev[1] / 10) !== Math.floor(cur[1] / 10)) nav = 'tab';
+          else if (prev[0] === 'ticket' && /^(select|time)$/.test(cur[0])) nav = 'fwd';   /* "Yeni randevu al" */
           else if (cur[1] !== prev[1]) nav = cur[1] > prev[1] ? 'fwd' : 'back';
         }
       } catch (e) {}
@@ -77,8 +78,10 @@
     return cur;
   }
   var cur = direction();
-  /* the gate. Fails closed: no storage => quiet panel, no sign reveal */
-  var enterOff = M.nav === 'same' || level !== 'full';
+  /* a slow zone script must not hold the first paint for good */
+  setTimeout(function () { var l = d.querySelector('link[rel="expect"]'); if (l && !d.getElementById('eof')) l.remove(); }, 2500);
+  /* the gate. Fails closed: no storage => quiet panel, no sign reveal. Back and Forward are always quiet */
+  var enterOff = M.nav === 'same' || level !== 'full' || navType === 'traverse';
   if (cur[1] >= 100) {
     var key = location.pathname + location.search, seen = store.get('seen') || [];
     if (!ss || seen.indexOf(key) > -1) enterOff = true;
@@ -104,18 +107,23 @@
     var vt = e.viewTransition;
     shownAt = performance.now();
     if (restored) direction();
+    if (vt && vt.ready) vt.ready.catch(function () {});   /* a skipped transition is not an error */
     if (vt && level === 'off') { vt.skipTransition(); vt = null; }
     if (vt) {
       liveVT = vt;
       root.setAttribute('data-vt', M.nav);
       if (M.nav === 'wipe') { root.setAttribute('data-enter', 'off'); M.entering = false; }   /* behind the blade the page stands still */
-      var done = function () { if (liveVT === vt) { liveVT = null; root.removeAttribute('data-vt'); } };
+      var done = function () { if (liveVT === vt) { liveVT = null; root.removeAttribute('data-vt'); root.removeAttribute('data-away'); } };
       vt.finished.then(done, done);
     } else if (M.nav === 'wipe') { M.nav = 'fwd'; root.setAttribute('data-nav', 'fwd'); }
     restore();
+    away(vt);
     revealed = true; flush();
   });
-  d.addEventListener('DOMContentLoaded', function () { domReady = true; if (revealed) shownAt = performance.now(); restore(); keptY = 0; flush(); });
+  /* a scrolled page: its top bars are out of view. Unnamed (app.css), they fade in place instead of flying in */
+  function away(vt) { root.toggleAttribute('data-away', !!vt && w.scrollY > 16); }
+  w.addEventListener('pageswap', function (e) { away(e.viewTransition); });
+  d.addEventListener('DOMContentLoaded', function () { domReady = true; if (revealed) shownAt = performance.now(); words(); restore(); keptY = 0; flush(); });
   /* an impatient tap ends the transition; never forwarded */
   d.addEventListener('pointerdown', function () { if (liveVT) try { liveVT.skipTransition(); } catch (e) {} }, true);
   /* ghost-tap guard: bars sit at the same spot on consecutive pages. Stateless */
@@ -124,18 +132,18 @@
   }, true);
   d.addEventListener('touchstart', function () {}, { passive: true });   /* iOS: paints :active at once */
 
-  /* ---- status words: chip + polite live region */
-  var chip = null, live = null, chipTimer = 0;
+  /* ---- status words: chip + polite live region (made empty at DOM ready: only a later change is spoken) */
+  var chip = null, live = null, chipTimer = 0, sayTimer = 0;
   function words() {
     if (chip || !d.body) return;
     d.body.insertAdjacentHTML('beforeend', '<div id="nav-status" aria-hidden="true"></div><div id="nav-live" class="sr-only" role="status"></div>');
     chip = d.getElementById('nav-status'); live = d.getElementById('nav-live');
   }
   M.announce = function (text) { words(); if (live) live.textContent = text || ''; };
-  M.status = function (text, ms) {
+  M.status = function (text, ms, mute) {   /* mute: the chip only */
     words(); clearTimeout(chipTimer); if (!chip) return;
-    chip.textContent = text || ''; M.announce(text);
-    if (text && ms) chipTimer = setTimeout(function () { chip.textContent = ''; live.textContent = ''; }, ms);
+    chip.textContent = text || ''; if (!mute) M.announce(text);
+    if (text && ms) chipTimer = setTimeout(function () { chip.textContent = ''; if (!mute) live.textContent = ''; }, ms);
   };
 
   /* ---- waiting: busy at once, pole at 300ms, words at 4s and 12s; one timer set */
@@ -149,19 +157,32 @@
     later(function () { root.classList.add('is-waiting'); }, 300);
     later(function () { M.status('Bağlanıyor…'); }, 4000);
     later(function () { M.status('Sunucu uyanıyor, birkaç saniye daha…'); }, 12000);
-    later(function () { reset(); if (post) M.status('Bağlantı kurulamadı. Tekrar deneyebilirsin.', 6000); }, post ? 90000 : 15000);
+    if (!post) later(release, 15000);   /* a link can be tapped again; pole and words stay while the browser still loads */
+    later(function () { reset(); M.status('Bağlantı kurulamadı. Tekrar deneyebilirsin.', 6000); }, 90000);
   }
-  function reset(keep) {   /* keep 1: new wait, marks stay · 2: first pageshow, the page's own words stay */
-    timers.forEach(clearTimeout); timers = [];
-    root.classList.remove('is-waiting');
-    if (chip && keep !== 2) { clearTimeout(chipTimer); chip.textContent = ''; }
-    if (keep === 1) return;
+  function release() {
     each('.is-busy, .is-picked, [aria-busy]', idle);
     each('form[data-busy]', function (f) { f.removeAttribute('data-busy'); });
   }
+  function reset(keep) {   /* keep: a new wait, the marks stay */
+    timers.forEach(clearTimeout); timers = [];
+    root.classList.remove('is-waiting');
+    clearTimeout(sayTimer);
+    if (chip) { clearTimeout(chipTimer); chip.textContent = live.textContent = ''; }
+    if (!keep) release();
+  }
+  /* a navigation the browser gave up (Stop): release now. An abort in its first second, or one that a newer
+     navigation or the unload follows, is not that */
+  var navSeq = 0;
+  if (w.navigation) w.navigation.addEventListener('navigate', function (e) {
+    var n = ++navSeq, t0 = Date.now();
+    if (e.signal) e.signal.addEventListener('abort', function () {
+      if (Date.now() - t0 > 1000) setTimeout(function () { if (n === navSeq && timers.length) { reset(); M.status('Yükleme durdu. Tekrar deneyebilirsin.', 6000); } }, 300);
+    });
+  });
   w.addEventListener('pageshow', function (e) {
-    reset(e.persisted ? 0 : 2);
-    if (e.persisted) { restored = true; shownAt = performance.now(); root.setAttribute('data-enter', 'off'); root.removeAttribute('data-first'); M.entering = false; direction(); }
+    /* the first pageshow resets nothing: a tap made before load is still on its way */
+    if (e.persisted) { reset(); restored = true; shownAt = performance.now(); root.setAttribute('data-enter', 'off'); root.removeAttribute('data-first'); M.entering = false; direction(); }
     d.dispatchEvent(new CustomEvent('motion:reset', { detail: { persisted: !!e.persisted } }));
   });
   function emit(name, target, detail) { target.dispatchEvent(new CustomEvent(name, { bubbles: true, detail: detail })); }
@@ -170,10 +191,10 @@
   function formsOf(action) { return [].filter.call(d.forms, function (f) { return f.getAttribute('action') === action; }); }
 
   /* ---- links (bubble phase: whoever cancels the click has done so) */
-  var lastSubmit = null, SUBMITS = 'button, input[type="submit"]';
+  var lastSubmit = null, newTab = false, SUBMITS = 'button, input[type="submit"]';
   d.addEventListener('click', function (e) {
     var t = e.target; if (!t.closest) return;
-    var sb = t.closest(SUBMITS); if (sb) lastSubmit = sb;
+    var sb = t.closest(SUBMITS); if (sb) { lastSubmit = sb; newTab = e.ctrlKey || e.metaKey || e.shiftKey; }
     if (e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     var a = t.closest('a[href]');
     if (!a || (a.target && a.target !== '_self') || a.hasAttribute('download') || a.origin !== location.origin || /\.ics$/.test(a.pathname)) return;
@@ -188,6 +209,7 @@
   d.addEventListener('submit', function (e) {
     var f = e.target, tg = f.getAttribute('target');
     if (e.defaultPrevented || (tg && tg !== '_self')) return;
+    if (newTab && lastSubmit.form === f) { newTab = false; return; }   /* modifier click: the answer opens elsewhere */
     if (f.hasAttribute('data-busy')) { e.preventDefault(); return; }
     f.setAttribute('data-busy', '1');
     var post = (f.getAttribute('method') || '').toLowerCase() === 'post';
@@ -214,12 +236,18 @@
     if (kept) { if (keptY) w.scrollTo(0, keptY); return; }
     kept = true;
     var s = store.take('scroll'), b = store.take('btn'), now = Date.now(), here = location.pathname;
-    var err = d.querySelector('.msgs.flash li.error'), flash = d.querySelector('.msgs.flash');   /* standing warnings don't count */
-    if (s && s.p === here && now - s.t < AGE && navType === 'push' && !err && s.y > 0) { keptY = s.y; w.scrollTo(0, keptY); }
+    var err = d.querySelector('.msgs li.error, .errorlist'), flash = d.querySelector('.msgs.flash');   /* standing warnings don't count */
+    if (s && s.p === here && now - s.t < AGE && navType === 'push') {
+      var er = err && !err.closest('.flash') && err.getBoundingClientRect();   /* a flash error is at the top */
+      if (!err) { if (s.y > 0) { keptY = s.y; w.scrollTo(0, keptY); } }
+      else if (er && (er.top < 0 || er.bottom > w.innerHeight)) err.scrollIntoView({ block: 'center' });   /* a field error must be seen */
+    }
     M.ready(function () {
       if (flash) {
         var r = flash.getBoundingClientRect(), text = [].map.call(flash.children, function (li) { return li.textContent; }).join(' ');
-        if (r.bottom < 0 || r.top > w.innerHeight) M.status(text, 4000); else M.announce(text);
+        if (r.bottom < 0 || r.top > w.innerHeight) M.status(text, 4000, 1);
+        /* spoken a second after arrival, as a change of its own; then the copy goes */
+        sayTimer = setTimeout(function () { M.announce(text); sayTimer = setTimeout(function () { if (live && live.textContent === text) live.textContent = ''; }, 6000); }, 1000);
       }
       var f = b && b.p === here && now - b.t < AGE && !err && M.full && d.querySelector('.msgs.flash li.success') && formsOf(b.a)[b.f];
       var btn = f && f.querySelectorAll(SUBMITS)[b.b];

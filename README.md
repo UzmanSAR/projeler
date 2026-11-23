@@ -78,7 +78,11 @@ değişkenlerini kaldır, demo kullanıcısını sil ve aşağıdaki "Yayına al
   (`static/css/app.css`, `static/js/app.js`, müşteri tarafı `public.*`, panel `panel.*`)
 - Hareket yalnızca süslemedir: JavaScript kapalıyken ya da "hareketi azalt" ayarı açıkken her sayfa
   eksiksiz çalışır; sayfa geçişlerini desteklemeyen tarayıcıda geçiş olmadan açılır
-- `MOTION` ortam değişkeni: `full` (varsayılan), `lite` (yalnızca basma, yükleme ve geçiş), `off` (kapalı)
+- `MOTION` ortam değişkeni: `full` (varsayılan), `lite` (yalnızca basma, yükleme ve geçiş), `off` (hareket
+  kapalı; `OFF`, `0`, `false` yazımları da kapatır). `off` yalnızca hareketi kapatır: gönderilen formun
+  kilitlenmesi ve bekleme göstergesi çalışmaya devam eder
+- Statik dosya adresleri içerikten türeyen bir `?v=` değeri taşır (`core/context.py`); dosya değişince
+  adres kendiliğinden değişir, sürümü elle artırmak gerekmez
 - Davranış bayrakları `templates/base.html` içindeki `data-flags` özniteliğinde: `live-total`
   ("Devam et" butonunda süre ve tutar), `now-line` (takvimde şu an çizgisi), `copy-link` (randevu
   bağlantısına dokununca kopyalama). `auto-code` (altıncı rakamda kodu kendiliğinden gönderme)
