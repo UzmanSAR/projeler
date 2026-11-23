@@ -13,7 +13,23 @@
     each('.day.is-picked, .slot.is-picked', function (el) { el.classList.remove('is-picked'); });
     a.classList.add('is-picked');
     if (strip && a.parentNode === strip) M.hint('days', strip.scrollLeft);
+    else if (M.full) {   /* makas seçilen saatin köşesini keser (the hour is already bordo: the tap never waits) */
+      if (!a.querySelector('.snip')) a.insertAdjacentHTML('beforeend', '<i class="offcut"></i><svg class="snip" viewBox="-12.5 -8 25 16" aria-hidden="true">' +
+        '<g class="sc-b"><path class="io" d="M-11,.15L0,0L4.5,-2"/><circle class="io" cx="7.3" cy="-3.5" r="2.8"/></g>' +
+        '<g class="sc-a"><path class="io" d="M-11,-.15L0,0L4.5,2"/><circle class="io" cx="7.3" cy="3.5" r="2.8"/></g><circle class="ii" r=".9"/></svg>');
+      a.classList.add('just-picked');
+    }
   });
+  d.addEventListener('motion:reset', function () { each('.slot.just-picked', function (el) { el.classList.remove('just-picked'); }); });
+  /* levha kendini çizer, makas kesik çizgiyi keser: ekrana girince, bir kez */
+  if (M.full && 'IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (es) {
+      es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.remove('is-wait'); e.target.classList.add('is-in'); io.unobserve(e.target); } });
+    }, { threshold: .5 });
+    each('.draw:not(.on-load), .cut:not(.perf)', function (el) { el.classList.add('is-wait'); io.observe(el); });
+  }
+  /* gün değişince ustura yeni günün adını açar */
+  M.ready(function () { if (M.nav === 'same' && M.from === 'time') M.shave(d.querySelector('[data-shave]'), 160); });
   /* P5: after a day change the strip stands where it stood; otherwise the chosen day is brought into view
      (CSS scroll-initial-target where it exists). Only scrollLeft is written: scrollIntoView could move the page. */
   var on = strip && strip.querySelector('.day.on');

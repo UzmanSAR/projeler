@@ -80,9 +80,21 @@ değişkenlerini kaldır, demo kullanıcısını sil ve aşağıdaki "Yayına al
 - Fiyat ve süre randevu kalemine kopyalanır; fiyat değişince geçmiş ciro değişmez
 - İşlem kaydı: kim, ne zaman, hangi randevuyu değiştirdi
 
+**Görünüm**
+- Açık tema "Usta işi": kemik beyazı kâğıt, mürekkep siyahı ve tek vurgu olarak bordo. Renk, yazı ve
+  ölçü değerleri `static/css/app.css` dosyasının ilk bloğundadır (`--gold` adı eski temadan kalmadır;
+  değeri bordodur)
+- Yazı tipleri kendi sunucumuzdan gelir (`static/fonts`, SIL OFL): başlıklar Gloock, metin Libre
+  Franklin, şekil altı notları Newsreader italik. Dışarıya hiçbir istek gitmez
+- Ustura, makas, tarak ve berber direği elle çizilmiş SVG'dir (`templates/_pole.html`,
+  `templates/_sprite.html`, ana sayfadaki levhalar)
+
 **Hareket katmanı**
 - Sayfa geçişleri, buton durumları ve bekleme göstergesi; derleme adımı ve dış kütüphane yok
   (`static/css/app.css`, `static/js/app.js`, müşteri tarafı `public.*`, panel `panel.*`)
+- Berberliğe özgü hareketler: ustura köpüğü siler (ana sayfa başlığı, gün değişimi, kapatılan
+  randevunun tutarı), makas kesik çizgiyi ve seçilen saatin köşesini keser, onayda mühür iner ve
+  koçan ayrılır, beklerken direk döner
 - Hareket yalnızca süslemedir: JavaScript kapalıyken ya da "hareketi azalt" ayarı açıkken her sayfa
   eksiksiz çalışır; sayfa geçişlerini desteklemeyen tarayıcıda geçiş olmadan açılır
 - `MOTION` ortam değişkeni: `full` (varsayılan), `lite` (yalnızca basma, yükleme ve geçiş), `off` (hareket
