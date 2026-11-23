@@ -22,7 +22,7 @@
   {% with s=services.0 %}{% if s %}<small>Fiyatlar dükkân tarafından girilir.</small>{% endif %}{% endwith %}
 </div>
 {% if staff|length > 1 %}
-<h2>Berberler</h2>
+<h2>Kuaförler</h2>
 <div class="card">{% for p in staff %}<span class="badge gray" style="margin-right:6px">{{ p.name }}{% if p.title %} {{ p.title }}{% endif %}</span>{% endfor %}</div>
 {% endif %}
 <h2>Çalışma saatleri</h2>

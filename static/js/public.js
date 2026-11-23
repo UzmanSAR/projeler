@@ -28,6 +28,33 @@
     }, { threshold: .5 });
     each('.draw:not(.on-load), .cut:not(.perf)', function (el) { el.classList.add('is-wait'); io.observe(el); });
   }
+  /* ustura, tarak ve makas ekrandayken durmadan çalışır; "Durdur" hepsini bekletir (seçim oturum boyunca kalır).
+     html[data-loops] is the only switch of these loops and is set here alone, with full motion. */
+  var loops = d.querySelectorAll('.loop'), doc = d.documentElement;
+  if (M.full && loops.length && 'IntersectionObserver' in window) {
+    var seen = new IntersectionObserver(function (es) {
+      es.forEach(function (e) { e.target.classList.toggle('is-live', e.isIntersecting); });
+    }, { rootMargin: '48px 0px' });
+    var setLoops = function (off) {
+      doc.setAttribute('data-loops', off ? 'off' : 'on');
+      each('.loop-toggle', function (b) {
+        b.textContent = off ? 'Oynat' : 'Durdur';
+        b.setAttribute('aria-label', off ? 'Çizimlerin hareketini başlat' : 'Çizimlerin hareketini durdur');
+      });
+    };
+    [].forEach.call(loops, function (el) {
+      seen.observe(el);
+      var fig = el.closest('figure'), cap = fig && fig.querySelector('figcaption');
+      if (!cap) return;
+      fig.removeAttribute('aria-hidden'); el.setAttribute('aria-hidden', 'true');   /* the drawing stays decorative, the button does not */
+      var b = d.createElement('button'); b.type = 'button'; b.className = 'loop-toggle'; cap.appendChild(b);
+      b.addEventListener('click', function () {
+        var off = doc.getAttribute('data-loops') !== 'off';
+        M.store.set('loops', off ? 'off' : 'on'); setLoops(off);
+      });
+    });
+    setLoops(M.store.get('loops') === 'off');
+  }
   /* gün değişince ustura yeni günün adını açar */
   M.ready(function () { if (M.nav === 'same' && M.from === 'time') M.shave(d.querySelector('[data-shave]'), 160); });
   /* P5: after a day change the strip stands where it stood; otherwise the chosen day is brought into view

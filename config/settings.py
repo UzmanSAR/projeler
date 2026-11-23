@@ -134,7 +134,7 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = 60 * 60 * 24 * 30
 
 # ---- Ürün ayarları -------------------------------------------------------
-SITE_NAME = env("SITE_NAME", "Berber Randevu")
+SITE_NAME = env("SITE_NAME", "Kuaför Randevu")
 SITE_URL = env("SITE_URL") or env("RENDER_EXTERNAL_URL") or "http://localhost:8000"
 # Hareket katmanı: full | lite | off (kapatma düğmesi). Büyük harf, boşluk ve 0/false gibi yazımlar da kapatır.
 MOTION = (env("MOTION", "full") or "full").strip().lower()

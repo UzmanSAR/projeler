@@ -26,7 +26,9 @@ from .booking import (BookingError, cancel_appointment, close_appointment, creat
 from .models import Appointment, Business, Customer, Service, Staff, TimeOff
 from .setup import create_business
 
-SLUG = "ornek-berber"
+SLUG = "ornek-berber"   # adres aynı kalır: eski bağlantılar çalışmaya devam eder
+SHOP_NAME, SHOP_ABOUT = "Örnek Kuaför", "Mahallenin kuaförü. Saç, sakal ve cilt bakımı."
+OLD_SHOP = ("Örnek Berber Salonu", "Mahallenin berberi. Saç, sakal ve cilt bakımı.")
 EMAIL, PASSWORD = "demo@example.com", "demo-sifre-1"
 HISTORY_DAYS, AHEAD_DAYS, CUSTOMERS = 84, 21, 360
 LOCK_ID = 7270001   # pg_advisory_lock anahtarı
@@ -119,11 +121,15 @@ def _shop():
     if business is None:
         User = get_user_model()
         user = User.objects.filter(username=EMAIL).first() or User.objects.create_user(EMAIL, EMAIL, PASSWORD)
-        business = create_business(user, "Örnek Berber Salonu", SLUG, STAFF[0][0], phone="05320000000")
-        business.description = "Mahallenin berberi. Saç, sakal ve cilt bakımı."
+        business = create_business(user, SHOP_NAME, SLUG, STAFF[0][0], phone="05320000000")
+        business.description = SHOP_ABOUT
         business.address = "Örnek Mah. Çarşı Cad. No: 12"
         business.district = "Örnek Mahallesi"
         business.save()
+    elif (business.name, business.description) == OLD_SHOP:
+        # Eski adla kurulmuş örnek dükkân: sahibi elle değiştirmediyse yeni ada geçer.
+        business.name, business.description = SHOP_NAME, SHOP_ABOUT
+        business.save(update_fields=["name", "description"])
     services = {}
     for order, (name, duration, price, _) in enumerate(SERVICES):
         services[name], _ = Service.objects.get_or_create(

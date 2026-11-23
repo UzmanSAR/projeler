@@ -1,6 +1,6 @@
 # Erkek Kuaförleri İçin Online Randevu Platformu
 
-Her berberin kendi randevu sayfası: pazar yeri yok, komisyon yok. Müşteri üye olmadan,
+Her kuaförün kendi randevu sayfası: pazar yeri yok, komisyon yok. Müşteri üye olmadan,
 SMS koduyla randevu alır; kuaför takvimini, müşterilerini ve cirosunu tek panelden görür.
 
 Proje raporundaki Faz 1 ve Faz 2 kapsamını içerir (ayrıntı aşağıda).
@@ -95,6 +95,9 @@ değişkenlerini kaldır, demo kullanıcısını sil ve aşağıdaki "Yayına al
 - Berberliğe özgü hareketler: ustura köpüğü siler (ana sayfa başlığı, gün değişimi, kapatılan
   randevunun tutarı), makas kesik çizgiyi ve seçilen saatin köşesini keser, onayda mühür iner ve
   koçan ayrılır, beklerken direk döner
+- Ana sayfadaki ustura, tarak ve makas ekrandayken durmadan çalışır (sap açılıp kapanır, dişlerden
+  ışık geçer, makas keser); ekrandan çıkınca bekler. Şekil altındaki "Durdur" hepsini durdurur,
+  seçim oturum boyunca kalır. Yalnızca tam harekette çalışır (`html[data-loops]`, `public.js`)
 - Hareket yalnızca süslemedir: JavaScript kapalıyken ya da "hareketi azalt" ayarı açıkken her sayfa
   eksiksiz çalışır; sayfa geçişlerini desteklemeyen tarayıcıda geçiş olmadan açılır
 - `MOTION` ortam değişkeni: `full` (varsayılan), `lite` (yalnızca basma, yükleme ve geçiş), `off` (hareket

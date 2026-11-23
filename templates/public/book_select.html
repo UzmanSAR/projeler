@@ -9,7 +9,7 @@
     <span class="box"><span><b>{{ s.name }}</b><small>{{ s.duration }} dk</small></span><b>{{ s.price|floatformat:"0g" }} ₺</b></span></label>
   {% endfor %}
   {% if staff|length > 1 %}
-  <h2>Hangi berber?</h2>
+  <h2>Hangi kuaför?</h2>
   <div class="chips">
     <label class="pick"><input type="radio" name="b" value="0" {% if not sel.staff %}checked{% endif %}><span class="box"><b>Fark etmez</b><small>ilk boş olan</small></span></label>
     {% for p in staff %}

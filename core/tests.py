@@ -130,7 +130,7 @@ class BookingTests(Base):
     def test_staff_without_skill_is_not_offered(self):
         mert = Staff.objects.create(business=self.b, name="Mert")
         mert.services.set([self.cut])
-        with self.assertRaisesMessage(BookingError, "yapabilen berber"):
+        with self.assertRaisesMessage(BookingError, "yapabilen kuaför"):
             create_appointment(self.b, [self.combo], self.at(10), staff=mert,
                                customer=self.customer(), now=self.now)
 

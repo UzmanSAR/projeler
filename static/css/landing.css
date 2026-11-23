@@ -181,6 +181,48 @@ html:not([data-enter="off"]) .slot.lp-pick { animation: rise 220ms var(--e-out) 
 @keyframes lp-pick { from { background: var(--surface); border-color: var(--line-strong); color: var(--ink); } }
 /* ilk ziyarette çağrı butonundan tek parıltı */
 html[data-first]:not([data-enter="off"]) .lp-hero .lp-actions .btn:not(.ghost)::before { animation: sheen 900ms var(--e-inout) 1100ms backwards; }
+/* ---- sürekli hareket: ustura, tarak ve makas ekrandayken durmadan çalışır.
+   html[data-loops] yalnızca tam harekette public.js tarafından konur ("on" | "off"); o yoksa (az hareket tercihi,
+   hafif düzey, betik yok) hiçbir kural işlemez ve çizim yerinde durur. Levha kendini çizdikten sonra başlar.
+   .is-live: çizim ekranda. Bekleme kuralları en sonda ve aynı ağırlıkta: animation kısaltmasını ezer. */
+.rz-spark { fill: var(--gold); }
+.cb-back { fill: var(--bg); }                                   /* the page colour inside the drawing: the band blends against it */
+.cb-gap { fill: var(--gold-bright); mix-blend-mode: lighten; }   /* lighter than ink, darker than paper: only the teeth take the colour */
+.plate.loop { pointer-events: none; }
+.lp .fig figcaption { position: relative; z-index: 1; }   /* above the swaying drawing */
+.loop-toggle { appearance: none; background: none; border: 0; border-radius: 0; padding: 14px 8px; margin: -14px 0 -14px .4em; cursor: pointer;
+  font: 600 .66rem var(--sans); letter-spacing: var(--track-label); text-transform: uppercase; color: var(--muted);
+  text-decoration: underline; text-decoration-color: var(--line-strong); text-underline-offset: 3px; -webkit-tap-highlight-color: transparent; }
+.loop-toggle:hover { color: var(--ink); }
+.loop-toggle:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: -8px; }
+html[data-loops] .loop:is(.is-in, .on-load) { animation: lp-sway 3.4s var(--e-inout) 1.4s infinite alternate; }
+.lp-fig-razor .loop { --sway-x: -5px; --sway-y: 3px; --sway-r: -1.1deg; }
+.lp-fig-comb .loop { --sway-y: -3px; --sway-r: .9deg; }
+.lp-fig-scissors .loop { --sway-x: 3px; --sway-y: -4px; --sway-r: 1.6deg; }
+html[data-loops] .lp-fig-razor .loop:is(.is-in, .on-load) { animation-duration: 2.8s; }
+html[data-loops] .lp-fig-scissors .loop:is(.is-in, .on-load) { animation-duration: 3.7s; }
+@keyframes lp-sway { to { transform: translate(var(--sway-x, 0px), var(--sway-y, 0px)) rotate(var(--sway-r, 0deg)); } }
+/* ustura: sap açılıp kapanır, ağız hafifçe kalkar, keskin kenarda kıvılcım */
+html[data-loops] .loop:is(.is-in, .on-load) .rz-handle { animation: lp-rz-handle 5.6s var(--e-inout) 1.4s infinite; }
+html[data-loops] .loop:is(.is-in, .on-load) .rz-blade { animation: lp-rz-blade 5.6s var(--e-inout) 1.4s infinite; }
+html[data-loops] .loop:is(.is-in, .on-load) .rz-spark { animation: lp-spark 5.6s var(--e-out) 1.4s infinite; }
+@keyframes lp-rz-handle { 0%, 100% { transform: rotate(31deg); } 50% { transform: rotate(20deg); } }
+@keyframes lp-rz-blade { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(1.6deg); } }
+@keyframes lp-spark { 0%, 38%, 66%, 100% { opacity: 0; transform: scale(.2) rotate(0deg); } 50% { opacity: 1; transform: scale(1) rotate(24deg); } }
+/* makas: iki kez keser, dinlenir */
+html[data-loops] .loop:is(.is-in, .on-load) .sc-a { animation: lp-snip-a 3.8s var(--e-inout) 1.6s infinite; }
+html[data-loops] .loop:is(.is-in, .on-load) .sc-b { animation: lp-snip-b 3.8s var(--e-inout) 1.6s infinite; }
+@keyframes lp-snip-a { 0%, 13%, 28%, 100% { transform: rotate(13deg); } 6.5%, 20.5% { transform: rotate(1.5deg); } 64% { transform: rotate(16deg); } }
+@keyframes lp-snip-b { 0%, 13%, 28%, 100% { transform: rotate(-13deg); } 6.5%, 20.5% { transform: rotate(-1.5deg); } 64% { transform: rotate(-16deg); } }
+/* tarak: dişler sırayla bordoya döner (üstünden ışık geçer gibi), gider ve döner */
+html[data-loops] .loop:is(.is-in, .on-load) .cb-gap { animation: lp-strum 5.4s linear 1.6s infinite; }
+@keyframes lp-strum {
+  0% { opacity: 0; transform: translateX(17px); } 2%, 26% { opacity: 1; } 28%, 50% { opacity: 0; transform: translateX(283px); }
+  52%, 76% { opacity: 1; } 78%, 100% { opacity: 0; transform: translateX(17px); } }
+/* ekranda değilken ve "Durdur" denince olduğu yerde bekler */
+html[data-loops] .loop:not(.is-live), html[data-loops="off"] .loop:is(.is-in, .on-load),
+html[data-loops] .loop:not(.is-live) :is(.rz-handle, .rz-blade, .rz-spark, .sc-a, .sc-b, .cb-gap),
+html[data-loops="off"] .loop:is(.is-in, .on-load) :is(.rz-handle, .rz-blade, .rz-spark, .sc-a, .sc-b, .cb-gap) { animation-play-state: paused; }
 /* açılan sorular */
 @supports selector(::details-content) and (interpolate-size: allow-keywords) {
   html[data-motion="full"] .lp details { interpolate-size: allow-keywords; }
