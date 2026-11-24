@@ -17,6 +17,16 @@ if not DEBUG and SECRET_KEY.startswith("dev-only"):
 
 ALLOWED_HOSTS = [h for h in env("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h]
 CSRF_TRUSTED_ORIGINS = [o for o in env("CSRF_TRUSTED_ORIGINS", "").split(",") if o]
+# Kendi alan adı: tek değişken yeter. SITE_DOMAIN=kuaforrandevu.com yazılınca hem çıplak ad hem
+# www. hali kabul edilir, formlar ikisinde de çalışır ve sitenin adresi https://kuaforrandevu.com olur.
+SITE_DOMAINS = [d.strip().lower().removeprefix("https://").removeprefix("http://").strip("/")
+                for d in env("SITE_DOMAIN", "").split(",") if d.strip()]
+for _d in SITE_DOMAINS:
+    _bare = _d.removeprefix("www.")
+    for _h in (_bare, "www." + _bare):
+        if _h not in ALLOWED_HOSTS:
+            ALLOWED_HOSTS.append(_h)
+            CSRF_TRUSTED_ORIGINS.append("https://" + _h)
 # Render kendi alan adını bu değişkenlerle bildirir.
 if env("RENDER_EXTERNAL_HOSTNAME"):
     ALLOWED_HOSTS.append(env("RENDER_EXTERNAL_HOSTNAME"))
@@ -135,7 +145,8 @@ if not DEBUG:
 
 # ---- Ürün ayarları -------------------------------------------------------
 SITE_NAME = env("SITE_NAME", "Kuaför Randevu")
-SITE_URL = env("SITE_URL") or env("RENDER_EXTERNAL_URL") or "http://localhost:8000"
+SITE_URL = (env("SITE_URL") or ("https://" + SITE_DOMAINS[0].removeprefix("www.") if SITE_DOMAINS else "")
+            or env("RENDER_EXTERNAL_URL") or "http://localhost:8000")
 # Hareket katmanı: full | lite | off (kapatma düğmesi). Büyük harf, boşluk ve 0/false gibi yazımlar da kapatır.
 MOTION = (env("MOTION", "full") or "full").strip().lower()
 if MOTION in {"0", "false", "no", "none", "hayir", "hayır", "kapali", "kapalı"}:
