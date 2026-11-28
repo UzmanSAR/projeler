@@ -4,8 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>{% block title %}{{ SITE_NAME }}{% endblock %}</title>
-<meta name="theme-color" content="#ffffff">
-<meta name="color-scheme" content="light">
+{# Tarayıcı çubuğunun rengi: telefonun açık/koyu ayarına göre; kişi elle seçtiyse app.js ikisini de seçilen renge çevirir #}
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" data-light="#ffffff" data-dark="#1a1f1d" data-own="light">
+<meta name="theme-color" content="#1a1f1d" media="(prefers-color-scheme: dark)" data-light="#ffffff" data-dark="#1a1f1d" data-own="dark">
+<meta name="color-scheme" content="light dark">
 {# Ana ekrana eklenebilen uygulama: panel için platformun, dükkân sayfalarında dükkânın tanımı (public/_shell.html) #}
 <link rel="manifest" href="{% block manifest %}{% url 'manifest' %}{% endblock %}">
 <meta name="mobile-web-app-capable" content="yes">

@@ -28,7 +28,7 @@ python manage.py runserver
 
 Geliştirmede SMS gönderilmez; mesajlar konsola yazılır ve doğrulama kodu ekranda gösterilir.
 
-Testler: `python manage.py test` (94 test).
+Testler: `python manage.py test` (103 test).
 
 ## Canlı tanıtım sitesi (Render)
 
@@ -136,6 +136,11 @@ değişkenlerini kaldır, demo kullanıcısını sil ve aşağıdaki "Yayına al
 - Yazı tipleri kendi sunucumuzdan gelir (`static/fonts`, SIL OFL): başlıklar Newsreader, metin Libre
   Franklin. Dışarıya hiçbir istek gitmez
 - Marka işareti `templates/_brand.html` ve `static/icons/`; site adı `SITE_NAME` ortam değişkenindedir
+- Karanlık mod: site telefonun ya da bilgisayarın açık/koyu ayarına kendiliğinden uyar. Alt bilgideki ve
+  panelde Ayarlar sayfasındaki "Görünüm" düğmeleriyle (Otomatik · Açık · Koyu) kişi kendi seçebilir; seçim
+  yalnızca o cihazda saklanır ve sayfa çizilmeden uygulanır (`static/js/app.js`). Koyu renkler `app.css`
+  içinde iki kez yazılıdır (telefon ayarı ve elle seçim için); `core/test_theme.py` ikisinin aynı kaldığını ve
+  bileşenlerin renkleri yalnızca bu belirteçlerden aldığını denetler
 
 **Hareket katmanı**
 - Sayfa geçişleri, buton durumları ve bekleme göstergesi; derleme adımı ve dış kütüphane yok

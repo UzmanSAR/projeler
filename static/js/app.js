@@ -3,6 +3,41 @@
 (function () {
   'use strict';
   var w = window, d = document, root = d.documentElement, ss = null;
+
+  /* ---- theme: 'auto' follows the phone's light/dark setting; 'light' or 'dark' is a choice kept on this device.
+     Runs before the body is painted, so a chosen theme never flashes the other one first. Switch: _theme_switch.html */
+  var THEME = 'theme';
+  function themeChoice() { var t = null; try { t = w.localStorage.getItem(THEME); } catch (e) {} return t === 'light' || t === 'dark' ? t : 'auto'; }
+  function applyTheme(t) {
+    if (t === 'auto') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', t);
+    var metas = d.querySelectorAll('meta[name="theme-color"][data-own]');
+    for (var i = 0; i < metas.length; i++) metas[i].setAttribute('content', metas[i].getAttribute('data-' + (t === 'auto' ? metas[i].getAttribute('data-own') : t)));
+  }
+  function syncSwitches() {
+    var t = themeChoice(), boxes = d.querySelectorAll('[data-theme-switch]');
+    for (var i = 0; i < boxes.length; i++) {
+      boxes[i].hidden = false;
+      var bs = boxes[i].querySelectorAll('[data-theme-set]');
+      for (var j = 0; j < bs.length; j++) bs[j].setAttribute('aria-pressed', String(bs[j].getAttribute('data-theme-set') === t));
+    }
+  }
+  function refreshTheme() { applyTheme(themeChoice()); syncSwitches(); }
+  applyTheme(themeChoice());
+  d.addEventListener('DOMContentLoaded', syncSwitches);
+  w.addEventListener('pageshow', function (e) { if (e.persisted) refreshTheme(); });          /* back to a page kept in memory */
+  w.addEventListener('storage', function (e) { if (e.key === THEME) refreshTheme(); });     /* chosen in another tab */
+  d.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest ? e.target.closest('[data-theme-set]') : null;
+    if (!b) return;
+    var t = b.getAttribute('data-theme-set');
+    try { if (t === 'auto') w.localStorage.removeItem(THEME); else w.localStorage.setItem(THEME, t); } catch (err) {}
+    applyTheme(t); syncSwitches();
+    if (t !== 'auto' && themeChoice() !== t) {               /* storage refused (private window): keep it for this page */
+      var bs = d.querySelectorAll('[data-theme-set]');
+      for (var i = 0; i < bs.length; i++) bs[i].setAttribute('aria-pressed', String(bs[i].getAttribute('data-theme-set') === t));
+    }
+  });
+
   try { ss = w.sessionStorage; ss.setItem('m:t', '1'); ss.removeItem('m:t'); } catch (e) { ss = null; }
   var store = {
     get: function (k) { try { return ss ? JSON.parse(ss.getItem('m:' + k)) : null; } catch (e) { return null; } },

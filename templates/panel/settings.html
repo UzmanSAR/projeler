@@ -37,6 +37,9 @@
   {% if request.business.status == "trial" and request.business.trial_ends %}<div class="row between"><span>Deneme bitişi</span><b>{{ request.business.trial_ends|date:"d.m.Y" }}</b></div>{% endif %}
   <div class="row between"><span>Kalan SMS kredisi</span><b>{{ request.business.sms_credit }}</b></div>
   <p style="margin:12px 0 0"><a class="btn ghost small" href="{% url 'panel:membership' %}">Üyelik ve ödeme</a></p></div>
+  <div class="card"><b>Görünüm</b>
+  <p class="muted" style="margin:4px 0 10px">Otomatik seçiliyken telefonunun açık ya da koyu ayarına uyar. Seçim yalnızca bu cihazda geçerli.</p>
+  {% include "_theme_switch.html" with bare=1 %}</div>
   <div class="card"><b>Öneri ve görüşlerin</b>
   <p class="muted" style="margin:4px 0 0">Programda eksik bulduğun ya da değişmesini istediğin bir şey varsa yaz; doğrudan bize ulaşır.</p>
   <p style="margin:12px 0 0"><a class="btn ghost small" href="{% url 'feedback' %}?next={{ request.path|urlencode }}">Görüş bildir</a></p></div>

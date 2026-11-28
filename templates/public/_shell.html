@@ -19,5 +19,6 @@
   {% include "_messages.html" %}
   {% block content %}{% endblock %}
   <p class="foot">Online randevu altyapısı: <a href="/">{{ SITE_NAME }}</a> · <a href="{% url 'privacy' %}">Gizlilik</a> · <a href="{% url 'feedback' %}?d={{ business.slug }}&amp;next={{ request.get_full_path|urlencode }}">Görüş bildir</a></p>
+  <div class="foot foot-theme">{% include "_theme_switch.html" %}</div>
 </main>
 {% endblock %}
