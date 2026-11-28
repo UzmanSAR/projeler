@@ -2,22 +2,24 @@
 {% load static %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/public.css' %}?v={{ STATIC_V }}">{% endblock %}
 {% block extra_js %}<script src="{% static 'js/public.js' %}?v={{ STATIC_V }}"></script>{% endblock %}
+{% block html_attrs %} data-tone="{{ business.active_tone }}"{% if business.lights %} data-lights{% endif %}{% endblock %}
 {% block title %}{{ business.name }} · Online randevu{% endblock %}
 {% block manifest %}{% url 'public:shop_manifest' business.slug %}{% endblock %}
 {% block app_name %}{{ business.name }}{% endblock %}
 {% block body %}
 <div class="hero"><div class="inner">
   <div class="head-row">
-    <span class="monogram" aria-hidden="true">{{ business.name|first|upper }}</span>
+    {% include "public/_emblem.html" with kind=business.kind %}
     <div><small>{{ business.get_kind_display }}{% if business.district %} · {{ business.district }}{% endif %}</small>
     <h1><a href="{% url 'public:business' business.slug %}">{{ business.name }}</a></h1></div>
+    {% include "_theme_toggle.html" %}
   </div>
   {% block hero %}{% endblock %}
 </div></div>
-<div class="stripe"></div>
 <main class="wrap">
   {% include "_messages.html" %}
   {% block content %}{% endblock %}
   <p class="foot">Online randevu altyapısı: <a href="/">{{ SITE_NAME }}</a> · <a href="{% url 'privacy' %}">Gizlilik</a> · <a href="{% url 'feedback' %}?d={{ business.slug }}&amp;next={{ request.get_full_path|urlencode }}">Görüş bildir</a></p>
+  <div class="foot foot-theme">{% include "_theme_switch.html" %}</div>
 </main>
 {% endblock %}

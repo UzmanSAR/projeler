@@ -78,7 +78,7 @@ class StyleTests(TestCase):
     def test_other_businesses_cannot_touch_styles(self):
         self.add()
         style = Style.objects.get()
-        other, user = make_business("veli", "v@example.com")
+        _, user = make_business("veli", "v@example.com")
         self.client.force_login(user)
         self.assertEqual(self.client.get(f"/panel/ayarlar/modeller/{style.id}/").status_code, 404)
         self.client.post(f"/panel/ayarlar/modeller/{style.id}/", {"action": "delete"})

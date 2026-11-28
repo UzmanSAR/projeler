@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block body_attrs %} class="scope-paper"{% endblock %}
+{% block theme_color %}{% include "_ink_theme_color.html" %}{% endblock %}
+{% block title %}Sayfa bulunamadı · {{ SITE_NAME }}{% endblock %}
+{% block meta %}<meta name="robots" content="noindex">{% endblock %}
+{% block body %}
+{% include "_site_top.html" %}
+<main class="doc">
+  <p class="eyebrow doc-code">404</p>
+  <h1>Bu sayfa bulunamadı.</h1>
+  <p class="lead">Adres yanlış yazılmış ya da sayfa kaldırılmış olabilir. Bir salonun randevu sayfasını arıyorsanız bağlantıyı salondan yeniden isteyin.</p>
+  <p><a class="btn" href="/">Ana sayfaya dönün</a></p>
+</main>
+{% include "_site_foot.html" %}
+{% endblock %}

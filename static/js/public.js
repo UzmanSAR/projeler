@@ -49,18 +49,12 @@
     d.addEventListener('motion:reset', total); total();
   }
 
-  /* P8 code: the underline follows the digits; the value is only ever read. Self-send (flag auto-code, off as
-     shipped): once per document, from real input, never from a value that was already there. */
+  /* P8 code: the underline follows the digits; the value is only ever read */
   var code = d.querySelector('input.code-input');
   if (code) {
-    var sent = false, digits = function () { return code.value.replace(/\D/g, '').length; };
+    var digits = function () { return code.value.replace(/\D/g, '').length; };
     var paint = function () { var n = Math.min(6, digits()); code.style.setProperty('--n', n); code.classList.toggle('is-full', n === 6); };
-    code.addEventListener('input', function (e) {
-      paint();
-      if (!M.flag('auto-code') || sent || !e.isTrusted || digits() !== 6 || !code.form || !code.form.requestSubmit || d.querySelector('form[data-busy]')) return;
-      sent = true;
-      setTimeout(function () { if (digits() === 6 && !d.querySelector('form[data-busy]')) code.form.requestSubmit(); }, 260);
-    });
+    code.addEventListener('input', paint);
     d.addEventListener('motion:reset', paint); paint();
     /* a failed "Tekrar gönder" is not a wrong code: no red field, no shake */
     d.addEventListener('motion:submit', function (e) { if (e.detail.form !== code.form) M.hint('calm', 1); });

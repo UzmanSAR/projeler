@@ -26,15 +26,13 @@ def open_intervals(business, day):
     return [(at(wh.open), at(wh.close))]
 
 
-def busy_by_staff(business, staff_list, lo, hi, exclude_id=None):
+def busy_by_staff(business, staff_list, lo, hi):
     """Her berber için [lo, hi) aralığındaki dolu zamanlar."""
     busy = {s.id: [] for s in staff_list}
     appts = Appointment.objects.filter(
         business=business, staff__in=staff_list, status__in=Appointment.ACTIVE,
         start__lt=hi, block_end__gt=lo,
     )
-    if exclude_id:
-        appts = appts.exclude(id=exclude_id)
     for a in appts:
         busy[a.staff_id].append((a.start, a.block_end))
     for off in TimeOff.objects.filter(business=business, start__lt=hi, end__gt=lo):

@@ -19,19 +19,21 @@ from core.availability import business_tz, day_slots, merged_slots
 from core.booking import (BookingError, cancel_appointment, create_appointment, eligible_staff,
                           get_or_create_customer, totals)
 from core.models import (Appointment, Business, Customer, Feedback, Membership, PlatformSettings, Service, Staff, Style,
-                         WorkingHours, slug_validator)
+                         WorkingHours, mask_phone, slug_validator)
 
 DAY_NAMES = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"]
 
 
 def landing(request):
-    today = timezone.localdate()
+    # Örnek salonlar yalnızca tanıtım kurulumunda vardır; yoksa bağlantıları da gösterilmez.
+    demos = {b.slug: b for b in Business.objects.filter(slug__in=("ornek-salon", "ornek-berber"))}
     return render(request, "public/landing.html", {
-        # Örnek salonlar yalnızca tanıtım kurulumunda vardır; yoksa bağlantıları da gösterilmez.
-        "demo": Business.objects.filter(slug="ornek-salon").first() or Business.objects.filter(slug="ornek-berber").first(),
-        "demo_men": Business.objects.filter(slug="ornek-berber").first(),
-        "demo_salon": Business.objects.filter(slug="ornek-salon").first(),
-        "days": [today + timedelta(days=i) for i in range(5)],   # telefon önizlemesindeki gün
+        "demo": demos.get("ornek-salon") or demos.get("ornek-berber"),
+        "demo_men": demos.get("ornek-berber"),
+        "demo_salon": demos.get("ornek-salon"),
+        "tomorrow": timezone.localdate() + timedelta(days=1),     # telefon önizlemesindeki gün
+        "hours": [f"{h:02d}" for h in range(8, 22)],              # açılıştaki saat cetveli
+        "ticks": range(0, 360, 30),                               # kadranın saat çizgileri (derece)
         "price": PlatformSettings.load().monthly_price,
     })
 
@@ -172,9 +174,8 @@ class Selection:
         return urlencode(pairs)
 
 
-def _url(name, business, sel=None, **extra):
-    url = reverse(f"public:{name}", args=[business.slug])
-    return f"{url}?{sel.query(**extra)}" if sel else url
+def _url(name, business, sel, **extra):
+    return f"{reverse(f'public:{name}', args=[business.slug])}?{sel.query(**extra)}"
 
 
 # ---- Sayfalar -------------------------------------------------------------
@@ -342,8 +343,7 @@ def book_verify(request, slug):
             return remember_device(redirect(retry), business, customer)
 
     return render(request, "public/book_verify.html", {
-        "business": business, "masked": f"{phone[:2]}•• ••• •• {phone[-2:]}", "retry": retry,
-        "resend_seconds": settings.OTP_RESEND_SECONDS,
+        "business": business, "masked": mask_phone(phone), "retry": retry,
     })
 
 
@@ -385,7 +385,7 @@ def appointment(request, slug, token):
 
 @require_POST
 def appointment_cancel(request, slug, token):
-    business, appt = _appointment(slug, token)
+    _, appt = _appointment(slug, token)
     try:
         cancel_appointment(appt, by_customer=True)
         messages.success(request, "Randevunuz iptal edildi.")
@@ -397,7 +397,7 @@ def appointment_cancel(request, slug, token):
 @require_POST
 def appointment_consent(request, slug, token):
     """Kampanya izni randevu bittikten sonra, ayrı ve işaretsiz bir kutuyla sorulur."""
-    business, appt = _appointment(slug, token)
+    _, appt = _appointment(slug, token)
     if appt.customer:
         agreed = request.POST.get("consent") == "1"
         appt.customer.marketing_consent = agreed
@@ -503,8 +503,7 @@ def account(request, slug):
 
     return render(request, "public/account.html", {
         "business": business, "customer": None, "pending": pending,
-        "masked": f"{pending['phone'][:2]}•• ••• •• {pending['phone'][-2:]}" if pending else "",
-        "resend_seconds": settings.OTP_RESEND_SECONDS,
+        "masked": mask_phone(pending["phone"]) if pending else "",
     })
 
 

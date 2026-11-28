@@ -7,17 +7,14 @@ bittiği günden başlar; gün geçtiyse ödeme gününden. Burada hiçbir hesap
 "ödeme bekliyor" ve "kapalı" durumlarını yönetim verir.
 """
 import calendar
-import logging
 from datetime import date
 
-from django.conf import settings
 from django.db.models import Max
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils import timezone
 
 WARN_DAYS = 5   # ödeme gününe bu kadar kala panelde hatırlatma çıkar
-log = logging.getLogger(__name__)
 
 
 def _on_day(year, month, day):
@@ -63,7 +60,6 @@ def summary(business, today=None):
         "days_over": -days_left if days_left is not None and days_left < 0 else 0,
         "overdue": days_left is not None and days_left < 0,
         "in_trial": business.status == business.Status.TRIAL and not business.paid_until,
-        "trial_days": settings.TRIAL_DAYS,
         "warn": (days_left is not None and days_left <= WARN_DAYS and price > 0
                  and business.status != business.Status.SUSPENDED),
     }

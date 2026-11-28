@@ -37,12 +37,6 @@ class ConsoleBackend:
         log.info("SMS -> %s: %s", phone, body)
 
 
-class FailingBackend:
-    """Testlerde sağlayıcı hatasını taklit eder."""
-
-    def send(self, phone, body):
-        raise RuntimeError("sağlayıcı yanıt vermedi")
-
 
 def get_backend():
     return import_string(settings.SMS_BACKEND)()

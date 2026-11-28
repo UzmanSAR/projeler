@@ -41,7 +41,7 @@
 </div>
 
 {% if upcoming %}
-<div class="card next-visit">
+<div class="card next-visit lit">
   <small>Yaklaşan randevun</small>
   <b>{{ upcoming.local|date:"j F l" }} · {{ upcoming.local|time:"H:i" }}</b>
   <span>{{ upcoming.a.summary }} · {{ upcoming.a.staff.name }}</span>
@@ -57,7 +57,7 @@
 
 {% if last %}
 <h2>En son yaptırdıkların</h2>
-<div class="card last-visit">
+<div class="card last-visit lit">
   {% if last.a.style %}<img src="{{ last.a.style.thumb_url }}" alt="" width="{{ last.a.style.width }}" height="{{ last.a.style.height }}">{% endif %}
   <div>
     <b>{{ last.local|date:"j F Y" }}</b>

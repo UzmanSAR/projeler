@@ -1,7 +1,8 @@
 {% extends "base.html" %}
 {% load static %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/panel.css' %}?v={{ STATIC_V }}">{% endblock %}
-{% block extra_js %}<script src="{% static 'js/panel.js' %}?v={{ STATIC_V }}"></script>{% endblock %}
+{% block body_attrs %} class="scope-paper"{% endblock %}
+{% block theme_color %}{% include "_ink_theme_color.html" %}{% endblock %}
 {% block title %}İşletme girişi · {{ SITE_NAME }}{% endblock %}
 {% block body %}
 {% include "_site_top.html" %}

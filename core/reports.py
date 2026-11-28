@@ -142,7 +142,7 @@ def build(business, year, month, staff=None):
                     .annotate(total=Sum("actual_total"), n=Count("id")).order_by("-total"))
 
     return {
-        "cards": cards, "cur": cur, "prev": prev,
+        "cards": cards, "cur": cur,
         "heat": heat, "hours": hour_range,
         "busiest": f"{days[busiest[0]]} {busiest[1]:02d}:00" if busiest else None,
         "by_service": by_service, "by_staff": by_staff,

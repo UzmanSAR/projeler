@@ -1,81 +1,121 @@
 {% extends "base.html" %}
 {% load static %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/landing.css' %}?v={{ STATIC_V }}">{% endblock %}
+{% block body_attrs %} class="scope-paper"{% endblock %}
+{% block theme_color %}{% include "_ink_theme_color.html" %}{% endblock %}
 {% block title %}{{ SITE_NAME }} · Kuaför ve güzellik merkezleri için online randevu{% endblock %}
 {% block meta %}<meta name="description" content="Kuaförler, berberler ve güzellik merkezleri için online randevu, müşteri geçmişi ve kasa takibi. Komisyon yok, ilk 14 gün ücretsiz.">
 <meta property="og:title" content="{{ SITE_NAME }} · Kuaför ve güzellik merkezleri için online randevu">
 <meta property="og:description" content="Müşterileriniz uygulama indirmeden randevu alır; siz takviminizi, müşteri geçmişini ve cironuzu tek ekrandan yönetirsiniz.">{% endblock %}
 {% block body %}
-{% include "_site_top.html" with landing=True %}
-<main class="lp">
+<div class="lp-intro scope-ink">
+  {% include "_site_top.html" with landing=True %}
   <section class="lp-hero">
-    <div class="lp-copy">
-      <p class="lp-eyebrow">Kuaförler, berberler ve güzellik merkezleri için</p>
-      <h1>Randevularınız, müşterileriniz ve kasanız tek ekranda.</h1>
-      <p class="lp-lead">Müşterileriniz salonunuza özel sayfadan, uygulama indirmeden ve üye olmadan randevu alır. Siz takviminizi, müşteri geçmişini ve günlük cironuzu telefonunuzdan yönetirsiniz.</p>
-      <div class="lp-actions">
-        <a class="btn" href="{% url 'panel:signup' %}">14 gün ücretsiz deneyin</a>
-        {% if demo %}<a class="btn ghost" href="{% url 'public:business' demo.slug %}">Örnek salonu inceleyin</a>{% endif %}
+    {# Saat cetveli: salonun günü 08.00 ile 21.00 arası #}
+    <div class="lp-ruler" aria-hidden="true">{% for h in hours %}<span>{{ h }}</span>{% endfor %}</div>
+    <div class="lp-in lp-hero-grid">
+      <div class="lp-copy">
+        <p class="eyebrow lp-eyebrow"><span>Kuaför</span><span>Berber</span><span>Güzellik merkezi</span></p>
+        <h1>Randevularınız, müşterileriniz ve kasanız <em>tek ekranda.</em></h1>
+        <p class="lp-lead">Müşterileriniz salonunuza özel sayfadan, uygulama indirmeden ve üye olmadan randevu alır. Siz takviminizi, müşteri geçmişini ve günlük cironuzu telefonunuzdan yönetirsiniz.</p>
+        <div class="lp-actions">
+          <a class="btn" href="{% url 'panel:signup' %}">14 gün ücretsiz deneyin</a>
+          {% if demo %}<a class="btn ghost" href="{% url 'public:business' demo.slug %}">Örnek salonu inceleyin</a>{% endif %}
+        </div>
+        <ul class="lp-trust"><li>Kart bilgisi istenmez</li><li>Komisyon yok</li><li>Taahhüt yok</li></ul>
+        <div class="lp-mode">{% include "_theme_switch.html" %}</div>
       </div>
-      <ul class="lp-trust"><li>Kart bilgisi istenmez</li><li>Randevu başına komisyon yok</li><li>Taahhüt yok</li></ul>
+      {# Kadran: salonun bir günü. Süslemedir; ekran okuyucuya kapalıdır. İmleçle eğilir (app.js, data-tilt). #}
+      <div class="lp-object" aria-hidden="true">
+        <div class="lp-dial" data-tilt>
+          <div class="lp-dial-body">
+            <div class="lp-dial-ring"><div class="lp-dial-face">
+              <i class="lp-booked"></i>
+              {% for t in ticks %}<i class="lp-tick" style="--a:{{ t }}deg"></i>{% endfor %}
+              <span class="lp-num n12">12</span><span class="lp-num n3">3</span><span class="lp-num n6">6</span><span class="lp-num n9">9</span>
+              <b class="lp-hand lp-hour"></b><b class="lp-hand lp-min"></b><b class="lp-pin"></b>
+            </div></div>
+            <div class="lp-chip c1"><small>09:30</small><b>Saç kesimi</b></div>
+            <div class="lp-chip c2"><small>Onaylandı</small><b>Kod ile</b></div>
+            <div class="lp-chip c3"><small>14:00</small><b>Dalgalı fön</b></div>
+          </div>
+        </div>
+        <ul class="lp-hud"><li><span>Açık</span>09:00 — 20:00</li><li><span>Onay</span>SMS kodu</li><li><span>Komisyon</span>0 ₺</li></ul>
+      </div>
+    </div>
+    <a class="lp-scroll" href="#kimler">Aşağı kaydırın</a>
+  </section>
+  <div class="lp-marquee" aria-hidden="true"><div class="lp-track">
+    {% for i in "12" %}<span>Kadın kuaförü</span><span>Erkek kuaförü</span><span>Berber</span><span>Güzellik merkezi</span><span>Online randevu</span>{% endfor %}
+  </div></div>
+</div>
+
+<main class="lp">
+  <section class="lp-section" id="kimler"><div class="lp-in">
+    <p class="eyebrow lp-label">Kimler için</p>
+    <h2>Her salonun çalışma düzenine uyar.</h2>
+    <div class="lp-cards three">
+      <article class="lp-card">{% include "public/_emblem.html" with kind="kadin" %}<h3>Kadın kuaförleri</h3><p>Kesim, fön, boya ve bakım randevuları kendi süresiyle takvime yerleşir. Müşteriniz beğendiği modeli seçerek gelir; ne istediği randevudan önce bellidir.</p>{% if demo_salon %}<a class="lp-card-link" href="{% url 'public:business' demo_salon.slug %}">Örnek salonu görün</a>{% endif %}</article>
+      <article class="lp-card">{% include "public/_emblem.html" with kind="erkek" %}<h3>Erkek kuaförleri ve berberler</h3><p>Yoğun saatlerde telefon susar. Randevusuz gelen müşteriyi de iki dokunuşla kaydedersiniz; gün sonunda kasa eksiksiz çıkar.</p>{% if demo_men %}<a class="lp-card-link" href="{% url 'public:business' demo_men.slug %}">Örnek kuaförü görün</a>{% endif %}</article>
+      <article class="lp-card">{% include "public/_emblem.html" with kind="guzellik" %}<h3>Güzellik merkezleri</h3><p>Cilt bakımı, manikür, kaş ve kirpik hizmetleri uygulayan uzmana göre ayrılır. Her müşterinin geçmiş uygulamaları kendi kartında durur.</p>{% if demo_salon %}<a class="lp-card-link" href="{% url 'public:business' demo_salon.slug %}">Örnek salonu görün</a>{% endif %}</article>
+    </div>
+  </div></section>
+
+  <section class="lp-section lp-product"><div class="lp-in lp-product-grid">
+    <div>
+      <p class="eyebrow lp-label">Ürün</p>
+      <h2>Müşteriniz modeli seçer, saati seçer, kodla onaylar.</h2>
+      <p class="lp-text">Randevu sayfası telefonda bir uygulama gibi açılır. Siz aynı anda panelde günün cirosunu, sıradaki müşteriyi ve boş saatleri görürsünüz.</p>
     </div>
     {# Önizleme: gerçek ekranların küçük bir örneği. Süslemedir; ekran okuyucuya ve klavyeye kapalıdır. #}
     <div class="lp-stage" aria-hidden="true" inert>
-      <div class="lp-phone"><div class="lp-screen">
-        <div class="lp-shop"><span class="lp-mono">Ö</span><span><small>Kadın kuaförü · Örnek Mahallesi</small><b>Örnek Saç ve Güzellik</b></span></div>
-        <div class="lp-label">Model seçin</div>
-        <div class="lp-looks"><span class="lp-look l1"><i></i>Kısa bob</span><span class="lp-look l2 on"><i></i>Dalgalı fön</span><span class="lp-look l3"><i></i>Röfle</span></div>
-        <div class="lp-label">Saat · {{ days.1|date:"j F l" }}</div>
-        <div class="lp-slots"><span class="slot">10:00</span><span class="slot">11:30</span><span class="slot">13:15</span><span class="slot lp-pick">14:00</span><span class="slot">15:30</span><span class="slot">17:45</span></div>
-        <span class="btn block">Devam et · 60 dk · 850 ₺</span>
-      </div></div>
-      <div class="lp-panel">
-        <div class="lp-panel-head"><b>Bugün</b><small>İşletme paneli</small></div>
-        <div class="lp-kpis"><div class="kpi"><small>Ciro</small><b>7.450 ₺</b></div><div class="kpi"><small>Tamamlanan</small><b>11</b></div><div class="kpi"><small>Bekleyen</small><b>5</b></div></div>
-        <div class="lp-row"><b class="lp-time">13:00</b><span><b>Elif K.</b><small>Kesim + fön · Selin</small></span><span class="badge green">Tamamlandı</span></div>
-        <div class="lp-row"><b class="lp-time">14:00</b><span><b>Deniz A.</b><small>Dalgalı fön · Merve</small></span><span class="badge">Sırada</span></div>
+      <div class="lp-stage-tilt" data-tilt>
+        <div class="lp-phone"><div class="lp-screen">
+          <div class="lp-shop"><span class="lp-mono">Ö</span><span><small>Kadın kuaförü · Örnek Mahallesi</small><b>Örnek Saç ve Güzellik</b></span></div>
+          <div class="lp-label-sm">Model seçin</div>
+          <div class="lp-looks"><span class="lp-look l1"><i></i>Kısa bob</span><span class="lp-look l2 on"><i></i>Dalgalı fön</span><span class="lp-look l3"><i></i>Röfle</span></div>
+          <div class="lp-label-sm">Saat · {{ tomorrow|date:"j F l" }}</div>
+          <div class="lp-slots"><span class="slot">10:00</span><span class="slot">11:30</span><span class="slot">13:15</span><span class="slot on">14:00</span><span class="slot">15:30</span><span class="slot">17:45</span></div>
+          <span class="btn block">Devam et · 60 dk · 850 ₺</span>
+        </div></div>
+        <div class="lp-panel">
+          <div class="lp-panel-head"><b>Bugün</b><small>İşletme paneli</small></div>
+          <div class="lp-kpis"><div class="kpi"><small>Ciro</small><b>7.450 ₺</b></div><div class="kpi"><small>Biten</small><b>11</b></div><div class="kpi"><small>Sırada</small><b>5</b></div></div>
+          <div class="lp-row"><b class="lp-time">13:00</b><span><b>Elif K.</b><small>Kesim + fön · Selin</small></span><span class="badge green">Tamamlandı</span></div>
+          <div class="lp-row"><b class="lp-time">14:00</b><span><b>Deniz A.</b><small>Dalgalı fön · Merve</small></span><span class="badge">Sırada</span></div>
+        </div>
       </div>
     </div>
-  </section>
+  </div></section>
 
-  <section class="lp-section lp-who" id="kimler">
-    <p class="lp-eyebrow">Kimler için</p>
-    <h2>Her salonun çalışma düzenine uyar</h2>
-    <div class="lp-cards three">
-      <article class="lp-card"><h3>Kadın kuaförleri</h3><p>Kesim, fön, boya ve bakım randevuları kendi süresiyle takvime yerleşir. Müşteriniz beğendiği modeli seçerek gelir; ne istediği randevudan önce bellidir.</p>{% if demo_salon %}<a class="lp-card-link" href="{% url 'public:business' demo_salon.slug %}">Örnek salonu görün</a>{% endif %}</article>
-      <article class="lp-card"><h3>Erkek kuaförleri ve berberler</h3><p>Yoğun saatlerde telefon susar. Randevusuz gelen müşteriyi de iki dokunuşla kaydedersiniz; gün sonunda kasa eksiksiz çıkar.</p>{% if demo_men %}<a class="lp-card-link" href="{% url 'public:business' demo_men.slug %}">Örnek kuaförü görün</a>{% endif %}</article>
-      <article class="lp-card"><h3>Güzellik merkezleri</h3><p>Cilt bakımı, manikür, kaş ve kirpik hizmetleri uygulayan uzmana göre ayrılır. Her müşterinin geçmiş uygulamaları kendi kartında durur.</p>{% if demo_salon %}<a class="lp-card-link" href="{% url 'public:business' demo_salon.slug %}">Örnek salonu görün</a>{% endif %}</article>
-    </div>
-  </section>
-
-  <section class="lp-section" id="ozellikler">
-    <p class="lp-eyebrow">Özellikler</p>
-    <h2>Salon yönetimi için ihtiyacınız olan her şey</h2>
+  <section class="lp-section" id="ozellikler"><div class="lp-in">
+    <p class="eyebrow lp-label">Özellikler</p>
+    <h2>Salon yönetimi için ihtiyacınız olan her şey.</h2>
     <div class="lp-features">
-      <div class="lp-feature"><b>Size özel randevu sayfası</b><p>Kendi adresinizle açılır; Instagram profilinize ve Google işletme kaydınıza eklenir. Sayfanızda başka salon ya da reklam yer almaz.</p></div>
-      <div class="lp-feature"><b>Model kataloğu</b><p>Çalışmalarınızın fotoğraflarını ekleyin. Müşteri randevu alırken beğendiği modeli seçer, seçimi randevu kaydında size görünür.</p></div>
-      <div class="lp-feature"><b>Müşteri geçmişi</b><p>Son ziyaret, yaptırılan işlemler, harcama ve notlarınız tek kartta. Müşteriniz de kendi geçmişini görür, aynı randevuyu tek dokunuşla tekrarlar.</p></div>
-      <div class="lp-feature"><b>Onay kodu ve hatırlatma</b><p>Randevu, müşterinin telefonuna gelen kodla onaylanır; bir gün önce hatırlatma gönderilir. Sahte ve unutulan randevular azalır.</p></div>
-      <div class="lp-feature"><b>Takvim ve personel</b><p>Her çalışanın kendi sütunu, yaptığı hizmetler ve çalışma saatleri. Mola, izin ve tatiller takvimden kapatılır.</p></div>
-      <div class="lp-feature"><b>Raporlar</b><p>Günlük ve aylık ciro, doluluk, en yoğun saatler; çalışana ve hizmete göre kazanç. Bir süredir gelmeyen düzenli müşteriler ayrıca listelenir.</p></div>
+      <div class="lp-feature"><span class="eyebrow">Sayfa</span><b>Size özel randevu sayfası</b><p>Kendi adresinizle açılır; Instagram profilinize ve Google işletme kaydınıza eklenir. Sayfanızda başka salon ya da reklam yer almaz.</p></div>
+      <div class="lp-feature"><span class="eyebrow">Katalog</span><b>Model kataloğu</b><p>Çalışmalarınızın fotoğraflarını ekleyin. Müşteri randevu alırken beğendiği modeli seçer, seçimi randevu kaydında size görünür.</p></div>
+      <div class="lp-feature"><span class="eyebrow">Geçmiş</span><b>Müşteri geçmişi</b><p>Son ziyaret, yaptırılan işlemler, harcama ve notlarınız tek kartta. Müşteriniz de kendi geçmişini görür, aynı randevuyu tek dokunuşla tekrarlar.</p></div>
+      <div class="lp-feature"><span class="eyebrow">Onay</span><b>Onay kodu ve hatırlatma</b><p>Randevu, müşterinin telefonuna gelen kodla onaylanır; bir gün önce hatırlatma gönderilir. Sahte ve unutulan randevular azalır.</p></div>
+      <div class="lp-feature"><span class="eyebrow">Takvim</span><b>Takvim ve personel</b><p>Her çalışanın kendi sütunu, yaptığı hizmetler ve çalışma saatleri. Mola, izin ve tatiller takvimden kapatılır.</p></div>
+      <div class="lp-feature"><span class="eyebrow">Rapor</span><b>Raporlar</b><p>Günlük ve aylık ciro, doluluk, en yoğun saatler; çalışana ve hizmete göre kazanç. Bir süredir gelmeyen düzenli müşteriler ayrıca listelenir.</p></div>
     </div>
-  </section>
+  </div></section>
 
-  <section class="lp-section lp-how" id="nasil">
-    <p class="lp-eyebrow">Nasıl çalışır</p>
-    <h2>Üç adımda online randevuya geçin</h2>
+  <section class="lp-band scope-ink" id="nasil"><div class="lp-in">
+    <p class="eyebrow lp-label">Nasıl çalışır</p>
+    <h2>Üç adımda online randevuya geçin.</h2>
     <ol class="lp-steps-list">
       <li><b>Hesabınızı açın</b><p>İşletme türünüzü seçin, çalışma saatlerinizi ve fiyatlarınızı girin. Türünüze uygun hizmet listesi hazır gelir.</p></li>
       <li><b>Bağlantınızı paylaşın</b><p>Size özel adresi Instagram'a, WhatsApp'a ve Google'a ekleyin. Müşteri bağlantıya dokunduğunda sayfa açılır.</p></li>
       <li><b>Randevular takviminize düşsün</b><p>Müşteri boş saati görür, telefonuna gelen kodla onaylar. Salon kapalıyken de randevu alırsınız.</p></li>
     </ol>
-  </section>
+  </div></section>
 
-  <section class="lp-section lp-price" id="fiyat">
+  <section class="lp-section" id="fiyat"><div class="lp-in lp-price">
     <div class="lp-price-copy">
-      <p class="lp-eyebrow">Fiyat</p>
-      <h2>Tek paket, sabit aylık ücret</h2>
-      <p class="muted">Randevu başına komisyon alınmaz. Çalışan, müşteri ya da randevu sayısına göre ücret değişmez. İlk 14 gün ücretsizdir; deneme süresince kart bilgisi istenmez.</p>
+      <p class="eyebrow lp-label">Fiyat</p>
+      <h2>Tek paket, sabit aylık ücret.</h2>
+      <p class="lp-text">Randevu başına komisyon alınmaz. Çalışan, müşteri ya da randevu sayısına göre ücret değişmez. İlk 14 gün ücretsizdir; deneme süresince kart bilgisi istenmez.</p>
     </div>
     <div class="lp-plan">
       <p class="lp-plan-price"><b>{{ price|floatformat:"0g" }}&nbsp;₺</b><span>/ ay</span></p>
@@ -89,40 +129,40 @@
       </ul>
       <a class="btn block" href="{% url 'panel:signup' %}">14 gün ücretsiz deneyin</a>
     </div>
-  </section>
+  </div></section>
 
-  <section class="lp-section lp-trustblock" id="guven">
-    <p class="lp-eyebrow">Güven</p>
-    <h2>Müşteri bilgileriniz size aittir</h2>
+  <section class="lp-section" id="guven"><div class="lp-in">
+    <p class="eyebrow lp-label">Güven</p>
+    <h2>Müşteri bilgileriniz size aittir.</h2>
     <div class="lp-cards three">
       <article class="lp-card"><h3>Paylaşılmaz</h3><p>Müşteri kayıtlarınızı yalnızca siz görürsünüz. Başka işletmelerle paylaşılmaz, reklam için kullanılmaz.</p></article>
       <article class="lp-card"><h3>Kişisel verilere saygılı</h3><p>Kampanya mesajı izni randevudan ayrı ve isteğe bağlı alınır. Müşteri isterse kaydı tek dokunuşla silinir.</p></article>
       <article class="lp-card"><h3>Güvenli altyapı</h3><p>Veriler Avrupa'daki veri merkezlerinde, şifreli bağlantıyla korunur. Fotoğraflardaki konum bilgisi kaydedilmeden silinir.</p></article>
     </div>
-    <p class="muted"><a href="{% url 'privacy' %}">Gizlilik ve kişisel veriler</a> sayfasında ayrıntıları bulabilirsiniz.</p>
-  </section>
+    <p class="lp-text"><a href="{% url 'privacy' %}">Gizlilik ve kişisel veriler</a> sayfasında ayrıntıları bulabilirsiniz.</p>
+  </div></section>
 
-  <section class="lp-section lp-faq" id="sss">
-    <p class="lp-eyebrow">Sık sorulanlar</p>
-    <h2>Merak edilenler</h2>
+  <section class="lp-section" id="sss"><div class="lp-in">
+    <p class="eyebrow lp-label">Sık sorulanlar</p>
+    <h2>Merak edilenler.</h2>
     <div class="lp-faq-list">
-      <details><summary>Müşterilerimin uygulama indirmesi gerekiyor mu?</summary><p class="muted">Hayır. Bağlantıya dokunduklarında sayfa tarayıcıda açılır. Üyelik ve şifre yoktur; telefona gelen kodla randevu onaylanır. İsteyen müşteri sayfayı ana ekranına ekleyebilir.</p></details>
-      <details><summary>Model fotoğraflarını nasıl eklerim?</summary><p class="muted">Panelde Ayarlar bölümündeki Modeller sayfasından, telefonunuzla çektiğiniz ya da galerinizdeki fotoğrafı seçerek eklersiniz. Fotoğraf otomatik küçültülür ve içindeki konum bilgisi silinir.</p></details>
-      <details><summary>Birden fazla çalışanım var, nasıl ayrılır?</summary><p class="muted">Her çalışanı ayrı ekler, yaptığı hizmetleri seçersiniz. Takvimde her çalışanın kendi sütunu olur; müşteri dilerse çalışan seçer, dilerse ilk müsait olana yazılır.</p></details>
-      <details><summary>Randevusuz gelen müşteriyi nasıl kaydederim?</summary><p class="muted">Bugün ekranından iki dokunuşla eklersiniz. Ciro ve doluluk raporlarına o da girer.</p></details>
-      <details><summary>Müşteri randevusuna gelmezse ne olur?</summary><p class="muted">Randevuyu "gelmedi" olarak kapatırsınız. Kaç kez gelmediği müşteri kartında görünür; dilerseniz o numaranın online randevusunu kapatabilirsiniz.</p></details>
-      <details><summary>Ücret nasıl ödenir?</summary><p class="muted">Aylık sabit ücret alınır. Ödeme bilgileri ve bir sonraki ödeme tarihi panelinizdeki Üyelik ve ödeme sayfasında yer alır.</p></details>
+      <details><summary>Müşterilerimin uygulama indirmesi gerekiyor mu?</summary><p>Hayır. Bağlantıya dokunduklarında sayfa tarayıcıda açılır. Üyelik ve şifre yoktur; telefona gelen kodla randevu onaylanır. İsteyen müşteri sayfayı ana ekranına ekleyebilir.</p></details>
+      <details><summary>Model fotoğraflarını nasıl eklerim?</summary><p>Panelde Ayarlar bölümündeki Modeller sayfasından, telefonunuzla çektiğiniz ya da galerinizdeki fotoğrafı seçerek eklersiniz. Fotoğraf otomatik küçültülür ve içindeki konum bilgisi silinir.</p></details>
+      <details><summary>Birden fazla çalışanım var, nasıl ayrılır?</summary><p>Her çalışanı ayrı ekler, yaptığı hizmetleri seçersiniz. Takvimde her çalışanın kendi sütunu olur; müşteri dilerse çalışan seçer, dilerse ilk müsait olana yazılır.</p></details>
+      <details><summary>Randevusuz gelen müşteriyi nasıl kaydederim?</summary><p>Bugün ekranından iki dokunuşla eklersiniz. Ciro ve doluluk raporlarına o da girer.</p></details>
+      <details><summary>Müşteri randevusuna gelmezse ne olur?</summary><p>Randevuyu "gelmedi" olarak kapatırsınız. Kaç kez gelmediği müşteri kartında görünür; dilerseniz o numaranın online randevusunu kapatabilirsiniz.</p></details>
+      <details><summary>Ücret nasıl ödenir?</summary><p>Aylık sabit ücret alınır. Ödeme bilgileri ve bir sonraki ödeme tarihi panelinizdeki Üyelik ve ödeme sayfasında yer alır.</p></details>
     </div>
-  </section>
+  </div></section>
 
-  <section class="lp-final">
-    <h2>Salonunuzu bugün online randevuya açın</h2>
-    <p class="muted">Kurulum yaklaşık beş dakika sürer. İlk 14 gün ücretsizdir.</p>
+  <section class="lp-final scope-ink"><div class="lp-in">
+    <h2>Salonunuzu bugün <em>online randevuya</em> açın.</h2>
+    <p class="lp-text">Kurulum yaklaşık beş dakika sürer. İlk 14 gün ücretsizdir.</p>
     <div class="lp-actions">
       <a class="btn" href="{% url 'panel:signup' %}">Ücretsiz deneyin</a>
       <a class="btn ghost" href="{% url 'contact' %}">Bize ulaşın</a>
     </div>
-  </section>
+  </div></section>
 </main>
 {% include "_site_foot.html" %}
 {% endblock %}

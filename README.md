@@ -15,24 +15,28 @@ pip install -r requirements.txt
 createuser berber --pwprompt --createdb   # şifre: berber (geliştirme varsayılanı)
 createdb berber --owner berber
 python manage.py migrate
-python manage.py seed_demo                # isteğe bağlı: örnek dükkân ve 12 haftalık veri
+python manage.py seed_demo                # isteğe bağlı: iki örnek salon ve 12 haftalık veri
 python manage.py runserver
 ```
 
 | Adres | Ne |
 |---|---|
-| `http://localhost:8000/ornek-berber/` | Müşterinin gördüğü sayfa |
-| `http://localhost:8000/panel/` | Kuaför paneli (`demo@example.com` / `demo-sifre-1`) |
+| `http://localhost:8000/ornek-berber/` | Müşterinin gördüğü sayfa (erkek kuaförü) |
+| `http://localhost:8000/ornek-salon/` | Müşterinin gördüğü sayfa (kadın kuaförü ve güzellik) |
+| `http://localhost:8000/panel/` | Kuaför paneli (`demo@example.com` ya da `salon@example.com` / `demo-sifre-1`) |
 | `http://localhost:8000/panel/kayit/` | Yeni dükkân kurulumu |
 | `http://localhost:8000/yonetim/` | Platform yönetimi (`python manage.py createsuperuser`) |
 
 Geliştirmede SMS gönderilmez; mesajlar konsola yazılır ve doğrulama kodu ekranda gösterilir.
 
-Testler: `python manage.py test` (94 test).
+Testler: `python manage.py test` (110 test).
 
 ## Canlı tanıtım sitesi (Render)
 
-Depoda `render.yaml` var; web servisini ve PostgreSQL'i birlikte kurar.
+Depoda `render.yaml` var; web servisini kurar. Veritabanı adresi (`DATABASE_URL`, ör. Supabase "Session
+pooler" bağlantısı) depoda tutulmaz, Render'da servisin **Environment** sekmesine elle girilir. Dosyadaki
+`berber-db` girdisi eski Render veritabanıdır; içinde saklanacak veri olmadığından emin olunca dosyadan ve
+Render'dan silinebilir.
 
 1. <https://render.com/deploy?repo=https://github.com/UzmanSAR/projeler/tree/claude/proje-incelemesi-l3887x>
    adresini aç, Render'a GitHub hesabınla giriş yap ve depoya erişim izni ver.
@@ -57,9 +61,11 @@ değişkenlerini kaldır, demo kullanıcısını sil ve aşağıdaki "Yayına al
 ## Neler var
 
 **Ana sayfa**
-- Tanıtım sayfası (`templates/public/landing.html`, `static/css/landing.css`): ürün önizlemesi, kimler
-  için, özellikler, nasıl çalışır, fiyat (platform ayarlarından), güven, sık sorulanlar. Örnek salonlar
-  kuruluysa bağlantıları görünür
+- Tanıtım sayfası (`templates/public/landing.html`, `static/css/landing.css`). Dokulu siyah açılış: saat
+  cetveli, ölçü ızgarası, büyük başlık, imleçle eğilen 3B randevu kadranı ve görünüm seçimi
+  (Otomatik · Açık · Koyu). Ardından akan yazı şeridi, kimler için, ürün önizlemesi (3B eğik telefon ve
+  panel), özellikler, nasıl çalışır (siyah bant), fiyat (platform ayarlarından), güven, sık sorulanlar.
+  Örnek salonlar kuruluysa bağlantıları görünür
 - Kurumsal sayfalar: İletişim (`/iletisim/`) ve Gizlilik ve kişisel veriler (`/gizlilik/`). Şirket
   unvanı, adres, vergi bilgisi, e-posta ve telefon yönetim panelinde **Platform ayarları**ndan girilir;
   boş olan bilgi gösterilmez. Gizlilik metni hizmetin işleyişini anlatır; yayından önce bir hukukçuya
@@ -69,6 +75,15 @@ değişkenlerini kaldır, demo kullanıcısını sil ve aşağıdaki "Yayına al
 - Kadın kuaförü, erkek kuaförü, kadın ve erkek kuaförü, güzellik merkezi. Kayıtta seçilir; hazır
   hizmet listesi türe göre gelir. Müşterinin gördüğü personel sözü kuaförlerde "Kuaför", güzellik
   merkezinde "Uzman"dır
+- Renk: erkek kuaförü turkuaz, kadın kuaförü ve güzellik merkezi pembe, karma salon yeşil. İşletme
+  panelde Ayarlar'dan (Renk) başka birini seçebilir. Renk müşteri sayfalarına ve panele uygulanır
+  (`<html data-tone>`, belirteçler `app.css` içinde, açık ve koyu temada)
+- Salon başlığında türün çizimi: erkek kuaförü çapraz tarak ve ustura, kadın kuaförü fön makinesi,
+  güzellik merkezi nilüfer, karma salon tarak ve makas (`templates/public/_emblem.html`). Etrafında ışık
+  döner
+- Dönen ışıklar (turkuaz ve pembe temada, yalnızca müşteri sayfalarında): seçilen işlem, model, çalışan,
+  gün ve saat; düğmeler; hizmet listesi, özet, randevu fişi ve geçmiş çerçeveleri. Telefonda hareket
+  azaltılmışsa, veri tasarrufu açıksa ya da `MOTION` kapalıysa ışık durur ama görünür kalır
 
 **Model kataloğu**
 - İşletme panelde (Ayarlar → Modeller) çalışma ya da model fotoğrafı ekler, istersen bir işleme bağlar.
@@ -88,7 +103,9 @@ değişkenlerini kaldır, demo kullanıcısını sil ve aşağıdaki "Yayına al
 **Kuaför paneli**
 - Bugün: günün randevuları, randevu kapatma (tamamlandı / gelmedi, tutar, nakit ya da kart),
   randevusuz müşteri kaydı, kapatılmamış eski randevu uyarısı
-- Takvim: berber başına sütun, elle randevu ekleme, saat kapatma
+- Takvim: çalışan başına sütun (telefonda tam genişlik, yana kaydırarak sıradaki çalışan; üstte çalışan
+  düğmeleri ve randevu sayıları), saat aralığı, müşteri ve işlem ayrı satırlarda; durum yazıyla
+  (Tamamlandı, Gelmedi, Kapatılmadı, Randevusuz). Elle randevu ekleme, saat kapatma
 - Müşteriler: ziyaret, harcama, gelmeme sayısı, not, kaybedilme riski olanlar, kayıt silme
 - Raporlar: beş temel rakam ve önceki aya göre değişim, yoğunluk haritası, hizmete ve berbere göre ciro
 - Ayarlar: hizmetler, personel, çalışma saatleri ve mola, randevu kuralları
@@ -125,17 +142,27 @@ değişkenlerini kaldır, demo kullanıcısını sil ve aşağıdaki "Yayına al
 - Çok kiracılı yapı: tek veritabanı, her kayıtta işletme kimliği; yalıtım otomatik testle doğrulanır
 - Çakışan randevu veritabanı kısıtıyla engellenir (`no_overlap_per_staff`)
 - Kod gönderim sınırları: numara, IP ve dükkân başına; kod sunucuda özet olarak tutulur
-- Mesaj kuyruğu: onay hemen, hatırlatma 24 saat önce; iptal edilen randevunun mesajı gitmez
+- Mesaj kuyruğu: onay hemen, hatırlatma 24 saat önce (randevu daha yakınsa 2 saat önce); iptal edilen
+  randevunun mesajı gitmez
 - Fiyat ve süre randevu kalemine kopyalanır; fiyat değişince geçmiş ciro değişmez
 - İşlem kaydı: kim, ne zaman, hangi randevuyu değiştirdi
 
 **Görünüm**
-- Kurumsal tema: sıcak kırık beyaz zemin, beyaz kartlar, tek vurgu olarak petrol yeşili. Renk, yazı ve
-  ölçü değerleri `static/css/app.css` dosyasının ilk bloğundadır (`--gold` adları eski temadan kalmadır;
-  değerleri vurgu rengidir)
-- Yazı tipleri kendi sunucumuzdan gelir (`static/fonts`, SIL OFL): başlıklar Newsreader, metin Libre
-  Franklin. Dışarıya hiçbir istek gitmez
+- Üç boyutlu (yumuşak kabartma) tasarım: açık modda gri yüzey, beyaz ışık ve mavi-gri gölge; koyu modda
+  antrasit. Kartlar, tablolar, seçim kutuları ve düğmeler kabarık durur; düğmelerin ışık alan bir kenarı
+  vardır, basılan ya da seçilen şey içe gömülür. Alanlar ve çukurlar (takvim, sekmeler, görünüm seçimi)
+  içe basıktır. Bütün değerler `static/css/app.css` dosyasının başındaki belirteçlerdedir
+- Kurumsal sayfalar (ana sayfa, giriş, kayıt, gizlilik, iletişim, görüş) dokulu siyah ve beyazdır:
+  üst ve alt bilgi her temada siyah (`.scope-ink`), gövde açık temada kâğıt beyazı, koyu temada antrasit
+  (`.scope-paper`). Doku, CSS içindeki küçük bir SVG gürültüsüdür; ek dosya yoktur
+- Yazı tipleri kendi sunucumuzdan gelir (`static/fonts`, SIL OFL): başlık ve metin Manrope, etiketler ve
+  sayılar IBM Plex Mono. Dışarıya hiçbir istek gitmez
 - Marka işareti `templates/_brand.html` ve `static/icons/`; site adı `SITE_NAME` ortam değişkenindedir
+- Karanlık mod: site telefonun ya da bilgisayarın açık/koyu ayarına kendiliğinden uyar. Alt bilgideki ve
+  panelde Ayarlar sayfasındaki "Görünüm" düğmeleriyle (Otomatik · Açık · Koyu) kişi kendi seçebilir; seçim
+  yalnızca o cihazda saklanır ve sayfa çizilmeden uygulanır (`static/js/app.js`). Koyu renkler `app.css`
+  içinde iki kez yazılıdır (telefon ayarı ve elle seçim için); `core/test_theme.py` ikisinin aynı kaldığını ve
+  bileşenlerin renkleri yalnızca bu belirteçlerden aldığını denetler
 
 **Hareket katmanı**
 - Sayfa geçişleri, buton durumları ve bekleme göstergesi; derleme adımı ve dış kütüphane yok
@@ -151,8 +178,7 @@ değişkenlerini kaldır, demo kullanıcısını sil ve aşağıdaki "Yayına al
   adres kendiliğinden değişir, sürümü elle artırmak gerekmez
 - Davranış bayrakları `templates/base.html` içindeki `data-flags` özniteliğinde: `live-total`
   ("Devam et" butonunda süre ve tutar), `now-line` (takvimde şu an çizgisi), `copy-link` (randevu
-  bağlantısına dokununca kopyalama). `auto-code` (altıncı rakamda kodu kendiliğinden gönderme)
-  kapalıdır; özniteliğe eklenince açılır
+  bağlantısına dokununca kopyalama)
 
 ## Rapora göre yapılan değişiklikler
 
@@ -170,11 +196,12 @@ değişkenlerini kaldır, demo kullanıcısını sil ve aşağıdaki "Yayına al
 3. **Ortam değişkenleri.** `.env.example` dosyasındaki değerler; `DEBUG=0`, `SECRET_KEY`, `REDIS_URL`.
 4. **Bot kontrolü.** Turnstile anahtarları verilmezse kod gönderiminden önce bot kontrolü yapılmaz.
 5. **Statik dosyalar.** `python manage.py collectstatic` ve bir web sunucusu (gunicorn + nginx gibi).
-6. **Hukuk.** Aydınlatma metni, kullanım koşulları ve veri işleme eki yazılmadı; avukat görüşü gerekir.
+6. **Hukuk.** Gizlilik sayfası (`/gizlilik/`) hizmetin işleyişini anlatır; kullanım koşulları ve veri işleme
+   eki yazılmadı. Yayından önce avukat görüşü gerekir.
 
 ## Henüz yok
 
-Fotoğraf galerisi, online abonelik tahsilatı (kart) ve fatura, SMS kredisi satışı, bekleme listesi,
+Online abonelik tahsilatı (kart) ve fatura, SMS kredisi satışı, bekleme listesi,
 yorum daveti, düzenli randevu, anlık bildirim, kapora, personelin kendi girişi ve yetki ayrımı, panel girişinde ikinci adım,
 takvimde sürükle-bırak, kampanya mesajı gönderimi ve İYS kaydı.
 

@@ -31,7 +31,6 @@ from .setup import create_business
 
 SLUG = "ornek-berber"   # adres aynı kalır: eski bağlantılar çalışmaya devam eder
 SHOP_NAME, SHOP_ABOUT = "Örnek Kuaför", "Mahallenin kuaförü. Saç, sakal ve cilt bakımı."
-OLD_SHOP = ("Örnek Berber Salonu", "Mahallenin berberi. Saç, sakal ve cilt bakımı.")
 EMAIL, PASSWORD = "demo@example.com", "demo-sifre-1"
 HISTORY_DAYS, AHEAD_DAYS, CUSTOMERS = 84, 21, 360
 LOCK_ID = 7270001   # pg_advisory_lock anahtarı
@@ -107,13 +106,13 @@ SALON_NOTES = ["Boya numarası 6.1, oksidan yüzde 6.", "Kalıcı ojede açık t
                "Keratin sonrası üç gün yıkama yok.", "Röfleyi iki ayda bir tazeler."]
 
 MEN = SimpleNamespace(
-    slug=SLUG, name=SHOP_NAME, about=SHOP_ABOUT, old=OLD_SHOP, email=EMAIL, password=PASSWORD,
+    slug=SLUG, name=SHOP_NAME, about=SHOP_ABOUT, email=EMAIL, password=PASSWORD,
     kind="erkek", staff=STAFF, services=SERVICES, addons=ADDONS, weekday_target=WEEKDAY_TARGET,
     first_30=FIRST_30, first=FIRST, notes=NOTES, everyday=5, saturday_only="Damat tıraşı", fallback=2,
     address="Örnek Mah. Çarşı Cad. No: 12", district="Örnek Mahallesi")
 SALON = SimpleNamespace(
     slug="ornek-salon", name="Örnek Saç ve Güzellik", about="Saç tasarımı, renk, manikür ve cilt bakımı.",
-    old=None, email="salon@example.com", password=PASSWORD,
+    email="salon@example.com", password=PASSWORD,
     kind="kadin", staff=SALON_STAFF, services=SALON_SERVICES, addons=("Kaş tasarımı",),
     weekday_target=(15, 17, 17, 19, 24, 30, 0), first_30=[], first=SALON_FIRST, notes=SALON_NOTES,
     everyday=5, saturday_only="Gelin saçı", fallback=1,
@@ -190,10 +189,6 @@ def _shop(spec=MEN):
         business.address = spec.address
         business.district = spec.district
         business.save()
-    elif spec.old and (business.name, business.description) == spec.old:
-        # Eski adla kurulmuş örnek dükkân: sahibi elle değiştirmediyse yeni ada geçer.
-        business.name, business.description = spec.name, spec.about
-        business.save(update_fields=["name", "description"])
     _membership(business)
     services = {}
     for order, (name, duration, price, _) in enumerate(spec.services):
@@ -264,7 +259,7 @@ def ensure_demo(history_days=HISTORY_DAYS, ahead_days=AHEAD_DAYS, now=None):
     with connection.cursor() as cursor:
         cursor.execute("SELECT pg_try_advisory_lock(%s)", [LOCK_ID])
         if not cursor.fetchone()[0]:
-            return {"created": 0, "closed": 0, "business": Business.objects.filter(slug=SLUG).first(), "busy": True}
+            return {"created": 0, "closed": 0, "business": Business.objects.filter(slug=SLUG).first()}
     try:
         now = now or timezone.now()
         results = [_ensure_demo(history_days, ahead_days, now, spec) for spec in SPECS]

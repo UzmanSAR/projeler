@@ -3,7 +3,7 @@
 <p><a class="tap" href="{% url 'panel:styles' %}">‹ Modeller</a></p>
 <h1>{% if style %}Modeli düzenle{% else %}Yeni model{% endif %}</h1>
 <div class="two">
-<form method="post" enctype="multipart/form-data" class="card" data-photo-form>{% csrf_token %}
+<form method="post" enctype="multipart/form-data" class="card">{% csrf_token %}
   {{ form.non_field_errors }}
   <label for="{{ form.photo.id_for_label }}" style="margin-top:0">{% if style %}Fotoğrafı değiştir{% else %}Fotoğraf{% endif %}</label>
   {% if style %}<img class="style-preview" src="{{ style.thumb_url }}" alt="{{ style.title }}" width="{{ style.width }}" height="{{ style.height }}">{% endif %}

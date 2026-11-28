@@ -2,11 +2,13 @@
 {% load static %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/panel.css' %}?v={{ STATIC_V }}">{% endblock %}
 {% block extra_js %}<script src="{% static 'js/panel.js' %}?v={{ STATIC_V }}"></script>{% endblock %}
+{% block html_attrs %} data-tone="{{ request.business.active_tone }}"{% endblock %}
 {% block title %}{{ request.business.name }} · Panel{% endblock %}
 {% block body %}
 <div class="topbar"><div class="inner">
   <b>{{ request.business.name }}</b>
   <span class="row">
+    {% include "_theme_toggle.html" %}
     <a href="/{{ request.business.slug }}/" target="_blank" rel="noopener">Sayfam<svg class="ext" viewBox="0 0 10 10" aria-hidden="true"><path d="M2,8L8,2M3.2,2H8V6.8"/></svg></a>
     <form method="post" action="{% url 'panel:logout' %}">{% csrf_token %}<button>Çıkış</button></form>
   </span>

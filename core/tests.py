@@ -21,6 +21,13 @@ TZ = ZoneInfo("Europe/Istanbul")
 User = get_user_model()
 
 
+class FailingBackend:
+    """SMS sağlayıcısının hata vermesini taklit eder (SMS_BACKEND ile)."""
+
+    def send(self, phone, body):
+        raise RuntimeError("sağlayıcı yanıt vermedi")
+
+
 def make_business(slug="ornek", email="a@example.com", closed=6):
     user = User.objects.create_user(username=email, email=email, password="gizli-sifre-1")
     return create_business(user, f"Berber {slug}", slug, "Ali", closed_weekday=closed), user
@@ -225,7 +232,7 @@ class MessageTests(Base):
         a2 = create_appointment(self.b, [self.cut], self.at(12), customer=c, source="manual", now=self.now)
         self.assertFalse(a2.messages.exists())
 
-    @override_settings(SMS_BACKEND="core.sms.FailingBackend")
+    @override_settings(SMS_BACKEND="core.tests.FailingBackend")
     def test_provider_failure_does_not_break_booking(self):
         appt = create_appointment(self.b, [self.cut], self.at(10), customer=self.customer(), now=self.now)
         self.assertEqual(appt.messages.get(kind="confirm").status, "failed")

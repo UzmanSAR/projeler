@@ -3,6 +3,57 @@
 (function () {
   'use strict';
   var w = window, d = document, root = d.documentElement, ss = null;
+
+  /* ---- theme: 'auto' follows the phone's light/dark setting; 'light' or 'dark' is a choice kept on this device.
+     Runs before the body is painted, so a chosen theme never flashes the other one first.
+     Controls: the moon/sun button on every page (_theme_toggle.html) and the three-way switch (_theme_switch.html). */
+  var THEME = 'theme', chosen = null, dark = w.matchMedia ? w.matchMedia('(prefers-color-scheme: dark)') : null;
+  function themeChoice() {
+    var t = chosen; try { t = w.localStorage.getItem(THEME) || chosen; } catch (e) {}   /* storage refused (private window): this page keeps it */
+    return t === 'light' || t === 'dark' ? t : 'auto';
+  }
+  function effective() { var t = themeChoice(); return t !== 'auto' ? t : (dark && dark.matches ? 'dark' : 'light'); }
+  function applyTheme(t) {
+    if (t === 'auto') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', t);
+    var metas = d.querySelectorAll('meta[name="theme-color"][data-own]');
+    for (var i = 0; i < metas.length; i++) metas[i].setAttribute('content', metas[i].getAttribute('data-' + (t === 'auto' ? metas[i].getAttribute('data-own') : t)));
+  }
+  function syncSwitches() {
+    var t = themeChoice(), on = String(effective() === 'dark'), i, j;
+    var boxes = d.querySelectorAll('[data-theme-switch]'), toggles = d.querySelectorAll('[data-theme-toggle]');
+    for (i = 0; i < boxes.length; i++) {
+      boxes[i].hidden = false;
+      var bs = boxes[i].querySelectorAll('[data-theme-set]');
+      for (j = 0; j < bs.length; j++) bs[j].setAttribute('aria-pressed', String(bs[j].getAttribute('data-theme-set') === t));
+    }
+    for (i = 0; i < toggles.length; i++) { toggles[i].hidden = false; toggles[i].setAttribute('aria-pressed', on); }
+  }
+  function refreshTheme() { applyTheme(themeChoice()); syncSwitches(); }
+  function choose(t, from) {
+    chosen = t;
+    try { if (t === 'auto') w.localStorage.removeItem(THEME); else w.localStorage.setItem(THEME, t); } catch (err) {}
+    var M = w.Motion;
+    if (!from || !M || !M.full || !d.startViewTransition) { refreshTheme(); return; }
+    /* the new theme opens like a circle from the button (app.css: .is-theming) */
+    var r = from.getBoundingClientRect();
+    root.style.setProperty('--tx', Math.round(r.left + r.width / 2) + 'px');
+    root.style.setProperty('--ty', Math.round(r.top + r.height / 2) + 'px');
+    root.classList.add('is-theming');
+    var vt = d.startViewTransition(refreshTheme), done = function () { root.classList.remove('is-theming'); };
+    vt.finished.then(done, done);
+  }
+  applyTheme(themeChoice());
+  d.addEventListener('DOMContentLoaded', syncSwitches);
+  w.addEventListener('pageshow', function (e) { if (e.persisted) refreshTheme(); });          /* back to a page kept in memory */
+  w.addEventListener('storage', function (e) { if (e.key === THEME) refreshTheme(); });     /* chosen in another tab */
+  if (dark && dark.addEventListener) dark.addEventListener('change', syncSwitches);         /* the phone switched while on "auto" */
+  d.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest ? e.target.closest('[data-theme-set], [data-theme-toggle]') : null;
+    if (!b) return;
+    if (b.hasAttribute('data-theme-toggle')) choose(effective() === 'dark' ? 'light' : 'dark', b);
+    else choose(b.getAttribute('data-theme-set'), null);
+  });
+
   try { ss = w.sessionStorage; ss.setItem('m:t', '1'); ss.removeItem('m:t'); } catch (e) { ss = null; }
   var store = {
     get: function (k) { try { return ss ? JSON.parse(ss.getItem('m:' + k)) : null; } catch (e) { return null; } },
@@ -18,7 +69,7 @@
   if (level === 'full' && ((con && (con.saveData || /(^|-)2g$/.test(con.effectiveType || ''))) || navigator.deviceMemory <= 1)) level = 'lite';
   root.setAttribute('data-motion', level);
   var reduced = level === 'off' || !!(w.matchMedia && w.matchMedia('(prefers-reduced-motion: reduce)').matches);
-  var M = w.Motion = { store: store, reduced: reduced, lite: level === 'lite', full: !reduced && level === 'full', nav: 'rise', from: null, screen: 'other', entering: false };
+  var M = w.Motion = { store: store, reduced: reduced, full: !reduced && level === 'full', nav: 'rise', from: null, screen: 'other', entering: false };
   M.flag = function (name) { return (' ' + (root.getAttribute('data-flags') || '') + ' ').indexOf(' ' + name + ' ') > -1; };
 
   /* ---- screens and ranks, first match wins; core/test_motion.py keeps them in step with urls.py */
@@ -138,7 +189,6 @@
   var chip = null, live = null, chipTimer = 0, sayTimer = 0;
   function words() {
     if (chip || !d.body) return;
-    if (!d.getElementById('nav-live')) d.body.insertAdjacentHTML('beforeend', '<div id="nav-status" aria-hidden="true"></div><div id="nav-live" class="sr-only" role="status"></div>');
     chip = d.getElementById('nav-status'); live = d.getElementById('nav-live');
   }
   M.announce = function (text) { words(); if (live) live.textContent = text || ''; };
@@ -283,4 +333,27 @@
     requestAnimationFrame(step); setTimeout(end, ms + 400);   /* rAF may stall in a background tab */
     return true;
   };
+})();
+
+/* 3B eğim: [data-tilt] öğesi imlece doğru hafifçe döner (ana sayfadaki kadran ve ürün görüntüsü). Yalnızca tam
+   harekette ve fareli cihazlarda; dokunmatikte landing.css'teki yavaş salınım kalır. Sayfa betiksiz de tamdır. */
+(function () {
+  'use strict';
+  var w = window, d = document, M = w.Motion;
+  if (!M || !M.full || !w.matchMedia || !w.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+  var els = [], raf = 0, px = 0, py = 0;
+  function frame() {
+    raf = 0;
+    els.forEach(function (el) {
+      var r = el.getBoundingClientRect();
+      if (r.bottom < 0 || r.top > w.innerHeight) return;
+      var x = (px - (r.left + r.width / 2)) / w.innerWidth, y = (py - (r.top + r.height / 2)) / w.innerHeight;
+      el.style.setProperty('--ry', (Math.max(-1, Math.min(1, x)) * 24).toFixed(2) + 'deg');
+      el.style.setProperty('--rx', (Math.max(-1, Math.min(1, -y)) * 16).toFixed(2) + 'deg');
+    });
+  }
+  d.addEventListener('DOMContentLoaded', function () {
+    els = [].slice.call(d.querySelectorAll('[data-tilt]'));
+    if (els.length) w.addEventListener('pointermove', function (e) { px = e.clientX; py = e.clientY; if (!raf) raf = w.requestAnimationFrame(frame); }, { passive: true });
+  });
 })();

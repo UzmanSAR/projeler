@@ -16,12 +16,12 @@ html[data-first]:not([data-enter="off"]) .welcome-back::after { animation: sheen
 
 /* P4 steps: on a forward step the newest bar is inked from the left */
 html[data-nav="fwd"]:not([data-enter="off"]) .steps .on:not(:has(~ .on)) { animation: pub-step var(--t-slow) var(--e-out) 140ms backwards; }
-@keyframes pub-step { from { background-size: 0 3px; color: var(--muted); } }
+@keyframes pub-step { from { background-size: 0 6px; color: var(--muted); } }
 
 /* P5, P7: the tapped day or hour answers at once (the snapshot must be solid) */
 a.day:active, .slot:active { transform: scale(.94); transition-duration: var(--t-press); }
 .days > .day.on { scroll-initial-target: nearest; }   /* only the real strip: a .day.on elsewhere (the home page preview) would pull the whole page to it */
-.days:has(.is-picked) .on:not(.is-picked) { background: var(--surface); border-color: var(--line-strong); color: var(--ink); }
+.days:has(.is-picked) .on:not(.is-picked) { background: var(--face-flat) padding-box, var(--rim) border-box; box-shadow: var(--raise-sm); color: var(--ink); }
 .days:has(.is-picked) .on:not(.is-picked) small { color: var(--muted); }
 .slots { transition: opacity var(--t-fast); }
 .days:has(.is-picked) ~ .slots { opacity: .45; pointer-events: none; }   /* the old day's hours: not tappable under the new day */
@@ -55,12 +55,12 @@ html[data-from="time"]:not([data-enter="off"]) .card:has(.when) { animation: non
 @keyframes pub-pick-land { from, 55% { opacity: 0; } }
 
 /* P8 code: an underline, one sixth per digit (--n, .is-full, .is-calm from public.js) */
-input.code-input { background-image: linear-gradient(90deg, var(--gold), var(--gold-bright)); background-repeat: no-repeat;
+input.code-input { background-image: linear-gradient(90deg, var(--accent), var(--accent-bright)); background-repeat: no-repeat;
   background-size: calc(var(--n, 0) / 6 * (100% - 28px)) 3px; background-position: 14px calc(100% - 7px);
   transition: background-size 260ms var(--e-out); }
-input.code-input.is-full { border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-soft); }
+input.code-input.is-full { border-color: var(--accent); box-shadow: var(--press-sm), 0 0 0 3px var(--accent-soft); }
 html[data-motion="full"] .flash:has(.error) ~ form .code-input:not(.is-calm) { animation: shake 360ms var(--e-out) 320ms; }
-.flash:has(.error) ~ form .code-input:not(.is-full, .is-calm) { border-color: var(--red); box-shadow: 0 0 0 3px var(--red-soft); }
+.flash:has(.error) ~ form .code-input:not(.is-full, .is-calm) { border-color: var(--red); box-shadow: var(--press-sm), 0 0 0 3px var(--red-soft); }
 
 /* P9 fiş: kodu girip gelen müşteride onay rozeti belirir, fiş hafifçe yerine oturur */
 html:is([data-from="verify"], [data-from="details"]):not([data-enter="off"]) .ticket.confirmed { animation: rise var(--t-base) var(--e-out) backwards; }
