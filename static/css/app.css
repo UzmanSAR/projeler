@@ -50,6 +50,7 @@
   --band: #0c0d0f; --on-band: #ffffff; --on-band-dim: rgba(255, 255, 255, .75);   /* iki temada da siyah kalan bant */
   --glow-1: #6c7080; --glow-2: #ffffff;   /* dönen ışık (salon rozeti, renk temaları) */
   --emblem-light: #ffffff;
+  --lamp-1: #12d3c1; --lamp-2: #9ffff3; --lamp-track: rgba(18, 211, 193, .28);   /* ana sayfadaki kadranın çevresinde dönen turkuaz ışık */
   --hero-bg: var(--bg);
   /* doku: ince kumlanma (siyah zerre) */
   --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .55 -.22'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
@@ -116,6 +117,7 @@
     --band: #0c0d0f; --on-band: #ffffff; --on-band-dim: rgba(255, 255, 255, .75);
     --glow-1: #b4b9c1; --glow-2: #ffffff;
     --emblem-light: #e9eef0;
+    --lamp-1: #12d3c1; --lamp-2: #9ffff3; --lamp-track: rgba(18, 211, 193, .28);
     --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .7 -.3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     --foil: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, .12) 50%, transparent 60%);
     --foil-soft: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, .06) 50%, transparent 60%);
@@ -157,6 +159,7 @@
   --band: #0c0d0f; --on-band: #ffffff; --on-band-dim: rgba(255, 255, 255, .75);
   --glow-1: #b4b9c1; --glow-2: #ffffff;
   --emblem-light: #e9eef0;
+  --lamp-1: #12d3c1; --lamp-2: #9ffff3; --lamp-track: rgba(18, 211, 193, .28);
   --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .7 -.3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   --foil: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, .12) 50%, transparent 60%);
   --foil-soft: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, .06) 50%, transparent 60%);
