@@ -10,13 +10,13 @@ User = get_user_model()
 
 class SignupForm(forms.Form):
     kind = forms.ChoiceField(label="İşletme türü", choices=Business.Kind.choices, initial=Business.Kind.WOMEN,
-                             help_text="Hazır hizmet listesi buna göre gelir; sonra değiştirebilirsin.")
+                             help_text="Hazır hizmet listesi buna göre gelir; sonra değiştirebilirsiniz.")
     business_name = forms.CharField(label="İşletme adı", max_length=80)
     slug = forms.CharField(
         label="Sayfa adresi", max_length=40,
-        help_text="Müşterinin göreceği link: site.com/adres. Örn. ali-kuafor",
+        help_text="Müşterilerinizin göreceği bağlantı: site.com/adres. Örn. atelier-sac",
     )
-    owner_name = forms.CharField(label="Adın (takvimde görünür)", max_length=40)
+    owner_name = forms.CharField(label="Adınız (takvimde görünür)", max_length=40)
     phone = forms.CharField(label="İşletme telefonu", max_length=20, required=False)
     closed_weekday = forms.TypedChoiceField(
         label="Haftalık kapalı gün", coerce=int, initial=6,

@@ -7,15 +7,17 @@
 {% block app_name %}{{ business.name }}{% endblock %}
 {% block body %}
 <div class="hero"><div class="inner">
-  <small>{% if business.district %}{{ business.district }} · {% endif %}{{ business.get_kind_display }}</small>
-  <h1><a href="{% url 'public:business' business.slug %}">{{ business.name }}</a></h1>
-  {% include "_pole.html" %}
+  <div class="head-row">
+    <span class="monogram" aria-hidden="true">{{ business.name|first|upper }}</span>
+    <div><small>{{ business.get_kind_display }}{% if business.district %} · {{ business.district }}{% endif %}</small>
+    <h1><a href="{% url 'public:business' business.slug %}">{{ business.name }}</a></h1></div>
+  </div>
   {% block hero %}{% endblock %}
 </div></div>
 <div class="stripe"></div>
 <main class="wrap">
   {% include "_messages.html" %}
   {% block content %}{% endblock %}
-  <p class="foot">Bu sayfa {{ SITE_NAME }} ile hazırlandı · <a href="{% url 'feedback' %}?d={{ business.slug }}&amp;next={{ request.get_full_path|urlencode }}">Görüş bildir</a></p>
+  <p class="foot">Online randevu altyapısı: <a href="/">{{ SITE_NAME }}</a> · <a href="{% url 'privacy' %}">Gizlilik</a> · <a href="{% url 'feedback' %}?d={{ business.slug }}&amp;next={{ request.get_full_path|urlencode }}">Görüş bildir</a></p>
 </main>
 {% endblock %}

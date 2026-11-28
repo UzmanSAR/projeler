@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Gizlilik ve kişisel veriler · {{ SITE_NAME }}{% endblock %}
+{% block meta %}<meta name="description" content="{{ SITE_NAME }} hangi kişisel verileri, hangi amaçla işler ve nasıl korur.">{% endblock %}
+{% block body %}
+{% include "_site_top.html" %}
+<main class="doc">
+  <h1>Gizlilik ve kişisel veriler</h1>
+  <p class="lead">Bu sayfa, {{ SITE_NAME }} üzerinden randevu alan müşterilerin ve sistemi kullanan işletmelerin verilerinin nasıl işlendiğini anlatır.</p>
+  <p class="meta">{% if PLATFORM.company_name %}Veri sorumlusu ve hizmet sağlayıcı: {{ PLATFORM.company_name }}{% if PLATFORM.address %}, {{ PLATFORM.address }}{% endif %}. {% endif %}{% if PLATFORM.contact_email %}İletişim: <a href="mailto:{{ PLATFORM.contact_email }}">{{ PLATFORM.contact_email }}</a>{% endif %}</p>
+
+  <h2>Hangi veriler işlenir</h2>
+  <ul>
+    <li><b>Randevu alan müşteriler:</b> ad, cep telefonu numarası, randevu tarihi ve saati, seçilen işlemler ve varsa seçilen model; işletmenin eklediği kısa not.</li>
+    <li><b>İşletmeler:</b> işletme adı, adres ve iletişim bilgileri, giriş için e-posta adresi ve şifrenin geri çevrilemez özeti, hizmet, personel ve çalışma saatleri, işletmenin yüklediği model fotoğrafları.</li>
+    <li><b>Teknik kayıtlar:</b> güvenlik için doğrulama kodu istekleri ve bunların sayısı; tarayıcıda "bu cihazı hatırla" çerezi.</li>
+  </ul>
+
+  <h2>Hangi amaçla</h2>
+  <ul>
+    <li>Randevunun oluşturulması, hatırlatılması ve iptali.</li>
+    <li>İşletmenin müşterisini, geçmiş ziyaretlerini ve kendi cirosunu görebilmesi.</li>
+    <li>Kötüye kullanımın (sahte randevu, aşırı kod isteği) önlenmesi.</li>
+  </ul>
+  <p>Kampanya ve indirim mesajları yalnızca müşteri randevusundan ayrı ve işaretsiz bir kutuyla izin verdiyse gönderilir. Bu izin randevu almanın şartı değildir ve her zaman geri alınabilir.</p>
+
+  <h2>Kimler görebilir</h2>
+  <p>Bir müşterinin bilgilerini yalnızca randevu aldığı işletme görür. İşletmeler birbirinin müşterilerini göremez. Veriler reklam amacıyla üçüncü kişilerle paylaşılmaz ve satılmaz.</p>
+
+  <h2>Nerede saklanır ve nasıl korunur</h2>
+  <p>Veriler Avrupa Birliği içindeki veri merkezlerinde barındırılır. Siteye erişim şifreli bağlantıyla (HTTPS) yapılır. Model fotoğrafları kaydedilmeden önce küçültülür ve fotoğrafın içindeki konum ve cihaz bilgileri silinir.</p>
+
+  <h2>Haklarınız</h2>
+  <p>6698 sayılı Kişisel Verilerin Korunması Kanunu kapsamında verilerinize erişme, düzeltilmesini ya da silinmesini isteme haklarına sahipsiniz. Müşteri kaydının silinmesini randevu aldığınız işletmeden isteyebilir ya da bize yazabilirsiniz. "Bu cihazda çıkış yap" ile cihazınızdaki hatırlatma çerezini dilediğiniz zaman silebilirsiniz.</p>
+
+  <p class="meta">Bu metin hizmetin işleyişini anlatır; işletmeniz kendi müşterilerine karşı ayrıca aydınlatma yükümlülüğü taşıyabilir.</p>
+</main>
+{% include "_site_foot.html" %}
+{% endblock %}

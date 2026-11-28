@@ -61,8 +61,9 @@ class LandingTests(TestCase):
         self.assertIn('href="/panel/kayit/"', html)
         self.assertIn('href="/panel/giris/"', html)
         self.assertIn("css/landing.css?v=", html)
-        self.assertNotIn("Örnek dükkânı gez", html)        # örnek dükkân yokken bağlantısı da yok
+        self.assertNotIn("Örnek salonu inceleyin", html)        # örnek salon yokken bağlantısı da yok
         demo._shop()
         html = self.client.get("/").content.decode()
         self.assertIn(f'href="/{demo.SLUG}/"', html)
-        self.assertIn("Örnek dükkânı gez", html)
+        self.assertIn("Örnek salonu inceleyin", html)
+        self.assertIn("499", html)                              # fiyat platform ayarından gelir

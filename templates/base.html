@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>{% block title %}{{ SITE_NAME }}{% endblock %}</title>
-<meta name="theme-color" content="#f4f1ea">
+<meta name="theme-color" content="#ffffff">
 <meta name="color-scheme" content="light">
 {# Ana ekrana eklenebilen uygulama: panel için platformun, dükkân sayfalarında dükkânın tanımı (public/_shell.html) #}
 <link rel="manifest" href="{% block manifest %}{% url 'manifest' %}{% endblock %}">
@@ -17,8 +17,8 @@
 {% if MOTION != "off" %}<style>@media (prefers-reduced-motion: no-preference) { @view-transition { navigation: auto; } }</style>{% endif %}
 <link rel="expect" href="#eof" blocking="render">
 {# Başlık ve metin yazıları ilk boyamadan önce yolda olsun: Türkçe harfler (ğ ş ı İ) latin-ext dosyasındadır #}
-<link rel="preload" as="font" type="font/woff2" crossorigin href="{% static 'fonts/gloock-latin-400-normal.woff2' %}">
-<link rel="preload" as="font" type="font/woff2" crossorigin href="{% static 'fonts/gloock-latin-ext-400-normal.woff2' %}">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="{% static 'fonts/newsreader-latin-wght-normal.woff2' %}">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="{% static 'fonts/newsreader-latin-ext-wght-normal.woff2' %}">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="{% static 'fonts/libre-franklin-latin-wght-normal.woff2' %}">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="{% static 'fonts/libre-franklin-latin-ext-wght-normal.woff2' %}">
 <link rel="stylesheet" href="{% static 'css/app.css' %}?v={{ STATIC_V }}">
@@ -26,7 +26,6 @@
 <script src="{% static 'js/app.js' %}?v={{ STATIC_V }}"></script>
 </head>
 <body>
-{% include "_sprite.html" %}
 {% block body %}{% endblock %}
 <div id="nav-status" aria-hidden="true"></div><div id="nav-live" class="sr-only" role="status"></div>
 {% block extra_js %}{% endblock %}

@@ -1,7 +1,7 @@
 /* HAREKET, müşteri tarafı (PUBLIC), after app.css. Own keyframes: pub-.
    Resting state = visible state. Arrivals sit behind CORE's gate html:not([data-enter="off"]). */
 
-/* ince bordo ışık: seçilen hizmetin ve "tekrar hoş geldin" kartının üstünden bir kez geçer; yalnızca tam harekette */
+/* ince ışık: seçilen hizmetin ve "tekrar hoş geldin" kartının üstünden bir kez geçer; yalnızca tam harekette */
 .welcome-back, .pick .box { position: relative; z-index: 0; overflow: hidden; }
 html[data-motion="full"] :where(.welcome-back, .pick .box)::after { content: ""; position: absolute; inset: 0; z-index: -1;
   background: var(--foil-soft), var(--foil-soft); transform: translateX(-130%); }
@@ -26,24 +26,6 @@ a.day:active, .slot:active { transform: scale(.94); transition-duration: var(--t
 .slots { transition: opacity var(--t-fast); }
 .days:has(.is-picked) ~ .slots { opacity: .45; pointer-events: none; }   /* the old day's hours: not tappable under the new day */
 .slots:has(.is-picked) .slot:not(.is-picked) { opacity: .4; }
-/* makas seçilen saatin köşesini keser, parça düşer (public.js adds .snip and .offcut; the hour is already bordo) */
-.snip { position: absolute; z-index: 3; top: -13px; right: 3px; width: 28px; height: 18px; color: var(--ink); pointer-events: none; overflow: visible;
-  transform: rotate(225deg); opacity: 0; --paper: var(--bg); }
-.snip .io { stroke-width: 1.5; }
-.offcut { position: absolute; z-index: 2; top: -1px; right: -1px; width: 13px; height: 13px; pointer-events: none; opacity: 0;
-  background: linear-gradient(to top right, transparent calc(50% - .5px), var(--gold) calc(50% - .5px)); }
-html[data-motion="full"] .slot.just-picked .snip { animation: pub-snip-show 360ms var(--e-out); }
-html[data-motion="full"] .slot.just-picked .snip .sc-a { animation: pub-snip-a 360ms var(--e-in) both; }
-html[data-motion="full"] .slot.just-picked .snip .sc-b { animation: pub-snip-b 360ms var(--e-in) both; }
-html[data-motion="full"] .slot.just-picked .offcut { animation: pub-offcut 360ms var(--e-in); }
-html[data-motion="full"] .slot.just-picked::before { animation: pub-corner 360ms linear backwards; }
-@keyframes pub-snip-show { 0% { opacity: 0; transform: rotate(225deg) translateX(8px); } 18%, 70% { opacity: 1; transform: rotate(225deg); } 100% { opacity: 0; transform: rotate(225deg) translateX(-6px); } }
-@keyframes pub-snip-a { 0%, 30% { transform: rotate(24deg); } 55%, 100% { transform: rotate(1deg); } }
-@keyframes pub-snip-b { 0%, 30% { transform: rotate(-24deg); } 55%, 100% { transform: rotate(-1deg); } }
-@keyframes pub-offcut { 0%, 44% { opacity: 1; transform: none; } 100% { opacity: 0; transform: translate(9px, 16px) rotate(70deg); } }
-@keyframes pub-corner { 0%, 44% { opacity: 0; } 45%, 100% { opacity: 1; } }
-html:not([data-motion="full"]) :is(.snip, .offcut) { display: none; }
-
 /* P6 slot-deal: a diagonal wave over six rows (four when there are five columns); the grid does not rise.
    Under a full grid the blocks after it stand still: at most 30 elements move. */
 html:not([data-enter="off"]) :is(main.wrap > .slots, .slots:has(:nth-child(24)) ~ *) { animation: none; }
@@ -72,7 +54,7 @@ html[data-from="time"]:not([data-enter="off"]) .card:has(.when) { animation: non
 @keyframes pub-pick-lift { 55% { opacity: 1; } to { opacity: 0; transform: translate(calc(50% - 2.25ch), -50%); } }
 @keyframes pub-pick-land { from, 55% { opacity: 0; } }
 
-/* P8 code: a bordo underline, one sixth per digit (--n, .is-full, .is-calm from public.js) */
+/* P8 code: an underline, one sixth per digit (--n, .is-full, .is-calm from public.js) */
 input.code-input { background-image: linear-gradient(90deg, var(--gold), var(--gold-bright)); background-repeat: no-repeat;
   background-size: calc(var(--n, 0) / 6 * (100% - 28px)) 3px; background-position: 14px calc(100% - 7px);
   transition: background-size 260ms var(--e-out); }
@@ -80,56 +62,12 @@ input.code-input.is-full { border-color: var(--gold); box-shadow: 0 0 0 3px var(
 html[data-motion="full"] .flash:has(.error) ~ form .code-input:not(.is-calm) { animation: shake 360ms var(--e-out) 320ms; }
 .flash:has(.error) ~ form .code-input:not(.is-full, .is-calm) { border-color: var(--red); box-shadow: 0 0 0 3px var(--red-soft); }
 
-/* levha kendini çizer: önce dış çizgi, sonra tarama, en son ikinci renk baskıya girer.
-   .on-load plays as the page arrives; the others wait for the screen (.is-wait, then .is-in, both from public.js) */
-html[data-motion="full"] .draw :is(.mo, .mop, .md, .mh, .mt, .mpl) { stroke-dasharray: 1; }
-.draw.is-wait :is(.mo, .mop, .md, .mh, .mt, .mpl) { stroke-dashoffset: 1; }
-.draw.is-wait :is(.mop, .mpl, .mpf) { fill-opacity: 0; }
-.draw.is-wait :is(.ms, .msb, .mi, .mhl, .mhd, .mhlf, .mgl, .msh) { opacity: 0; }
-html[data-motion="full"] .draw.is-in :is(.mo, .mop, .mpl), html[data-motion="full"]:not([data-enter="off"]) .draw.on-load :is(.mo, .mop, .mpl) { animation: draw 620ms var(--e-inout) var(--draw-delay, 0ms) backwards; }
-html[data-motion="full"] .draw.is-in :is(.md, .mt), html[data-motion="full"]:not([data-enter="off"]) .draw.on-load :is(.md, .mt) { animation: draw 520ms var(--e-inout) calc(var(--draw-delay, 0ms) + 220ms) backwards; }
-html[data-motion="full"] .draw.is-in .mh, html[data-motion="full"]:not([data-enter="off"]) .draw.on-load .mh { animation: draw 460ms var(--e-out) calc(var(--draw-delay, 0ms) + 400ms) backwards; }
-html[data-motion="full"] .draw.is-in :is(.ms, .msb, .mi, .mhl, .mhd, .mhlf, .mgl, .msh),
-html[data-motion="full"]:not([data-enter="off"]) .draw.on-load :is(.ms, .msb, .mi, .mhl, .mhd, .mhlf, .mgl, .msh) { animation: ink-in 320ms var(--e-out) calc(var(--draw-delay, 0ms) + 560ms) backwards; }
-html[data-motion="full"] .draw:is(.is-in, .on-load) .mt-f { animation-delay: calc(var(--draw-delay, 0ms) + 340ms); }
-
-/* makas kesik çizgiyi keser: makas soldan sağa yürür, ağzı dört kez kapanır; geçtiği yerde çizginin alt yarısı iner */
-.cut.is-wait .cut-line { clip-path: inset(-2px 100% -2px 0); }
-.cut.is-wait::after { clip-path: none; }
-.cut.is-wait .cut-run { transform: translateX(calc(-100% + var(--cut-w))); }
-html[data-motion="full"] .cut.is-in .cut-run { animation: pub-cut-run var(--t-cut) linear backwards; }
-html[data-motion="full"] .cut.is-in .cut-line { animation: pub-cut-drop var(--t-cut) linear backwards; }
-html[data-motion="full"] .cut.is-in::after { animation: pub-cut-keep var(--t-cut) linear backwards; }
-html[data-motion="full"] .cut.is-in .sc-a { animation: pub-snip-run-a var(--t-cut) linear backwards; }
-html[data-motion="full"] .cut.is-in .sc-b { animation: pub-snip-run-b var(--t-cut) linear backwards; }
-@keyframes pub-cut-run { from { transform: translateX(calc(-100% + var(--cut-w))); } }
-@keyframes pub-cut-drop { from { clip-path: inset(-2px 100% -2px 0); } to { clip-path: inset(-2px 0 -2px 0); } }
-@keyframes pub-cut-keep { from { clip-path: inset(0 0 0 0); } to { clip-path: inset(0 0 0 100%); } }
-@keyframes pub-snip-run-a { 0%, 25%, 50%, 75% { transform: rotate(19deg); } 12.5%, 37.5%, 62.5%, 87.5% { transform: rotate(2deg); } }
-@keyframes pub-snip-run-b { 0%, 25%, 50%, 75% { transform: rotate(-19deg); } 12.5%, 37.5%, 62.5%, 87.5% { transform: rotate(-2deg); } }
-
-/* P9 fiş: mühür iner, onay işareti çizilir; makas delikli çizgiyi keser, koçan ayrılır.
-   At rest the stamp is simply there and the stub hangs slightly apart. Trigger: a fresh arrival from the code or details screen. */
-.ticket:not(.confirmed) { margin-bottom: 14px; padding-bottom: 6px; }
-.ticket + .row .cut { position: absolute; left: -1px; right: -1px; top: -13px; height: 26px; }
-.ticket + .row .cut::before, .ticket + .row .cut::after { content: none; }
-.ticket + .row .cut-line { top: 12px; transform: none; background: repeating-linear-gradient(90deg, var(--ink) 0 7px, transparent 7px 12px); }
-.ticket + .row .cut-sc { --paper: var(--surface); }
-html:is([data-from="verify"], [data-from="details"]):not([data-enter="off"]) .ticket.confirmed { animation: rise var(--t-base) var(--e-out) backwards, pub-thud 220ms var(--e-out) 420ms; }
-html:is([data-from="verify"], [data-from="details"]):not([data-enter="off"]) .stamp { animation: pub-stamp var(--t-stamp) 180ms backwards; }
-html:is([data-from="verify"], [data-from="details"]):not([data-enter="off"]) .stamp .st-check { stroke-dasharray: 1; animation: draw 260ms var(--e-out) 520ms backwards; }
-html:is([data-from="verify"], [data-from="details"]):not([data-enter="off"]) .ticket + .row { animation: rise var(--t-base) var(--e-out) backwards, pub-stub 300ms var(--e-soft) 840ms backwards; }
-html:is([data-from="verify"], [data-from="details"]):not([data-enter="off"]) .ticket + .row .cut-run { animation: pub-cut-run 640ms linear 200ms backwards; }
-html:is([data-from="verify"], [data-from="details"]):not([data-enter="off"]) .ticket + .row .sc-a { animation: pub-snip-run-a 640ms linear 200ms backwards; }
-html:is([data-from="verify"], [data-from="details"]):not([data-enter="off"]) .ticket + .row .sc-b { animation: pub-snip-run-b 640ms linear 200ms backwards; }
-@keyframes pub-stamp {   /* --e-in, --e-spring as literals: var() fails in a keyframe's timing function */
-  from { opacity: 0; transform: rotate(-24deg) scale(1.7); animation-timing-function: cubic-bezier(.5, 0, .9, .3); }
-  55% { opacity: 1; transform: rotate(-9deg) scale(.94); animation-timing-function: cubic-bezier(.34, 1.45, .5, 1); } }
-@keyframes pub-thud { 30% { transform: translateY(2px); } }
-@keyframes pub-stub { from { transform: none; } }
+/* P9 fiş: kodu girip gelen müşteride onay rozeti belirir, fiş hafifçe yerine oturur */
+html:is([data-from="verify"], [data-from="details"]):not([data-enter="off"]) .ticket.confirmed { animation: rise var(--t-base) var(--e-out) backwards; }
+html:is([data-from="verify"], [data-from="details"]):not([data-enter="off"]) .confirm-badge { animation: pop 320ms var(--e-spring) 260ms backwards; }
+html:is([data-from="verify"], [data-from="details"]):not([data-enter="off"]) .confirm-badge path { stroke-dasharray: 1; animation: pub-check 300ms var(--e-out) 420ms backwards; }
+@keyframes pub-check { from { stroke-dashoffset: 1; } }
 
 /* P10 cancelled: struck through (app.css), no stamp; the way forward takes the glint */
 html[data-nav="same"] .ticket[class*="cancelled"] ~ p .btn::before { animation: sheen 900ms var(--e-inout) 400ms backwards; }
 
-/* lite, reduced: press, loading, cross-fade only */
-@media (prefers-reduced-motion: reduce) { .snip, .offcut { display: none !important; } }

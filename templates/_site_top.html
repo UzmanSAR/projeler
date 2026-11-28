@@ -1,0 +1,7 @@
+<header class="site-top"><div class="inner">
+  {% include "_brand.html" %}
+  <nav aria-label="Site">
+    {% if landing %}<a class="hide-sm" href="#ozellikler">Özellikler</a><a class="hide-sm" href="#fiyat">Fiyat</a><a class="hide-sm" href="#sss">Sorular</a>{% endif %}
+    <a href="{% url 'panel:login' %}">Giriş</a><a class="btn" href="{% url 'panel:signup' %}">Ücretsiz deneyin</a>
+  </nav>
+</div></header>

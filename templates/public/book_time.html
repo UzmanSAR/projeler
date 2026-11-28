@@ -9,7 +9,7 @@
   {% else %}<span class="day off" title="Boş saat yok"><small>{{ d.name }}</small><b>{{ d.date.day }}</b></span>{% endif %}
 {% endfor %}
 </div>
-<h2><span>Saat{% if picked %} · <span data-shave>{{ picked|date:"j F l" }}</span>{% endif %}</span></h2>
+<h2>Saat{% if picked %} <small>· {{ picked|date:"j F l" }}</small>{% endif %}</h2>
 {% if slots %}
 <div class="slots">{% for s in slots %}<a class="slot" href="{{ s.url }}">{{ s.label }}</a>{% endfor %}</div>
 <p class="muted">Yalnızca boş saatler gösterilir.</p>

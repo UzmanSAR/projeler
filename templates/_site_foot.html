@@ -1,0 +1,15 @@
+<footer class="site-foot"><div class="inner">
+  <div class="company">
+    {% include "_brand.html" %}
+    <span style="margin-top:8px">Kuaförler ve güzellik merkezleri için online randevu ve müşteri yönetimi.</span>
+    {% if PLATFORM.company_name %}<span>{{ PLATFORM.company_name }}</span>{% endif %}
+    {% if PLATFORM.address %}<span>{{ PLATFORM.address }}</span>{% endif %}
+    {% if PLATFORM.tax_info %}<span>{{ PLATFORM.tax_info }}</span>{% endif %}
+  </div>
+  <nav aria-label="Kurumsal">
+    <a href="{% url 'contact' %}">İletişim</a>
+    <a href="{% url 'privacy' %}">Gizlilik ve kişisel veriler</a>
+    <a href="{% url 'feedback' %}">Öneri ve görüş</a>
+    <a href="{% url 'panel:login' %}">İşletme girişi</a>
+  </nav>
+</div></footer>

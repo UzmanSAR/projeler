@@ -18,7 +18,7 @@ from core import otp
 from core.availability import business_tz, day_slots, merged_slots
 from core.booking import (BookingError, cancel_appointment, create_appointment, eligible_staff,
                           get_or_create_customer, totals)
-from core.models import (Appointment, Business, Customer, Feedback, Membership, Service, Staff, Style,
+from core.models import (Appointment, Business, Customer, Feedback, Membership, PlatformSettings, Service, Staff, Style,
                          WorkingHours, slug_validator)
 
 DAY_NAMES = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"]
@@ -29,8 +29,17 @@ def landing(request):
     return render(request, "public/landing.html", {
         # Örnek dükkân yalnızca tanıtım kurulumunda vardır; yoksa bağlantısı da gösterilmez.
         "demo": Business.objects.filter(slug="ornek-berber").first(),
-        "days": [today + timedelta(days=i) for i in range(5)],   # telefon önizlemesindeki gün şeridi
+        "days": [today + timedelta(days=i) for i in range(5)],   # telefon önizlemesindeki gün
+        "price": PlatformSettings.load().monthly_price,
     })
+
+
+def privacy(request):
+    return render(request, "public/privacy.html")
+
+
+def contact(request):
+    return render(request, "public/contact.html")
 
 
 def style_image(request, pk, digest, size=""):
