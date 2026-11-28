@@ -130,7 +130,7 @@ class BookingTests(Base):
     def test_staff_without_skill_is_not_offered(self):
         mert = Staff.objects.create(business=self.b, name="Mert")
         mert.services.set([self.cut])
-        with self.assertRaisesMessage(BookingError, "yapabilen kuaför"):
+        with self.assertRaisesMessage(BookingError, "yapabilen çalışan"):
             create_appointment(self.b, [self.combo], self.at(10), staff=mert,
                                customer=self.customer(), now=self.now)
 
@@ -373,7 +373,7 @@ class PublicFlowTests(Base):
     def test_device_cookie_does_not_cross_businesses(self):
         other, _ = make_business("diger", "b@example.com")
         self.book()
-        self.assertContains(self.client.get("/diger/hesabim/"), "doğrulanmış bir numara yok")
+        self.assertContains(self.client.get("/diger/hesabim/"), "Giriş yap ya da kayıt ol")   # diğer salonda tanınmaz
         self.assertFalse(Customer.objects.filter(business=other).exists())
 
 
@@ -469,14 +469,25 @@ class PanelTests(Base):
     def test_signup_creates_ready_business(self):
         self.client.logout()
         r = self.client.post("/panel/kayit/", {
-            "business_name": "Yıldız Berber", "slug": "Yıldız Berber", "owner_name": "Can",
+            "kind": "erkek", "business_name": "Yıldız Berber", "slug": "Yıldız Berber", "owner_name": "Can",
             "closed_weekday": 6, "open_at": "09:00", "close_at": "20:00",
             "email": "yeni@example.com", "password": "uzun-bir-sifre-9"})
         self.assertRedirects(r, "/panel/")
         self.assertContains(self.client.get("/yildiz-berber/"), "Saç + sakal")
+        self.assertContains(self.client.get("/yildiz-berber/"), "Erkek kuaförü")
         self.client.logout()
         r = self.client.post("/panel/kayit/", {
-            "business_name": "X", "slug": "panel", "owner_name": "Can", "closed_weekday": 6,
+            "kind": "guzellik", "business_name": "Ayna Güzellik", "slug": "ayna", "owner_name": "Selin",
+            "closed_weekday": 6, "open_at": "10:00", "close_at": "19:00",
+            "email": "ayna@example.com", "password": "uzun-bir-sifre-9"})
+        self.assertRedirects(r, "/panel/")
+        page = self.client.get("/ayna/").content.decode()
+        self.assertIn("Güzellik merkezi", page)
+        self.assertIn("Cilt bakımı", page)
+        self.assertNotIn("Sakal", page)
+        self.client.logout()
+        r = self.client.post("/panel/kayit/", {
+            "kind": "erkek", "business_name": "X", "slug": "panel", "owner_name": "Can", "closed_weekday": 6,
             "open_at": "09:00", "close_at": "20:00", "email": "x@example.com",
             "password": "uzun-bir-sifre-9"})
         self.assertContains(r, "Bu adres kullanılamaz")   # ayrılmış adres

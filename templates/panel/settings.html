@@ -9,6 +9,11 @@
   {% for s in services %}<tr><td><a href="{% url 'panel:service_edit' s.id %}"><b>{{ s.name }}</b></a>{% if not s.active %} <span class="badge gray">Kapalı</span>{% endif %}<br><small>{{ s.duration }} dk{% if s.buffer %} + {{ s.buffer }} dk hazırlık{% endif %}{% if s.price_updated_at < stale %} · <span class="bad">fiyat {{ s.price_updated_at|date:"d.m.Y" }} tarihinden beri aynı, güncel mi?</span>{% endif %}</small></td><td class="num">{{ s.price|floatformat:"0g" }} ₺</td></tr>
   {% empty %}<tr><td>Hizmet eklenmedi.</td></tr>{% endfor %}
   </table></div>
+  <div class="row between"><h2>Modeller</h2><a class="btn small" href="{% url 'panel:styles' %}">{% if style_count %}Yönet{% else %}+ Ekle{% endif %}</a></div>
+  <a class="card style-strip" href="{% url 'panel:styles' %}">
+    {% for s in styles %}<img src="{{ s.thumb_url }}" alt="" width="{{ s.width }}" height="{{ s.height }}" loading="lazy">{% empty %}<span class="muted">Çalışmalarının fotoğraflarını ekle; müşteriler randevu alırken beğendiği modeli seçsin.</span>{% endfor %}
+    {% if style_count > 4 %}<span class="more">+{{ style_count|add:"-4" }}</span>{% endif %}
+  </a>
   <div class="row between"><h2>Personel</h2><a class="btn small" href="{% url 'panel:staff_add' %}">+ Ekle</a></div>
   <div class="card"><table class="plain">
   {% for p in staff %}<tr><td><a href="{% url 'panel:staff_edit' p.id %}"><b>{{ p.name }}</b></a> <small>{{ p.title }}</small>{% if not p.active %} <span class="badge gray">Pasif</span>{% endif %}</td><td class="num"><small>{{ p.services.count }} işlem</small></td></tr>{% endfor %}
@@ -19,7 +24,7 @@
   </table></div>
 </div>
 <div>
-  <h2>Dükkân bilgileri ve randevu kuralları</h2>
+  <h2>İşletme bilgileri ve randevu kuralları</h2>
   <form method="post" class="card">{% csrf_token %}
     {{ form.non_field_errors }}
     {% for f in form %}

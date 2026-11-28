@@ -2,19 +2,21 @@
 {% load static %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/panel.css' %}?v={{ STATIC_V }}">{% endblock %}
 {% block extra_js %}<script src="{% static 'js/panel.js' %}?v={{ STATIC_V }}"></script>{% endblock %}
-{% block title %}Kuaför girişi{% endblock %}
+{% block title %}İşletme girişi · {{ SITE_NAME }}{% endblock %}
 {% block body %}
-<div class="hero"><div class="inner"><small>{{ SITE_NAME }}</small><h1>Kuaför girişi</h1>{% include "_pole.html" %}</div></div>
-<div class="stripe"></div>
-<main class="wrap">
+{% include "_site_top.html" %}
+<main class="auth">
+  <h1>İşletme girişi</h1>
+  <p class="muted">Salonunuzun paneline e-posta adresiniz ve şifrenizle girin.</p>
   {% if form.errors %}<ul class="msgs"><li class="error">E-posta ya da şifre hatalı.</li></ul>{% endif %}
-  <form method="post">{% csrf_token %}
-    <label for="id_username">E-posta</label>
+  <form method="post" class="card">{% csrf_token %}
+    <label for="id_username" style="margin-top:0">E-posta</label>
     <input id="id_username" type="email" name="username" autocomplete="username" required autofocus>
     <label for="id_password">Şifre</label>
     <input id="id_password" type="password" name="password" autocomplete="current-password" required>
     <p style="margin-top:16px"><button class="btn block">Giriş yap</button></p>
   </form>
-  <p class="muted">Hesabın yok mu? <a href="{% url 'panel:signup' %}">Dükkânını kur</a></p>
+  <p class="muted">Henüz hesabınız yok mu? <a href="{% url 'panel:signup' %}">İşletmenizi kaydedin</a> · ilk 14 gün ücretsiz</p>
 </main>
+{% include "_site_foot.html" %}
 {% endblock %}

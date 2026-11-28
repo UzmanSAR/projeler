@@ -14,7 +14,7 @@ from django.urls import reverse
 from .context import static_version
 from .models import Business
 
-PAPER = "#f4f1ea"
+PAPER = "#f6f4f0"
 
 
 GENERIC = {"kuaför", "kuaförü", "kuaförler", "berber", "berberi", "salon", "salonu", "erkek", "dükkân", "dükkânı",

@@ -2,19 +2,22 @@ from django import forms
 from django.contrib.auth import get_user_model, password_validation
 from django.utils.text import slugify
 
-from core.models import Business, Service, Staff, WorkingHours, validate_slug_free
+from core.images import MAX_UPLOAD
+from core.models import Business, Service, Staff, Style, WorkingHours, validate_slug_free
 
 User = get_user_model()
 
 
 class SignupForm(forms.Form):
-    business_name = forms.CharField(label="Dükkân adı", max_length=80)
+    kind = forms.ChoiceField(label="İşletme türü", choices=Business.Kind.choices, initial=Business.Kind.WOMEN,
+                             help_text="Hazır hizmet listesi buna göre gelir; sonra değiştirebilirsiniz.")
+    business_name = forms.CharField(label="İşletme adı", max_length=80)
     slug = forms.CharField(
         label="Sayfa adresi", max_length=40,
-        help_text="Müşterinin göreceği link: site.com/adres. Örn. ali-kuafor",
+        help_text="Müşterilerinizin göreceği bağlantı: site.com/adres. Örn. atelier-sac",
     )
-    owner_name = forms.CharField(label="Adın (takvimde görünür)", max_length=40)
-    phone = forms.CharField(label="Dükkân telefonu", max_length=20, required=False)
+    owner_name = forms.CharField(label="Adınız (takvimde görünür)", max_length=40)
+    phone = forms.CharField(label="İşletme telefonu", max_length=20, required=False)
     closed_weekday = forms.TypedChoiceField(
         label="Haftalık kapalı gün", coerce=int, initial=6,
         choices=WorkingHours.WEEKDAYS + [(7, "Kapalı gün yok")],
@@ -57,7 +60,7 @@ class SignupForm(forms.Form):
 class BusinessForm(forms.ModelForm):
     class Meta:
         model = Business
-        fields = ["name", "description", "address", "district", "phone", "whatsapp", "maps_url",
+        fields = ["name", "kind", "description", "address", "district", "phone", "whatsapp", "maps_url",
                   "slot_step", "min_notice_minutes", "max_days_ahead", "cancel_limit_minutes",
                   "max_open_per_phone", "remind_manual"]
         widgets = {"description": forms.Textarea(attrs={"rows": 3})}
@@ -90,3 +93,29 @@ class StaffForm(forms.ModelForm):
     def __init__(self, *args, business, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["services"].queryset = Service.objects.filter(business=business)
+
+
+class StyleForm(forms.ModelForm):
+    photo = forms.ImageField(
+        label="Fotoğraf", required=False,
+        widget=forms.ClearableFileInput(attrs={"accept": "image/jpeg,image/png,image/webp"}),
+        help_text="Telefonundan çekebilir ya da galeriden seçebilirsin. Konum bilgisi silinerek kaydedilir.")
+
+    class Meta:
+        model = Style
+        fields = ["title", "note", "service", "order", "active"]
+        labels = {"title": "Model adı"}
+
+    def __init__(self, *args, business=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["service"].queryset = business.services.all()
+        self.fields["service"].empty_label = "Bağlı işlem yok"
+        self.fields["title"].widget.attrs["placeholder"] = "Örn. Kısa bob, Fade, Gelin topuzu"
+        if self.instance.pk is None:
+            self.fields["photo"].required = True
+
+    def clean_photo(self):
+        photo = self.cleaned_data.get("photo")
+        if photo and photo.size > MAX_UPLOAD:
+            raise forms.ValidationError("Fotoğraf çok büyük (en fazla 15 MB).")
+        return photo

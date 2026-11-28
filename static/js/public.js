@@ -13,53 +13,7 @@
     each('.day.is-picked, .slot.is-picked', function (el) { el.classList.remove('is-picked'); });
     a.classList.add('is-picked');
     if (strip && a.parentNode === strip) M.hint('days', strip.scrollLeft);
-    else if (M.full) {   /* makas seçilen saatin köşesini keser (the hour is already bordo: the tap never waits) */
-      if (!a.querySelector('.snip')) a.insertAdjacentHTML('beforeend', '<i class="offcut"></i><svg class="snip" viewBox="-12.5 -8 25 16" aria-hidden="true">' +
-        '<g class="sc-b"><path class="io" d="M-11,.15L0,0L4.5,-2"/><circle class="io" cx="7.3" cy="-3.5" r="2.8"/></g>' +
-        '<g class="sc-a"><path class="io" d="M-11,-.15L0,0L4.5,2"/><circle class="io" cx="7.3" cy="3.5" r="2.8"/></g><circle class="ii" r=".9"/></svg>');
-      a.classList.add('just-picked');
-    }
   });
-  d.addEventListener('motion:reset', function () { each('.slot.just-picked', function (el) { el.classList.remove('just-picked'); }); });
-  /* levha kendini çizer, makas kesik çizgiyi keser: ekrana girince, bir kez */
-  if (M.full && 'IntersectionObserver' in window) {
-    var io = new IntersectionObserver(function (es) {
-      es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.remove('is-wait'); e.target.classList.add('is-in'); io.unobserve(e.target); } });
-    }, { threshold: .5 });
-    each('.draw:not(.on-load), .cut:not(.perf)', function (el) { el.classList.add('is-wait'); io.observe(el); });
-  }
-  /* ustura, tarak ve makas ekrandayken durmadan çalışır; "Durdur" hepsini bekletir (seçim oturum boyunca kalır).
-     html[data-loops] is the only switch of these loops and is set here alone, with full motion. */
-  var loops = d.querySelectorAll('.loop'), doc = d.documentElement;
-  if (M.full && loops.length && 'IntersectionObserver' in window) {
-    var seen = new IntersectionObserver(function (es) {
-      es.forEach(function (e) { e.target.classList.toggle('is-live', e.isIntersecting); });
-    }, { rootMargin: '48px 0px' });
-    var setLoops = function (off) {
-      doc.setAttribute('data-loops', off ? 'off' : 'on');
-      each('.loop-toggle', function (b) {
-        b.textContent = off ? 'Oynat' : 'Durdur';
-        b.setAttribute('aria-label', off ? 'Çizimlerin hareketini oynat' : 'Çizimlerin hareketini durdur');   /* the visible word is in the name */
-      });
-    };
-    [].forEach.call(loops, function (el) {
-      seen.observe(el);
-      var fig = el.closest('figure'), cap = fig && fig.querySelector('figcaption');
-      if (!cap) return;
-      /* the drawing and its caption stay decorative, the button does not */
-      var text = d.createElement('span'); text.setAttribute('aria-hidden', 'true');
-      while (cap.firstChild) text.appendChild(cap.firstChild);
-      cap.appendChild(text); fig.removeAttribute('aria-hidden'); el.setAttribute('aria-hidden', 'true');
-      var b = d.createElement('button'); b.type = 'button'; b.className = 'loop-toggle'; cap.appendChild(b);
-      b.addEventListener('click', function () {
-        var off = doc.getAttribute('data-loops') !== 'off';
-        M.store.set('loops', off ? 'off' : 'on'); setLoops(off);
-      });
-    });
-    setLoops(M.store.get('loops') === 'off');
-  }
-  /* gün değişince ustura yeni günün adını açar */
-  M.ready(function () { if (M.nav === 'same' && M.from === 'time') M.shave(d.querySelector('[data-shave]'), 160); });
   /* P5: after a day change the strip stands where it stood; otherwise the chosen day is brought into view
      (CSS scroll-initial-target where it exists). Only scrollLeft is written: scrollIntoView could move the page. */
   var on = strip && strip.querySelector('.day.on');
@@ -70,6 +24,13 @@
     var left = box(), over = left + on.offsetWidth - strip.clientWidth;
     if (left < 0) strip.scrollLeft += left; else if (over > 0) strip.scrollLeft += over;
   }
+
+  /* Model seçilince bağlı işlem işaretlenir (müşteri istemezse kaldırabilir). Hareketten bağımsız: her düzeyde. */
+  d.addEventListener('change', function (e) {
+    var r = e.target; if (!r.matches || !r.matches('input[name="m"]') || !r.checked) return;
+    var id = r.getAttribute('data-service'), box = id && d.querySelector('input[name="h"][value="' + id + '"]');
+    if (box && !box.checked) { box.checked = true; box.dispatchEvent(new Event('change', { bubbles: true })); }
+  });
 
   /* P3 live total on "Devam et" (flag live-total). Like the server, it counts the first six ticked services. */
   var picks = d.querySelectorAll('.pick input[name="h"]'), cta = picks.length && picks[0].form && picks[0].form.querySelector('.sticky .btn');

@@ -77,7 +77,7 @@ def _queue_messages(appt, now):
 
 
 @transaction.atomic
-def create_appointment(business, services, start, *, staff=None, customer=None,
+def create_appointment(business, services, start, *, staff=None, customer=None, style=None,
                        source=Appointment.Source.ONLINE, user=None, now=None, notify=True):
     """Randevuyu oluşturur. staff=None ise ('fark etmez') boş olan ilk berber atanır."""
     now = now or timezone.now()
@@ -85,20 +85,22 @@ def create_appointment(business, services, start, *, staff=None, customer=None,
     if not services or any(s.business_id != business.id or not s.active for s in services):
         raise BookingError("Geçerli bir işlem seçin.")
     if staff is not None and staff.business_id != business.id:
-        raise BookingError("Geçerli bir kuaför seçin.")
+        raise BookingError("Geçerli bir çalışan seçin.")
     online = source == Appointment.Source.ONLINE
+    if style is not None and (style.business_id != business.id or not style.active):
+        style = None
     duration, buffer, price = totals(services)
     candidates = eligible_staff(business, services, staff)
     if not candidates:
-        raise BookingError("Seçilen işlemleri yapabilen kuaför bulunamadı.")
+        raise BookingError("Seçilen işlemleri yapabilen çalışan bulunamadı.")
 
     if online:
         if not business.accepts_bookings:
-            raise BookingError("Bu dükkân şu an online randevu almıyor. Lütfen dükkânı arayın.")
+            raise BookingError("Bu salon şu an online randevu almıyor. Lütfen salonu arayın.")
         if customer is None:
             raise BookingError("Telefon doğrulaması gerekli.")
         if customer.blocked:
-            raise BookingError("Online randevu alınamıyor. Lütfen dükkânı arayın.")
+            raise BookingError("Online randevu alınamıyor. Lütfen salonu arayın.")
         open_qs = Appointment.objects.filter(
             business=business, customer=customer,
             status=Appointment.Status.CONFIRMED, start__gt=now,
@@ -128,6 +130,7 @@ def create_appointment(business, services, start, *, staff=None, customer=None,
                 appt = Appointment.objects.create(
                     business=business, staff=chosen, customer=customer, start=start, end=end,
                     block_end=end + timedelta(minutes=buffer), source=source, planned_total=price,
+                    style=style,
                 )
             break
         except IntegrityError:  # aynı saniyede başka biri aldı
@@ -176,7 +179,7 @@ def cancel_appointment(appt, *, by_customer, user=None, now=None):
     if appt.status != Appointment.Status.CONFIRMED:
         raise BookingError("Bu randevu zaten kapatılmış.")
     if by_customer and not appt.can_cancel_online(now):
-        raise BookingError("İptal süresi geçti. Lütfen dükkânı arayın.")
+        raise BookingError("İptal süresi geçti. Lütfen salonu arayın.")
     appt.status = (Appointment.Status.CANCELLED_CUSTOMER if by_customer
                    else Appointment.Status.CANCELLED_BUSINESS)
     appt.save(update_fields=["status"])

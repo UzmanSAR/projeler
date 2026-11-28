@@ -1,124 +1,128 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}{{ SITE_NAME }} · Kuaförün kendi randevu sayfası{% endblock %}
-{% block meta %}<meta name="description" content="Erkek kuaförleri için online randevu: pazar yeri yok, komisyon yok. Müşterin üye olmadan 30 saniyede randevu alır; sen takvimini, müşterilerini ve cironu tek ekranda görürsün.">
-<meta property="og:title" content="{{ SITE_NAME }} · Kuaförün kendi randevu sayfası">
-<meta property="og:description" content="Pazar yeri yok, komisyon yok. Kendi linkin, kendi müşterin. İlk 14 gün ücretsiz.">
-<meta property="og:type" content="website">{% endblock %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'css/public.css' %}?v={{ STATIC_V }}">
-<link rel="stylesheet" href="{% static 'css/landing.css' %}?v={{ STATIC_V }}">{% endblock %}
-{% block extra_js %}<script src="{% static 'js/public.js' %}?v={{ STATIC_V }}"></script>{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/landing.css' %}?v={{ STATIC_V }}">{% endblock %}
+{% block title %}{{ SITE_NAME }} · Kuaför ve güzellik merkezleri için online randevu{% endblock %}
+{% block meta %}<meta name="description" content="Kuaförler, berberler ve güzellik merkezleri için online randevu, müşteri geçmişi ve kasa takibi. Komisyon yok, ilk 14 gün ücretsiz.">
+<meta property="og:title" content="{{ SITE_NAME }} · Kuaför ve güzellik merkezleri için online randevu">
+<meta property="og:description" content="Müşterileriniz uygulama indirmeden randevu alır; siz takviminizi, müşteri geçmişini ve cironuzu tek ekrandan yönetirsiniz.">{% endblock %}
 {% block body %}
-{# Bu sayfanın 24 px kesimleri (çizimlerin kalemleri app.css içinde) #}
-<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><symbol id="i-pole" viewBox="0 0 24 24"><circle class="io" cx="12" cy="2.9" r="1.5"/><path class="io" d="M7.6 5.9h8.8v1.9H7.6zM7.6 18.3h8.8v1.9H7.6z"/><path class="io" d="M8.8 7.8v10.5M15.2 7.8v10.5"/><path class="isf" d="M8.8 12.1l6.4-3.6v2.6l-6.4 3.6zM8.8 17.3l6.4-3.6v2.6l-3.6 2H8.8z"/><circle class="io" cx="12" cy="22" r="1"/></symbol><symbol id="i-scissors" viewBox="0 0 24 24"><circle class="io" cx="18.3" cy="6.3" r="2.9"/><circle class="io" cx="18.3" cy="17.7" r="2.9"/><path class="io" d="M15.9 8l-4.4 3.2M2.4 18.2l9.1-7M15.9 16l-4.4-3.2M2.4 5.8l9.1 7"/><circle class="ii" cx="11.5" cy="12" r=".9"/></symbol></svg>
-<div class="hero lp-hero"><div class="lp-grid">
-  <div class="lp-top"><b><svg class="ico" aria-hidden="true"><use href="#i-pole"/></svg>{{ SITE_NAME }}</b><a href="{% url 'panel:login' %}">Kuaför girişi</a></div>
-  <div class="inner">
-    <small>Erkek kuaförleri için</small>
-    <h1>Kuaförün <em class="shave on-load">kendi<i class="lather" aria-hidden="true"></i><span class="shave-run" aria-hidden="true"><svg class="shave-razor" viewBox="0 0 202 236"><use href="#m-razor-shave"/></svg></span></em> randevu sayfası</h1>
-    <figure class="fig lp-fig-razor" aria-hidden="true">
-      <svg class="plate draw on-load loop" viewBox="0 0 340 152"><g transform="translate(178,36) rotate(4)"><path class="msh" pathLength="1" d="M-146.74,22.2L-86.4,21.8M-136.3,24.6L-86.43,24.2M-124.52,27L-99.64,26.6M-80.28,21.4L-48.2,21"/><g class="rz-handle" transform="rotate(31)"><path class="msh" pathLength="1" d="M42.38,14.6L141.39,12M61.5,17L146.51,14.4M87.58,19.2L154.19,16.6"/><path class="ms" pathLength="1" d="M-10.5,0.2C-10.5,-6.6 -5,-10.2 2,-10.3C50,-11.6 100,-14.6 150,-14.4C161.5,-14.8 169.6,-9.8 170,-3C170.4,4.2 163,7.6 152,7.8C100,9.4 50,10.9 2,10.3C-5,10.2 -10.5,7 -10.5,0.2Z"/><path class="mo" pathLength="1" d="M-10.5,0.2C-10.5,-6.6 -5,-10.2 2,-10.3C50,-11.6 100,-14.6 150,-14.4C161.5,-14.8 169.6,-9.8 170,-3C170.4,4.2 163,7.6 152,7.8C100,9.4 50,10.9 2,10.3C-5,10.2 -10.5,7 -10.5,0.2Z"/><path class="mhl" pathLength="1" d="M19.36,-4.88C37.78,-5.31 56.46,-5.94 75.32,-6.53"/><path class="mhl" pathLength="1" d="M84.27,-6.81C102.69,-7.37 121.28,-7.87 139.95,-8.09"/><path class="mhd" pathLength="1" d="M22.41,1.89C58.67,1.4 95.98,0.09 134.01,-0.74M29.61,4.59C61.36,4.22 93.91,3.23 127.11,2.38M30.43,7.4C59.84,7.17 89.96,6.37 120.72,5.53"/><path class="mpl" pathLength="1" d="M-10.5,0.2C-10.5,-6.6 -5,-10.2 2,-10.3L13,-10.6C15.2,-4 15.2,4 13,10.5L2,10.3C-5,10.2 -10.5,7 -10.5,0.2Z"/><path class="mpl" pathLength="1" d="M148,-14.4C161,-14.8 169.6,-9.8 170,-3C170.4,4.2 163,7.6 150,7.8C147.6,0.6 147.4,-7 148,-14.4Z"/><path class="mh" pathLength="1" d="M9.6,-8.6C11,-3 11,3 9.6,8.6M151.6,-12.4C151,-6 151.4,0 152.8,5.8"/><circle class="mi" cx="159" cy="-3.4" r="1.5"/><circle class="mi" cx="80" cy="-1.6" r="1.2"/><circle class="mhlf" cx="80" cy="-1.6" r="2.6"/></g><g class="rz-blade"><path class="mop" pathLength="1" d="M3,-5.2L-26,-5.6C-33,-5.8 -36,-9.8 -44,-10.2L-138,-11.6C-149,-11.8 -156.5,-5.5 -156.5,3.5C-156.5,11 -153,17.8 -147,18Q-98,20.6 -52,17.6C-46,17.2 -43.6,13 -43.1,9C-42.7,6 -39,5.3 -33,5.3L-8,5.4C0,5.6 8,6.6 15,10.6C21,14 28,17.2 33,14.6C37.6,12.2 36.6,6.4 31,3.4C23,-0.9 12,-5 3,-5.2Z"/><path class="md" pathLength="1" d="M-45.5,-4.7L-139,-6C-146.5,-6 -151.2,-2.2 -152.4,3.4"/><path class="mh" pathLength="1" d="M-50,-8.3L-96,-8.95M-101,-9L-132,-9.5"/><path class="mh" pathLength="1" d="M-58,-6.6L-128,-7.6"/><path class="md" pathLength="1" d="M-47.2,-4.6C-51.4,3 -51.2,10.5 -47.6,17"/><path class="mh" pathLength="1" d="M-50.6,-4.5C-54.6,3 -54.4,10.6 -51,17.3"/><path class="mh" pathLength="1" d="M-57.78,-2.4L-144.96,-2.3M-58.02,-0.1L-127.56,-0.07M-58.63,2.4L-113.86,2.37M-56.7,5.1L-99.88,5.02M-58.02,7.9L-91.72,7.78M-57.7,10.8L-86.76,10.67M-57.55,13.6L-78.57,13.43M-150.5,4L-128.46,4.3M-151,7.2L-134.52,7.5M-150,10.4L-137.46,10.7M-148.4,13.4L-139.57,13.7"/><path class="mh" pathLength="1" d="M-53,15.7Q-98,18.7 -146.5,16.3"/><path class="mh" pathLength="1" d="M-31,5.2v-1.9M-28,5.2v-1.9M-25,5.2v-1.9M-22,5.2v-1.9M-19,5.2v-1.9M-16,5.2v-1.9"/><path class="mh" pathLength="1" d="M-33,-2.6h13M-32,-.5h10M-31,1.6h7"/><path class="mh" pathLength="1" d="M12,6.4C18,9.4 24,13.4 30,12.6"/><g transform="translate(-122,19.5)"><path class="rz-spark" opacity="0" d="M0,-9C.9,-2.6 2.6,-.9 9,0C2.6,.9 .9,2.6 0,9C-.9,2.6 -2.6,.9 -9,0C-2.6,-.9 -.9,-2.6 0,-9Z"/></g></g><circle class="mpl" pathLength="1" cx="0" cy="0" r="3.6"/><circle class="mi" cx="0" cy="0" r="1.5"/></g></svg>
-      <figcaption><b>Şek. 1</b>Ustura</figcaption>
-    </figure>
-    <p>Pazar yeri yok, komisyon yok. Müşterin üye olmadan 30 saniyede randevu alır; sen takvimini, müşterilerini ve cironu tek ekranda görürsün.</p>
-    <div class="lp-actions">
-      <a class="btn" href="{% url 'panel:signup' %}">Dükkânını 5 dakikada kur</a>
-      {% if demo %}<a class="btn ghost" href="{% url 'public:business' demo.slug %}">Örnek dükkânı gez</a>{% endif %}
+{% include "_site_top.html" with landing=True %}
+<main class="lp">
+  <section class="lp-hero">
+    <div class="lp-copy">
+      <p class="lp-eyebrow">Kuaförler, berberler ve güzellik merkezleri için</p>
+      <h1>Randevularınız, müşterileriniz ve kasanız tek ekranda.</h1>
+      <p class="lp-lead">Müşterileriniz salonunuza özel sayfadan, uygulama indirmeden ve üye olmadan randevu alır. Siz takviminizi, müşteri geçmişini ve günlük cironuzu telefonunuzdan yönetirsiniz.</p>
+      <div class="lp-actions">
+        <a class="btn" href="{% url 'panel:signup' %}">14 gün ücretsiz deneyin</a>
+        {% if demo %}<a class="btn ghost" href="{% url 'public:business' demo.slug %}">Örnek salonu inceleyin</a>{% endif %}
+      </div>
+      <ul class="lp-trust"><li>Kart bilgisi istenmez</li><li>Randevu başına komisyon yok</li><li>Taahhüt yok</li></ul>
     </div>
-    <ul class="lp-trust"><li>İlk 14 gün ücretsiz</li><li>Kart istemez</li><li>Komisyon yok</li></ul>
-  </div>
-  {# Önizleme: gerçek ekranların küçük bir örneği. Süslemedir; ekran okuyucuya ve klavyeye kapalıdır. #}
-  <div class="lp-stage" aria-hidden="true" inert>
-    <div class="lp-phone"><div class="lp-screen">
-      <div class="lp-shop"><small>Örnek Mahallesi · Erkek kuaförü</small><b>Örnek Kuaför</b></div>
-      <div class="lp-steps"><i class="on"></i><i class="on"></i><i></i><i></i></div>
-      <div class="lp-label">Gün</div>
-      <div class="lp-days">{% for d in days %}<span class="day{% if forloop.counter == 2 %} on{% endif %}"><small>{{ d|date:"D" }}</small><b>{{ d|date:"j" }}</b></span>{% endfor %}</div>
-      <div class="lp-label">Saat</div>
-      <div class="lp-slots"><span class="slot">10:00</span><span class="slot">11:30</span><span class="slot">13:15</span><span class="slot">14:00</span><span class="slot">15:30</span><span class="slot lp-pick">16:15</span><span class="slot">17:45</span><span class="slot">19:00</span></div>
-      <span class="btn block">Devam et · 30 dk · 400 ₺</span>
-    </div></div>
-    <div class="lp-panel">
-      <div class="lp-panel-head"><b>Bugün</b><small>Kuaför paneli</small></div>
-      <div class="lp-kpis"><div class="kpi"><small>Ciro</small><b>5.250 ₺</b></div><div class="kpi"><small>Tamamlanan</small><b>15</b></div><div class="kpi"><small>Bekleyen</small><b>6</b></div></div>
-      <div class="lp-row"><b class="lp-time">14:30</b><span><b>Ahmet Y.</b><small>Saç + sakal · Ali</small></span><span class="badge green">Tamamlandı</span></div>
-      <div class="lp-row"><b class="lp-time">16:15</b><span><b>Kerem K.</b><small>Saç kesimi · Mert</small></span><span class="badge">Sırada</span></div>
+    {# Önizleme: gerçek ekranların küçük bir örneği. Süslemedir; ekran okuyucuya ve klavyeye kapalıdır. #}
+    <div class="lp-stage" aria-hidden="true" inert>
+      <div class="lp-phone"><div class="lp-screen">
+        <div class="lp-shop"><span class="lp-mono">Ö</span><span><small>Kadın kuaförü · Örnek Mahallesi</small><b>Örnek Saç ve Güzellik</b></span></div>
+        <div class="lp-label">Model seçin</div>
+        <div class="lp-looks"><span class="lp-look l1"><i></i>Kısa bob</span><span class="lp-look l2 on"><i></i>Dalgalı fön</span><span class="lp-look l3"><i></i>Röfle</span></div>
+        <div class="lp-label">Saat · {{ days.1|date:"j F l" }}</div>
+        <div class="lp-slots"><span class="slot">10:00</span><span class="slot">11:30</span><span class="slot">13:15</span><span class="slot lp-pick">14:00</span><span class="slot">15:30</span><span class="slot">17:45</span></div>
+        <span class="btn block">Devam et · 60 dk · 850 ₺</span>
+      </div></div>
+      <div class="lp-panel">
+        <div class="lp-panel-head"><b>Bugün</b><small>İşletme paneli</small></div>
+        <div class="lp-kpis"><div class="kpi"><small>Ciro</small><b>7.450 ₺</b></div><div class="kpi"><small>Tamamlanan</small><b>11</b></div><div class="kpi"><small>Bekleyen</small><b>5</b></div></div>
+        <div class="lp-row"><b class="lp-time">13:00</b><span><b>Elif K.</b><small>Kesim + fön · Selin</small></span><span class="badge green">Tamamlandı</span></div>
+        <div class="lp-row"><b class="lp-time">14:00</b><span><b>Deniz A.</b><small>Dalgalı fön · Merve</small></span><span class="badge">Sırada</span></div>
+      </div>
     </div>
-    <p class="note lp-stage-cap">Müşterinin sayfası ve senin panelin, küçük bir örnek</p>
-  </div>
-</div></div>
-<div class="wrap lp">
-  <div class="cut" aria-hidden="true"><i class="cut-line"></i><span class="cut-run"><svg class="cut-sc" viewBox="-12.5 -8 25 16"><g class="sc-b"><path class="io" d="M-11,0.15L0,0L4.5,-2"/><circle class="io" cx="7.3" cy="-3.5" r="2.8"/></g><g class="sc-a"><path class="io" d="M-11,-0.15L0,0L4.5,2"/><circle class="io" cx="7.3" cy="3.5" r="2.8"/></g><circle class="ii" cx="0" cy="0" r=".9"/></svg></span></div>
+  </section>
 
-  <section class="lp-section">
+  <section class="lp-section lp-who" id="kimler">
+    <p class="lp-eyebrow">Kimler için</p>
+    <h2>Her salonun çalışma düzenine uyar</h2>
+    <div class="lp-cards three">
+      <article class="lp-card"><h3>Kadın kuaförleri</h3><p>Kesim, fön, boya ve bakım randevuları kendi süresiyle takvime yerleşir. Müşteriniz beğendiği modeli seçerek gelir; ne istediği randevudan önce bellidir.</p>{% if demo_salon %}<a class="lp-card-link" href="{% url 'public:business' demo_salon.slug %}">Örnek salonu görün</a>{% endif %}</article>
+      <article class="lp-card"><h3>Erkek kuaförleri ve berberler</h3><p>Yoğun saatlerde telefon susar. Randevusuz gelen müşteriyi de iki dokunuşla kaydedersiniz; gün sonunda kasa eksiksiz çıkar.</p>{% if demo_men %}<a class="lp-card-link" href="{% url 'public:business' demo_men.slug %}">Örnek kuaförü görün</a>{% endif %}</article>
+      <article class="lp-card"><h3>Güzellik merkezleri</h3><p>Cilt bakımı, manikür, kaş ve kirpik hizmetleri uygulayan uzmana göre ayrılır. Her müşterinin geçmiş uygulamaları kendi kartında durur.</p>{% if demo_salon %}<a class="lp-card-link" href="{% url 'public:business' demo_salon.slug %}">Örnek salonu görün</a>{% endif %}</article>
+    </div>
+  </section>
+
+  <section class="lp-section" id="ozellikler">
+    <p class="lp-eyebrow">Özellikler</p>
+    <h2>Salon yönetimi için ihtiyacınız olan her şey</h2>
+    <div class="lp-features">
+      <div class="lp-feature"><b>Size özel randevu sayfası</b><p>Kendi adresinizle açılır; Instagram profilinize ve Google işletme kaydınıza eklenir. Sayfanızda başka salon ya da reklam yer almaz.</p></div>
+      <div class="lp-feature"><b>Model kataloğu</b><p>Çalışmalarınızın fotoğraflarını ekleyin. Müşteri randevu alırken beğendiği modeli seçer, seçimi randevu kaydında size görünür.</p></div>
+      <div class="lp-feature"><b>Müşteri geçmişi</b><p>Son ziyaret, yaptırılan işlemler, harcama ve notlarınız tek kartta. Müşteriniz de kendi geçmişini görür, aynı randevuyu tek dokunuşla tekrarlar.</p></div>
+      <div class="lp-feature"><b>Onay kodu ve hatırlatma</b><p>Randevu, müşterinin telefonuna gelen kodla onaylanır; bir gün önce hatırlatma gönderilir. Sahte ve unutulan randevular azalır.</p></div>
+      <div class="lp-feature"><b>Takvim ve personel</b><p>Her çalışanın kendi sütunu, yaptığı hizmetler ve çalışma saatleri. Mola, izin ve tatiller takvimden kapatılır.</p></div>
+      <div class="lp-feature"><b>Raporlar</b><p>Günlük ve aylık ciro, doluluk, en yoğun saatler; çalışana ve hizmete göre kazanç. Bir süredir gelmeyen düzenli müşteriler ayrıca listelenir.</p></div>
+    </div>
+  </section>
+
+  <section class="lp-section lp-how" id="nasil">
     <p class="lp-eyebrow">Nasıl çalışır</p>
-    <h2>Üç adımda randevu almaya başla</h2>
+    <h2>Üç adımda online randevuya geçin</h2>
     <ol class="lp-steps-list">
-      <li><b>Dükkânını kur</b><p>Adını, çalışma saatlerini ve fiyatlarını gir. Saç, sakal ve saç + sakal hizmetleri hazır gelir; beş dakika sürer.</p></li>
-      <li><b>Linkini paylaş</b><p>Instagram profiline ve WhatsApp durumuna koyacağın tek adres. Sayfanda başka dükkân ya da reklam görünmez.</p>
-        <div class="linkbox" aria-hidden="true"><svg class="ico"><use href="#i-scissors"/></svg>…/ali-kuafor/</div></li>
-      <li><b>Randevular takvimine düşsün</b><p>Müşteri boş saati görür, telefonuna gelen kodla onaylar. Dükkân kapalıyken de randevu alırsın.</p></li>
+      <li><b>Hesabınızı açın</b><p>İşletme türünüzü seçin, çalışma saatlerinizi ve fiyatlarınızı girin. Türünüze uygun hizmet listesi hazır gelir.</p></li>
+      <li><b>Bağlantınızı paylaşın</b><p>Size özel adresi Instagram'a, WhatsApp'a ve Google'a ekleyin. Müşteri bağlantıya dokunduğunda sayfa açılır.</p></li>
+      <li><b>Randevular takviminize düşsün</b><p>Müşteri boş saati görür, telefonuna gelen kodla onaylar. Salon kapalıyken de randevu alırsınız.</p></li>
     </ol>
   </section>
 
-  <section class="lp-section lp-feat">
-    <p class="lp-eyebrow">Neler var</p>
-    <h2>Müşterin için kolay, senin için düzenli</h2>
-    <figure class="fig lp-fig-comb" aria-hidden="true">
-      <svg class="plate draw loop" viewBox="0 0 300 80"><rect class="cb-back" x="8" y="14" width="284" height="56"/><path class="mop" pathLength="1" d="M13,21C13,15.6 16.4,13.8 21.6,13.6C100,9.6 200,9.6 278.4,13.6C283.6,13.8 287,15.6 287,21L287,54C287,58.4 281.4,58.4 281.4,54L281.4,30.4L19.4,30.4L19.4,62C19.4,66.6 13,66.6 13,62Z"/><path class="md" pathLength="1" d="M24,17.2C100,13.4 200,13.4 276,17.2"/><path class="mh" pathLength="1" d="M30,20.6C100,17 180,16.8 236,18.6M40,24C100,21.2 160,20.8 204,21.8M250,22.4L272,23.6"/><path class="mt mt-c" pathLength="1" d="M26,30.4L26,64.06M31.3,30.4L31.3,63.99M36.6,30.4L36.6,63.74M41.9,30.4L41.9,63.77M47.2,30.4L47.2,63.52M52.5,30.4L52.5,63.58M57.8,30.4L57.8,63.53M63.1,30.4L63.1,63.36M68.4,30.4L68.4,63.4M73.7,30.4L73.7,63.11M79,30.4L79,63.18M84.3,30.4L84.3,63.08M89.6,30.4L89.6,62.97M94.9,30.4L94.9,62.68M100.2,30.4L100.2,62.73M105.5,30.4L105.5,62.59M110.8,30.4L110.8,62.68M116.1,30.4L116.1,62.41M121.4,30.4L121.4,62.46M126.7,30.4L126.7,62.36M132,30.4L132,62.13M137.3,30.4L137.3,61.97M142.6,30.4L142.6,62.11M147.9,30.4L147.9,61.84"/><path class="mt mt-f" pathLength="1" d="M154.4,30.4L154.4,61.54M157.18,30.4L157.18,61.4M159.96,30.4L159.96,61.37M162.74,30.4L162.74,61.39M165.52,30.4L165.52,61.1M168.3,30.4L168.3,60.95M171.08,30.4L171.08,61.03M173.86,30.4L173.86,60.78M176.64,30.4L176.64,60.7M179.42,30.4L179.42,60.73M182.2,30.4L182.2,60.44M184.98,30.4L184.98,60.36M187.76,30.4L187.76,60.21M190.54,30.4L190.54,60.26M193.32,30.4L193.32,60.12M196.1,30.4L196.1,60.04M198.88,30.4L198.88,59.84M201.66,30.4L201.66,59.81M204.44,30.4L204.44,59.66M207.22,30.4L207.22,59.42M210,30.4L210,59.43M212.78,30.4L212.78,59.31M215.56,30.4L215.56,59.13M218.34,30.4L218.34,59.14M221.12,30.4L221.12,58.99M223.9,30.4L223.9,58.73M226.68,30.4L226.68,58.85M229.46,30.4L229.46,58.59M232.24,30.4L232.24,58.48M235.02,30.4L235.02,58.5M237.8,30.4L237.8,58.24M240.58,30.4L240.58,58.11M243.36,30.4L243.36,58.16M246.14,30.4L246.14,57.91M248.92,30.4L248.92,57.98M251.7,30.4L251.7,57.63M254.48,30.4L254.48,57.6M257.26,30.4L257.26,57.59M260.04,30.4L260.04,57.37M262.82,30.4L262.82,57.35M265.6,30.4L265.6,57.09M268.38,30.4L268.38,56.98M271.16,30.4L271.16,57.04M273.94,30.4L273.94,56.88M276.72,30.4L276.72,56.7"/><rect class="cb-gap" x="-9" y="31.4" width="18" height="35.4" opacity="0"/></svg>
-      <figcaption><b>Şek. 2</b>Tarak: seyrek ve sık diş</figcaption>
-    </figure>
-    <div class="lp-features">
-      <div class="card"><b>Kendi linkin, kendi müşterin</b><p class="muted">Müşteri yalnızca senin sayfanı görür. Kayıtlar dükkânına aittir; başka dükkânla paylaşılmaz.</p></div>
-      <div class="card"><b>Üyelik yok, uygulama yok</b><p class="muted">Dört adımda randevu: işlem, saat, ad ve telefon, SMS kodu. Aynı telefondan 90 gün tekrar kod istenmez.</p></div>
-      <div class="card"><b>Hatırlatma kendiliğinden gider</b><p class="muted">Onay mesajı hemen, hatırlatma bir gün önce. Müşteri gelemeyecekse tek dokunuşla iptal eder, saat yeniden açılır.</p></div>
-      <div class="card"><b>Randevusuz gelen de aynı takvimde</b><p class="muted">Kapıdan giren müşteriyi iki dokunuşla işlersin. Ciron ve doluluğun eksiksiz çıkar.</p></div>
-      <div class="card"><b>Gün sonunda rakamlar hazır</b><p class="muted">Ciro, doluluk, en yoğun saatler; hizmete ve kuaföre göre kazanç. Bir süredir gelmeyen düzenli müşterilerin ayrı listelenir.</p></div>
-      <div class="card"><b>Sabit aylık ücret</b><p class="muted">Randevu başına komisyon yok. İlk 14 gün ücretsiz, kart istemeden denersin.</p></div>
+  <section class="lp-section lp-price" id="fiyat">
+    <div class="lp-price-copy">
+      <p class="lp-eyebrow">Fiyat</p>
+      <h2>Tek paket, sabit aylık ücret</h2>
+      <p class="muted">Randevu başına komisyon alınmaz. Çalışan, müşteri ya da randevu sayısına göre ücret değişmez. İlk 14 gün ücretsizdir; deneme süresince kart bilgisi istenmez.</p>
     </div>
-    <figure class="fig lp-fig-scissors" aria-hidden="true">
-      <svg class="plate draw loop" viewBox="0 0 300 160"><g transform="translate(152,80)"><g class="sc-b" transform="rotate(-13)"><path class="mop" pathLength="1" d="M-134,0.7C-98,6.2 -58,10.2 -25,11.2C-12,11.6 0,12.2 11,8.8C25,4.2 42,-6.4 60,-10.4L74,-13L71.6,-25.4C48,-22.4 25,-17.6 8,-11.6C0,-8.6 -8,-4 -16,-2.2L-134,-0.6Z"/><path class="md" pathLength="1" d="M-122,2.6C-92,5.8 -58,7.8 -28,8"/><path class="mh" pathLength="1" d="M-108,5C-88,7.2 -64,8.8 -42,9.5M-74,4.6L-36,5.8M-54,2.4L-32,3.2M-128,0.2L-30,-0.5"/><path class="mh" pathLength="1" d="M24,-1.4C35,-8.2 47,-12.8 61,-15.6M30,-10.8C40,-15 51,-17.8 63,-20.4"/><path class="mop" pathLength="1" d="M93.4,-38.2C100,-43.6 107.6,-46.6 114.6,-45.8C117,-45.5 117.6,-42.8 115.4,-42C109.4,-39.6 105,-35 101.4,-29.2Z"/><path class="mop" pathLength="1" fill-rule="evenodd" d="M67,-23a18,18 0 1,0 36,0a18,18 0 1,0 -36,0ZM72.8,-23a12.2,12.2 0 1,0 24.4,0a12.2,12.2 0 1,0 -24.4,0Z"/><path class="mh" pathLength="1" d="M86.95,-36.86A14,14 0 0,1 98.31,-27.33M87.21,-38.75A15.9,15.9 0 0,1 98.18,-31.89"/></g><g class="sc-a" transform="rotate(13)"><path class="mop" pathLength="1" d="M-134,-0.7C-98,-6.2 -58,-10.2 -25,-11.2C-12,-11.6 0,-12.2 11,-8.8C25,-4.2 42,6.4 60,10.4L74,13L71.6,25.4C48,22.4 25,17.6 8,11.6C0,8.6 -8,4 -16,2.2L-134,0.6Z"/><path class="md" pathLength="1" d="M-122,-2.6C-92,-5.8 -58,-7.8 -28,-8"/><path class="mh" pathLength="1" d="M-108,-5C-88,-7.2 -64,-8.8 -42,-9.5M-74,-4.6L-36,-5.8M-54,-2.4L-32,-3.2M-128,-0.2L-30,0.5"/><path class="mh" pathLength="1" d="M24,1.4C35,8.2 47,12.8 61,15.6M30,10.8C40,15 51,17.8 63,20.4"/><path class="mop" pathLength="1" fill-rule="evenodd" d="M67,23a18,18 0 1,0 36,0a18,18 0 1,0 -36,0ZM72.8,23a12.2,12.2 0 1,0 24.4,0a12.2,12.2 0 1,0 -24.4,0Z"/><path class="mh" pathLength="1" d="M98.31,27.33A14,14 0 0,1 86.95,36.86M100.12,27.91A15.9,15.9 0 0,1 91.47,37.53"/></g><circle class="mpl" pathLength="1" cx="0" cy="0" r="4.8"/><path class="md" pathLength="1" d="M-2.9,-1.7L2.9,1.7"/></g></svg>
-      <figcaption><b>Şek. 3</b>Makas</figcaption>
-    </figure>
-  </section>
-
-  <section class="lp-section">
-    <p class="lp-eyebrow">Fark</p>
-    <h2>Pazar yeri değil, senin sayfan</h2>
-    <div class="lp-compare">
-      <div><b>Pazar yeri uygulamalarında</b>
-        <ul><li>Müşteri seni rakiplerinle aynı listede görür</li><li>Randevu başına komisyon ödersin</li><li>Müşteri uygulamanın müşterisidir</li></ul></div>
-      <div class="lp-mine"><b>{{ SITE_NAME }} ile</b>
-        <ul><li>Sayfanda yalnızca sen varsın</li><li>Ücret sabit, komisyon yok</li><li>Müşteri kaydı dükkânına aittir</li></ul></div>
+    <div class="lp-plan">
+      <p class="lp-plan-price"><b>{{ price|floatformat:"0g" }}&nbsp;₺</b><span>/ ay</span></p>
+      <ul>
+        <li>Salonunuza özel randevu sayfası</li>
+        <li>Sınırsız randevu ve müşteri kaydı</li>
+        <li>Personel, takvim ve çalışma saatleri</li>
+        <li>Model kataloğu</li>
+        <li>Müşteri geçmişi ve raporlar</li>
+        <li>Telefonda uygulama gibi açılan panel</li>
+      </ul>
+      <a class="btn block" href="{% url 'panel:signup' %}">14 gün ücretsiz deneyin</a>
     </div>
   </section>
 
-  <section class="lp-section lp-faq">
+  <section class="lp-section lp-trustblock" id="guven">
+    <p class="lp-eyebrow">Güven</p>
+    <h2>Müşteri bilgileriniz size aittir</h2>
+    <div class="lp-cards three">
+      <article class="lp-card"><h3>Paylaşılmaz</h3><p>Müşteri kayıtlarınızı yalnızca siz görürsünüz. Başka işletmelerle paylaşılmaz, reklam için kullanılmaz.</p></article>
+      <article class="lp-card"><h3>Kişisel verilere saygılı</h3><p>Kampanya mesajı izni randevudan ayrı ve isteğe bağlı alınır. Müşteri isterse kaydı tek dokunuşla silinir.</p></article>
+      <article class="lp-card"><h3>Güvenli altyapı</h3><p>Veriler Avrupa'daki veri merkezlerinde, şifreli bağlantıyla korunur. Fotoğraflardaki konum bilgisi kaydedilmeden silinir.</p></article>
+    </div>
+    <p class="muted"><a href="{% url 'privacy' %}">Gizlilik ve kişisel veriler</a> sayfasında ayrıntıları bulabilirsiniz.</p>
+  </section>
+
+  <section class="lp-section lp-faq" id="sss">
     <p class="lp-eyebrow">Sık sorulanlar</p>
-    <h2>Aklına takılanlar</h2>
+    <h2>Merak edilenler</h2>
     <div class="lp-faq-list">
-      <details><summary>Müşterim uygulama indirmek zorunda mı?</summary><p class="muted">Hayır. Linke dokunur, sayfa tarayıcıda açılır. Üyelik ve şifre yoktur; telefonuna gelen kodla randevusunu onaylar.</p></details>
-      <details><summary>Randevusuz gelen müşteriyi nasıl işlerim?</summary><p class="muted">Bugün ekranından iki dokunuşla eklersin. Ciro ve doluluk raporlarına o da girer.</p></details>
-      <details><summary>Müşteri randevusuna gelmezse ne olur?</summary><p class="muted">Randevuyu "gelmedi" olarak kapatırsın. Kaç kez gelmediği müşteri kartında görünür.</p></details>
-      <details><summary>Telefonla kullanabilir miyim?</summary><p class="muted">Evet. Panel telefonda rahat kullanılacak şekilde tasarlandı; bilgisayarda da açılır.</p></details>
-      <details><summary>Ücreti ne kadar?</summary><p class="muted">Sabit aylık ücret alınır, randevu başına komisyon yoktur. İlk 14 gün ücretsizdir ve kart istenmez.</p></details>
+      <details><summary>Müşterilerimin uygulama indirmesi gerekiyor mu?</summary><p class="muted">Hayır. Bağlantıya dokunduklarında sayfa tarayıcıda açılır. Üyelik ve şifre yoktur; telefona gelen kodla randevu onaylanır. İsteyen müşteri sayfayı ana ekranına ekleyebilir.</p></details>
+      <details><summary>Model fotoğraflarını nasıl eklerim?</summary><p class="muted">Panelde Ayarlar bölümündeki Modeller sayfasından, telefonunuzla çektiğiniz ya da galerinizdeki fotoğrafı seçerek eklersiniz. Fotoğraf otomatik küçültülür ve içindeki konum bilgisi silinir.</p></details>
+      <details><summary>Birden fazla çalışanım var, nasıl ayrılır?</summary><p class="muted">Her çalışanı ayrı ekler, yaptığı hizmetleri seçersiniz. Takvimde her çalışanın kendi sütunu olur; müşteri dilerse çalışan seçer, dilerse ilk müsait olana yazılır.</p></details>
+      <details><summary>Randevusuz gelen müşteriyi nasıl kaydederim?</summary><p class="muted">Bugün ekranından iki dokunuşla eklersiniz. Ciro ve doluluk raporlarına o da girer.</p></details>
+      <details><summary>Müşteri randevusuna gelmezse ne olur?</summary><p class="muted">Randevuyu "gelmedi" olarak kapatırsınız. Kaç kez gelmediği müşteri kartında görünür; dilerseniz o numaranın online randevusunu kapatabilirsiniz.</p></details>
+      <details><summary>Ücret nasıl ödenir?</summary><p class="muted">Aylık sabit ücret alınır. Ödeme bilgileri ve bir sonraki ödeme tarihi panelinizdeki Üyelik ve ödeme sayfasında yer alır.</p></details>
     </div>
   </section>
 
   <section class="lp-final">
-    <div class="cut" aria-hidden="true"><span class="cut-run"><svg class="cut-sc" viewBox="-12.5 -8 25 16"><g class="sc-b"><path class="io" d="M-11,0.15L0,0L4.5,-2"/><circle class="io" cx="7.3" cy="-3.5" r="2.8"/></g><g class="sc-a"><path class="io" d="M-11,-0.15L0,0L4.5,2"/><circle class="io" cx="7.3" cy="3.5" r="2.8"/></g><circle class="ii" cx="0" cy="0" r=".9"/></svg></span></div>
-    <div class="lp-final-body">
-      <svg class="plate draw" aria-hidden="true" viewBox="0 0 100 226"><clipPath id="pole7-glass"><rect x="30" y="57" width="40" height="118"/></clipPath><rect class="mpf" x="30" y="57" width="40" height="118"/><g clip-path="url(#pole7-glass)"><g class="pole-stripes"><path class="ms" d="M30,-54C30,-64 70,-74 70,-84L70,-70C70,-60 30,-50 30,-40Z"/><path class="msb" d="M30,-26C30,-36 70,-46 70,-56L70,-42C70,-32 30,-22 30,-12Z"/><path class="ms" d="M30,2C30,-8 70,-18 70,-28L70,-14C70,-4 30,6 30,16Z"/><path class="msb" d="M30,30C30,20 70,10 70,0L70,14C70,24 30,34 30,44Z"/><path class="ms" d="M30,58C30,48 70,38 70,28L70,42C70,52 30,62 30,72Z"/><path class="msb" d="M30,86C30,76 70,66 70,56L70,70C70,80 30,90 30,100Z"/><path class="ms" d="M30,114C30,104 70,94 70,84L70,98C70,108 30,118 30,128Z"/><path class="msb" d="M30,142C30,132 70,122 70,112L70,126C70,136 30,146 30,156Z"/><path class="ms" d="M30,170C30,160 70,150 70,140L70,154C70,164 30,174 30,184Z"/><path class="msb" d="M30,198C30,188 70,178 70,168L70,182C70,192 30,202 30,212Z"/><path class="ms" d="M30,226C30,216 70,206 70,196L70,210C70,220 30,230 30,240Z"/><path class="msb" d="M30,254C30,244 70,234 70,224L70,238C70,248 30,258 30,268Z"/><path class="ms" d="M30,282C30,272 70,262 70,252L70,266C70,276 30,286 30,296Z"/><path class="msb" d="M30,310C30,300 70,290 70,280L70,294C70,304 30,314 30,324Z"/></g><rect class="mgl" x="34.4" y="57" width="3.2" height="118"/><path class="mh" d="M60.5,57V175M63.6,57V175M66.2,57V175M68.2,57V175"/></g><path class="mo" pathLength="1" d="M30,57V175M70,57V175"/><path class="mop" pathLength="1" d="M26,50C26,36 36,29 50,29C64,29 74,36 74,50Z"/><path class="mh" pathLength="1" d="M58,31.6C64,34.6 68.4,40.6 69.6,47.6M61,36.6C63.6,39.6 65.2,43.4 65.8,47.6"/><rect class="mop" pathLength="1" x="22.6" y="50" width="54.8" height="7" rx="1.6"/><path class="mh" pathLength="1" d="M62,52v3M66,52v3M70,52v3M73.4,52v3"/><path class="mop" pathLength="1" d="M26,182C26,196 36,203 50,203C64,203 74,196 74,182Z"/><path class="mh" pathLength="1" d="M58,200.4C64,197.4 68.4,191.4 69.6,184.4M61,195.4C63.6,192.4 65.2,188.6 65.8,184.4"/><rect class="mop" pathLength="1" x="22.6" y="175" width="54.8" height="7" rx="1.6"/><path class="mh" pathLength="1" d="M62,177v3M66,177v3M70,177v3M73.4,177v3"/><rect class="mop" pathLength="1" x="46.2" y="24" width="7.6" height="5.4"/><circle class="mop" pathLength="1" cx="50" cy="15" r="9.4"/><path class="mh" pathLength="1" d="M53.4,8.4C57,10.6 58.4,15 56.6,19.4M55,13C55.8,15 55.6,17 54.6,18.8"/><rect class="mop" pathLength="1" x="46.2" y="202.8" width="7.6" height="4.6"/><circle class="mop" pathLength="1" cx="50" cy="214.4" r="7.2"/><path class="mh" pathLength="1" d="M52.8,209.6C55.4,211.6 56,215 54.4,218.2"/></svg>
-      <div>
-        <h2>Dükkânın bu akşam randevu almaya başlasın</h2>
-        <p class="muted">Kurulum beş dakika sürer. İlk 14 gün ücretsiz, kart istemez.</p>
-      </div>
-      <div class="lp-actions">
-        <a class="btn" href="{% url 'panel:signup' %}">Dükkânını kur</a>
-        <a class="btn ghost" href="{% url 'panel:login' %}">Kuaför girişi</a>
-      </div>
+    <h2>Salonunuzu bugün online randevuya açın</h2>
+    <p class="muted">Kurulum yaklaşık beş dakika sürer. İlk 14 gün ücretsizdir.</p>
+    <div class="lp-actions">
+      <a class="btn" href="{% url 'panel:signup' %}">Ücretsiz deneyin</a>
+      <a class="btn ghost" href="{% url 'contact' %}">Bize ulaşın</a>
     </div>
   </section>
-  <p class="foot"><span>{{ SITE_NAME }} · Erkek kuaförleri için online randevu</span><a href="{% url 'feedback' %}">Görüş bildir</a></p>
-</div>
+</main>
+{% include "_site_foot.html" %}
 {% endblock %}

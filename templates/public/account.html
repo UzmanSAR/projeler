@@ -1,17 +1,79 @@
 {% extends "public/_shell.html" %}
 {% block meta %}<meta name="robots" content="noindex">{% endblock %}
 {% block content %}
-<h2 style="margin-top:0">Randevularım</h2>
 {% if not customer %}
-<div class="card">Bu cihazda doğrulanmış bir numara yok. İlk randevunu aldığında geçmişin burada görünür.</div>
-<p><a class="btn block" href="{% url 'public:book_select' business.slug %}">Randevu al</a></p>
+  {% if pending %}
+  <h2 style="margin-top:0">Kodu gir</h2>
+  <p>{{ masked }} numarasına 6 haneli bir kod gönderdik.</p>
+  <form method="post">{% csrf_token %}
+    <input type="hidden" name="action" value="verify">
+    <input class="code-input" type="text" name="code" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" autofocus required aria-label="Giriş kodu">
+    <p><button class="btn block">Giriş yap</button></p>
+  </form>
+  <form method="post" class="row between">{% csrf_token %}
+    <input type="hidden" name="action" value="resend">
+    <span class="muted">Kod gelmedi mi?</span>
+    <button class="btn ghost small">Tekrar gönder</button>
+  </form>
+  <form method="post">{% csrf_token %}<input type="hidden" name="action" value="change">
+    <button class="link-btn">Başka numara kullan</button></form>
+  {% else %}
+  <h2 style="margin-top:0">Giriş yap ya da kayıt ol</h2>
+  <p class="muted">Şifre yok. Numarana gelen kodla girersin; önceki randevularını, en son ne zaman geldiğini ve hangi işlemleri yaptırdığını görürsün. Numara bu salonda ilk kez kullanılıyorsa kaydın oluşturulur.</p>
+  <form method="post" class="card">{% csrf_token %}
+    <input type="hidden" name="action" value="send">
+    <label for="acct-phone" style="margin-top:0">Cep telefonu</label>
+    <input id="acct-phone" type="tel" name="phone" inputmode="tel" autocomplete="tel" placeholder="05xx xxx xx xx" required>
+    <label for="acct-name">Adın <small>(ilk kez giriyorsan)</small></label>
+    <input id="acct-name" type="text" name="name" autocomplete="name" maxlength="60">
+    {% if TURNSTILE_SITE_KEY %}
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <div class="cf-turnstile" data-sitekey="{{ TURNSTILE_SITE_KEY }}" style="margin-top:12px"></div>
+    {% endif %}
+    <p style="margin-top:14px"><button class="btn block">Kod gönder</button></p>
+  </form>
+  <p class="muted"><small>Numaran yalnızca {{ business.name }} ile paylaşılır; reklam mesajı için ayrıca izin istenir.</small></p>
+  {% endif %}
 {% else %}
-<p class="muted">{{ customer.name }} · {{ customer.masked_phone }}</p>
-{% for row in appts %}
-<div class="card">
+<div class="account-head">
+  <h2 style="margin-top:0">Merhaba{% if customer.name %}, {{ customer.name }}{% endif %}</h2>
+  <p class="muted">{{ customer.masked_phone }}</p>
+</div>
+
+{% if upcoming %}
+<div class="card next-visit">
+  <small>Yaklaşan randevun</small>
+  <b>{{ upcoming.local|date:"j F l" }} · {{ upcoming.local|time:"H:i" }}</b>
+  <span>{{ upcoming.a.summary }} · {{ upcoming.a.staff.name }}</span>
+  <a class="btn ghost small" href="{% url 'public:appointment' business.slug upcoming.a.token %}">Detay / iptal</a>
+</div>
+{% endif %}
+
+<div class="kpis three visit-kpis">
+  <div class="kpi"><small>Son ziyaret</small><b>{% if last %}{{ last.local|date:"j M" }}{% else %}—{% endif %}</b>{% if since != None %}<span>{% if since == 0 %}bugün{% elif since == 1 %}dün{% else %}{{ since }} gün önce{% endif %}</span>{% endif %}</div>
+  <div class="kpi"><small>Ziyaret</small><b>{{ visits }}</b></div>
+  <div class="kpi"><small>En çok</small><b class="word">{% if favourites %}{{ favourites.0.0 }}{% else %}—{% endif %}</b></div>
+</div>
+
+{% if last %}
+<h2>En son yaptırdıkların</h2>
+<div class="card last-visit">
+  {% if last.a.style %}<img src="{{ last.a.style.thumb_url }}" alt="" width="{{ last.a.style.width }}" height="{{ last.a.style.height }}">{% endif %}
+  <div>
+    <b>{{ last.local|date:"j F Y" }}</b>
+    <p>{{ last.a.summary }}{% if last.a.style %} · Model: {{ last.a.style.title }}{% endif %}</p>
+    <p class="muted">{{ last.a.staff.name }} · {% if last.a.actual_total != None %}{{ last.a.actual_total|floatformat:"0g" }}{% else %}{{ last.a.planned_total|floatformat:"0g" }}{% endif %}&nbsp;₺</p>
+    <a class="btn small" href="{{ last.rebook }}">Aynısını tekrar al</a>
+  </div>
+</div>
+{% endif %}
+
+<h2>Tüm randevular</h2>
+{% for row in rows %}
+<div class="card hist">
   <div class="row between"><b>{{ row.local|date:"j F Y" }} · {{ row.local|time:"H:i" }}</b>
-  <span class="badge {% if row.a.status == 'completed' %}green{% elif row.a.status == 'confirmed' %}{% elif row.a.status == 'no_show' %}red{% else %}gray{% endif %}">{{ row.a.get_status_display }}</span></div>
-  <p>{{ row.a.summary }} · {{ row.a.staff.name }} · {% if row.a.actual_total != None %}{{ row.a.actual_total|floatformat:"0g" }}{% else %}{{ row.a.planned_total|floatformat:"0g" }}{% endif %} ₺</p>
+  <span class="badge {% if row.a.status == 'completed' %}green{% elif row.a.status == 'confirmed' %}blue{% elif row.a.status == 'no_show' %}red{% else %}gray{% endif %}">{{ row.a.get_status_display }}</span></div>
+  <p>{{ row.a.summary }}{% if row.a.style %} · Model: {{ row.a.style.title }}{% endif %} · {{ row.a.staff.name }} · {% if row.a.actual_total != None %}{{ row.a.actual_total|floatformat:"0g" }}{% else %}{{ row.a.planned_total|floatformat:"0g" }}{% endif %}&nbsp;₺</p>
   <div class="row">
     {% if row.a.status == "confirmed" %}<a class="btn ghost small" href="{% url 'public:appointment' business.slug row.a.token %}">Detay / iptal</a>
     {% else %}<a class="btn ghost small" href="{{ row.rebook }}">Aynısını tekrar al</a>{% endif %}
@@ -20,7 +82,7 @@
 {% empty %}<div class="card">Henüz randevun yok.</div>{% endfor %}
 <p><a class="btn block" href="{% url 'public:book_select' business.slug %}">Yeni randevu al</a></p>
 <form method="post" action="{% url 'public:account_forget' business.slug %}">{% csrf_token %}
-  <button class="btn ghost small">Bu cihazda numaramı unut</button>
+  <button class="btn ghost small">Bu cihazda çıkış yap</button>
 </form>
 {% endif %}
 {% endblock %}

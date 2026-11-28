@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}İletişim · {{ SITE_NAME }}{% endblock %}
+{% block body %}
+{% include "_site_top.html" %}
+<main class="doc">
+  <h1>İletişim</h1>
+  <p class="lead">Kurulum, üyelik ya da kullanım hakkında sorularınız için bize ulaşın.</p>
+  <div class="card">
+    {% if PLATFORM.contact_email %}<p><b>E-posta</b><br><a href="mailto:{{ PLATFORM.contact_email }}">{{ PLATFORM.contact_email }}</a></p>{% endif %}
+    {% if PLATFORM.contact_phone %}<p><b>Telefon</b><br><a href="tel:{{ PLATFORM.contact_phone }}">{{ PLATFORM.contact_phone }}</a></p>{% endif %}
+    {% if PLATFORM.company_name %}<p><b>Unvan</b><br>{{ PLATFORM.company_name }}</p>{% endif %}
+    {% if PLATFORM.address %}<p><b>Adres</b><br>{{ PLATFORM.address }}</p>{% endif %}
+    <p><b>Yazılı mesaj</b><br>Öneri, görüş ya da destek talebi için <a href="{% url 'feedback' %}">formu kullanabilirsiniz</a>; mesajınız doğrudan ekibimize ulaşır.</p>
+  </div>
+  <p class="meta">Bir salondaki randevunuzla ilgili konular için lütfen doğrudan o salonu arayın; randevu sayfasında telefon numarası yer alır.</p>
+</main>
+{% include "_site_foot.html" %}
+{% endblock %}

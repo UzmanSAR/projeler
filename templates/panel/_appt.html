@@ -5,6 +5,7 @@
       <b>{% if a.customer %}<a class="tap" href="{% url 'panel:customer' a.customer.id %}" style="color:inherit">{{ a.customer.name|default:a.customer.phone }}</a>{% else %}İsimsiz müşteri{% endif %}</b>
       {% if a.customer.no_show_count >= 2 %}<span class="badge red">{{ a.customer.no_show_count }} kez gelmedi</span>{% endif %}
       <br><small>{{ a.summary }} · {{ a.staff.name }}{% if a.customer.note %} · “{{ a.customer.note|truncatechars:40 }}”{% endif %}</small>
+      {% if a.style %}<a class="appt-style" href="{{ a.style.image_url }}" target="_blank" rel="noopener"><img src="{{ a.style.thumb_url }}" alt="" width="{{ a.style.width }}" height="{{ a.style.height }}" loading="lazy"><small>Seçilen model: <b>{{ a.style.title }}</b></small></a>{% endif %}
     </span>
     <span style="text-align:right">
       <b>{% if a.actual_total != None %}{{ a.actual_total|floatformat:"0g" }}{% else %}{{ a.planned_total|floatformat:"0g" }}{% endif %} ₺</b><br>

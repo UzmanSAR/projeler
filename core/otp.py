@@ -67,17 +67,17 @@ def verify_turnstile(token, ip):
         return False
 
 
-def request_code(business, phone, ip):
+def request_code(business, phone, ip, purpose="booking"):
     """Kod üretir ve SMS ile gönderir. Geliştirmede kodu döndürür."""
     if cache.get(f"otp:cool:{business.id}:{phone}"):
         raise OtpError("Kod az önce gönderildi. Lütfen yarım dakika bekleyin.")
     if not _bump(f"otp:ph:h:{phone}", 3600, settings.OTP_PER_PHONE_HOUR) or \
        not _bump(f"otp:ph:d:{phone}", 86400, settings.OTP_PER_PHONE_DAY):
-        raise OtpError("Bu numaraya çok fazla kod istendi. Daha sonra tekrar deneyin ya da dükkânı arayın.")
+        raise OtpError("Bu numaraya çok fazla kod istendi. Daha sonra tekrar deneyin ya da salonu arayın.")
     if not _bump(f"otp:ip:{ip}", 3600, settings.OTP_PER_IP_HOUR):
         raise OtpError("Çok fazla deneme yapıldı. Daha sonra tekrar deneyin.")
     if not _bump(f"otp:biz:{business.id}", 86400, settings.OTP_PER_BUSINESS_DAY):
-        raise OtpError("Online randevu geçici olarak durduruldu. Lütfen dükkânı arayın.")
+        raise OtpError("Online randevu geçici olarak durduruldu. Lütfen salonu arayın.")
 
     code = f"{secrets.randbelow(10**6):06d}"
     cache.set(f"otp:code:{business.id}:{phone}", {"h": _hash(code, phone), "tries": 0},
@@ -85,7 +85,9 @@ def request_code(business, phone, ip):
     cache.set(f"otp:cool:{business.id}:{phone}", 1, settings.OTP_RESEND_SECONDS)
     send_sms(
         business, phone,
-        f"{business.name} randevu onay kodunuz: {code}. Bu kod yalnizca randevunuzu onaylar.",
+        (f"{business.name} giris kodunuz: {code}. Randevu gecmisinizi gormek icindir; kimseyle paylasmayin."
+         if purpose == "login" else
+         f"{business.name} randevu onay kodunuz: {code}. Bu kod yalnizca randevunuzu onaylar."),
         MessageLog.Kind.OTP,
     )
     return code if settings.SMS_SHOW_CODE else None

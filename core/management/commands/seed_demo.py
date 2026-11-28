@@ -20,5 +20,5 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         result = demo.ensure_demo(history_days=options["days"], ahead_days=options["ahead"])
         self.stdout.write(self.style.SUCCESS(
-            f"Örnek dükkân güncel: {result['created']} randevu eklendi, {result['closed']} randevu kapatıldı. "
-            f"Panel: {demo.EMAIL} / {demo.PASSWORD} · Sayfa: /{demo.SLUG}/"))
+            f"Örnek salonlar güncel: {result['created']} randevu eklendi, {result['closed']} randevu kapatıldı. "
+            "Paneller: " + ", ".join(f"{s.email} / {s.password} (/{s.slug}/)" for s in demo.SPECS)))

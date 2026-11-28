@@ -6,24 +6,16 @@
 {% elif appt.status == "no_show" %}<h2 style="margin-top:0">Randevuya gelinmedi</h2>
 {% else %}<h2 style="margin-top:0">Randevu iptal edildi</h2>{% endif %}
 <div class="card ticket {{ appt.status }}">
-  {% if appt.status == "confirmed" %}{# Mühür: onaylı randevunun damgası. Süslemedir; durum başlıkta yazılıdır. #}
-  <svg class="stamp" viewBox="0 0 120 120" aria-hidden="true">
-    <defs><path id="st-arc" d="M60,60m-43.5,0a43.5,43.5 0 1,1 87,0a43.5,43.5 0 1,1 -87,0"/></defs>
-    <circle class="st-o" cx="60" cy="60" r="56.5"/><circle class="st-i" cx="60" cy="60" r="52"/><circle class="st-i" cx="60" cy="60" r="33"/>
-    <text><textPath href="#st-arc" startOffset="1%">RANDEVUN ALINDI · RANDEVUN ALINDI ·</textPath></text>
-    <path class="st-check" pathLength="1" d="M44.5,61.5l11,11.5l21,-25"/>
-    <path class="st-wear" d="M22,31l3,-1l1,2l-3,2zM93,84l4,1l-1,3l-3,-1zM70,9l2,0l0,3l-3,0zM14,72l3,1l-1,2l-2,-1zM101,45l2,-1l1,3l-2,1zM40,104l3,1l-1,2l-3,-1z"/>
-  </svg>{% endif %}
+  {% if appt.status == "confirmed" %}<span class="confirm-badge"><svg viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="9" fill="currentColor" opacity=".14"/><path d="M5.2 9.3l2.4 2.4 5-5.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" pathLength="1"/></svg>Onaylandı</span>{% endif %}
   <dl class="summary" style="margin:0">
   <dt>Zaman</dt><dd class="when">{{ local_start|date:"j F Y l" }} <span class="at">{{ local_start|time:"H:i" }}</span></dd>
   <dt>İşlem</dt><dd>{{ appt.summary }} · {{ appt.planned_total|floatformat:"0g" }} ₺</dd>
-  <dt>Kuaför</dt><dd>{{ appt.staff.name }}</dd>
+  {% if appt.style %}<dt>Model</dt><dd class="with-thumb"><img src="{{ appt.style.thumb_url }}" alt="" width="{{ appt.style.width }}" height="{{ appt.style.height }}">{{ appt.style.title }}</dd>{% endif %}
+  <dt>{{ business.staff_word }}</dt><dd>{{ appt.staff.name }}</dd>
   {% if business.address %}<dt>Adres</dt><dd>{{ business.address }}</dd>{% endif %}
 </dl></div>
 {% if appt.status == "confirmed" %}
 <div class="row">
-  {# Koçan: delikli çizgiyi makas keser #}
-  <div class="cut perf" aria-hidden="true"><i class="cut-line"></i><span class="cut-run"><svg class="cut-sc" viewBox="-12.5 -8 25 16"><g class="sc-b"><path class="io" d="M-11,0.15L0,0L4.5,-2"/><circle class="io" cx="7.3" cy="-3.5" r="2.8"/></g><g class="sc-a"><path class="io" d="M-11,-0.15L0,0L4.5,2"/><circle class="io" cx="7.3" cy="3.5" r="2.8"/></g><circle class="ii" cx="0" cy="0" r=".9"/></svg></span></div>
   <a class="btn ghost grow small" href="{% url 'public:appointment_ics' business.slug appt.token %}">Takvime ekle</a>
   {% if business.maps_url %}<a class="btn ghost grow small" href="{{ business.maps_url }}" rel="noopener">Yol tarifi</a>{% endif %}
 </div>
@@ -33,7 +25,7 @@
   <p class="muted">Randevudan {{ cancel_hours|floatformat:"-1" }} saat öncesine kadar ücretsiz iptal edebilirsin. Ertelemek için iptal edip yeni saat seç.</p>
   <button class="btn danger block">Randevuyu iptal et</button>
 </form>
-{% else %}<div class="card">Online iptal süresi geçti. {% if business.phone %}Lütfen dükkânı ara: <a href="tel:{{ business.phone }}">{{ business.phone }}</a>{% endif %}</div>{% endif %}
+{% else %}<div class="card">Online iptal süresi geçti. {% if business.phone %}Lütfen salonu ara: <a href="tel:{{ business.phone }}">{{ business.phone }}</a>{% endif %}</div>{% endif %}
 {% else %}
 <p><a class="btn block" href="{{ rebook }}">Yeni randevu al</a></p>
 {% endif %}

@@ -40,8 +40,13 @@ class MotionWiringTests(TestCase):
         html = self.client.get("/").content.decode()
         version = static_version()
         self.assertRegex(version, r"^[0-9a-f]{10}$")
-        for name in ("css/app.css", "js/app.js", "css/public.css", "js/public.js"):
+        for name in ("css/app.css", "js/app.js", "css/landing.css", "js/pwa.js"):
             self.assertIn(f"{name}?v={version}", html)
+        from core.tests import make_business
+        make_business("ali")
+        shop = self.client.get("/ali/").content.decode()
+        for name in ("css/public.css", "js/public.js"):
+            self.assertIn(f"{name}?v={version}", shop)
 
     def test_kill_switch_spellings(self):
         """MOTION değeri ayar dosyasında sadeleşir: OFF, Off, 'off ', 0, false hepsi kapatır."""

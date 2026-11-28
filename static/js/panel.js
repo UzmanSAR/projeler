@@ -54,7 +54,6 @@
       var card = h.data.id && d.querySelector('.appt[data-appt="' + h.data.id + '"]');
       if (card && h.data.s === 'completed' && card.classList.contains('completed')) {   /* N3: the row is closed; the razor wipes the new figure clean */
         card.classList.add('just-done');
-        M.shave(card.querySelector('.row > span:last-child'), 240);
       }
     }
     var c = M.takeHint('cards');   /* N4 */

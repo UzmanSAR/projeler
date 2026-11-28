@@ -9,8 +9,8 @@
   /* phone: one mark slides to the tapped tab. No :has(): the mark of app.css stays on the open tab. Five tabs */
   @supports selector(:has(a)) {
     .tabs a.on::before { content: none; }
-    .tabs::before { content: ""; position: absolute; top: -1px; left: 0; width: 20%; height: 4px; pointer-events: none;
-      background: linear-gradient(90deg, transparent calc(50% - 17px), var(--gold) calc(50% - 17px) calc(50% + 17px), transparent calc(50% + 17px));
+    .tabs::before { content: ""; position: absolute; top: 0; left: 0; width: 20%; height: 3px; pointer-events: none;
+      background: linear-gradient(90deg, transparent calc(50% - 16px), var(--gold) calc(50% - 16px) calc(50% + 16px), transparent calc(50% + 16px));
       transform: translateX(calc(var(--tab, 0) * 100%)); transition: transform 300ms var(--e-soft); }
     .tabs:has(a:nth-child(2).on) { --tab: 1; } .tabs:has(a:nth-child(3).on) { --tab: 2; }
     .tabs:has(a:nth-child(4).on) { --tab: 3; } .tabs:has(a:nth-child(5).on) { --tab: 4; }
@@ -38,8 +38,8 @@
   .linkbox.is-copied::after { animation-duration: var(--t-scene); animation-delay: 0s; }
   .till::after { animation-delay: 500ms; }
   /* N3: the ink edge of the row drains away and leaves the new colour */
-  .appt.just-done { overflow-clip-margin: 3px; }
-  .appt.just-done::before { content: ""; position: absolute; left: -3px; top: 0; bottom: 0; width: 3px; background: var(--ink);
+  .appt.just-done { overflow-clip-margin: 4px; }
+  .appt.just-done::before { content: ""; position: absolute; left: -4px; top: 0; bottom: 0; width: 4px; background: var(--ink);
     transform: scaleY(0); transform-origin: 50% 100%; animation: pan-drain 460ms var(--e-inout) 120ms backwards; }
 }
 @keyframes pan-drain { from { transform: scaleY(1); } }
@@ -59,10 +59,10 @@ html:not([data-enter="off"]) .kpis > .kpi { animation: rise var(--t-base) var(--
 /* tile scrolled away: a paper slip at the top, about 2s */
 .till { position: fixed; z-index: 20; top: calc(10px + env(safe-area-inset-top)); left: 50%; pointer-events: none;
   display: flex; align-items: baseline; gap: 10px; padding: 7px 16px 6px; white-space: nowrap;
-  background: var(--surface); border: 1px solid var(--ink); border-radius: var(--radius-sm); box-shadow: var(--shadow-paper);
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-round); box-shadow: var(--shadow-2);
   transform: translate(-50%, 0); animation: pan-till-in 320ms var(--e-out) backwards, pan-till-out 260ms var(--e-in) 2100ms forwards; }
-.till small { font: 600 .66rem var(--sans); letter-spacing: .08em; text-transform: uppercase; }
-.till b { font: 400 1.3rem/1.2 var(--serif); color: var(--gold); text-align: right; }
+.till small { font: 600 .74rem var(--sans); }
+.till b { font: 500 1.3rem/1.2 var(--serif); color: var(--gold); text-align: right; }
 @keyframes pan-till-in { from { opacity: 0; transform: translate(-50%, -160%); } }
 @keyframes pan-till-out { to { opacity: 0; transform: translate(-50%, -160%); } }
 
