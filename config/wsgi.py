@@ -30,9 +30,12 @@ def _refresh_demo():
         connection.close()
 
 
-# Ücretsiz barındırmada süreç boşta kapanır, ilk ziyarette yeniden başlar: örnek dükkân her
-# başlangıçta tazelenir. İstekleri bekletmemek için ayrı bir iş parçacığında çalışır.
+# Ücretsiz barındırmada süreç boşta kapanır, ilk ziyarette yeniden başlar: örnek salonlar her
+# başlangıçta tazelenir. İstekleri bekletmemek için ayrı bir iş parçacığında, sunucu açılıp ilk
+# istekler (ve sağlık yoklaması) yanıtlandıktan sonra çalışır: modüller aynı anda iki yerden yüklenmez.
 if os.environ.get("SEED_DEMO") == "1":
     import threading
 
-    threading.Thread(target=_refresh_demo, name="demo-refresh", daemon=True).start()
+    timer = threading.Timer(20.0, _refresh_demo)
+    timer.name, timer.daemon = "demo-refresh", True
+    timer.start()

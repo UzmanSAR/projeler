@@ -129,3 +129,5 @@ html:not([data-enter="off"]) .lp-slots .lp-pick { animation: lp-pick 320ms var(-
 }
 @media (prefers-reduced-motion: reduce) { .lp details::details-content { transition: none !important; } }
 .lp-slots .lp-pick { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.lp-card { display: flex; flex-direction: column; }
+.lp-card-link { display: inline-block; margin-top: auto; padding-top: 14px; font-weight: 600; font-size: .92rem; }

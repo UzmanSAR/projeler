@@ -1,4 +1,5 @@
-"""Örnek dükkân: tanıtım sitesinde müşteri sayfası, panel ve raporlar dolu görünsün diye üretilen veri.
+"""Örnek salonlar: tanıtım sitesinde müşteri sayfası, panel ve raporlar dolu görünsün diye üretilen veri.
+İki örnek vardır: erkek kuaförü (MEN, /ornek-berber/) ve kadın kuaförü ile güzellik hizmetleri (SALON, /ornek-salon/).
 
 ensure_demo() tekrar tekrar çalıştırılabilir; eksik olanı tamamlar, var olana dokunmaz:
 
@@ -14,6 +15,7 @@ bir iki yeni müşteri eklenir; her müşteri belli sayıda ziyaretten sonra gel
 """
 import random
 from datetime import datetime, time, timedelta
+from types import SimpleNamespace
 
 from django.contrib.auth import get_user_model
 from django.db import connection
@@ -75,6 +77,50 @@ NOTES = ["Yanlar kısa, üst uzun kalsın.", "Sakal üç numara.", "Ense jiletle
          "Her seferinde yıkama ister.", "Favoriler düz kesilsin."]
 
 
+# İkinci örnek: kadın kuaförü ve güzellik hizmetleri. Ana sayfadaki "örnek salon" bağlantısı buna gider.
+SALON_STAFF = [
+    ("Selin", "stilist", ("Cilt bakımı", "Kirpik lifting", "Manikür", "Kalıcı oje"), 30),
+    ("Merve", "stilist", ("Cilt bakımı", "Kirpik lifting"), 27),
+    ("Ayşe", "renk uzmanı", ("Cilt bakımı", "Kirpik lifting", "Gelin saçı", "Kaş tasarımı"), 21),
+    ("Ece", "güzellik uzmanı", ("Kesim", "Fön", "Kesim + fön", "Dip boya", "Röfle", "Keratin bakım", "Gelin saçı"), 22),
+]
+SALON_SERVICES = [
+    ("Fön", 30, 350, 24),
+    ("Kesim + fön", 60, 850, 22),
+    ("Kesim", 45, 650, 10),
+    ("Manikür", 40, 450, 12),
+    ("Kaş tasarımı", 20, 300, 12),
+    ("Dip boya", 90, 1500, 8),
+    ("Kalıcı oje", 60, 650, 7),
+    ("Röfle", 150, 3200, 3),
+    ("Cilt bakımı", 60, 1200, 4),
+    ("Keratin bakım", 120, 2800, 2),
+    ("Kirpik lifting", 60, 900, 3),
+    ("Gelin saçı", 120, 4000, 1),
+]
+SALON_FIRST = ["Ayşe", "Fatma", "Zeynep", "Elif", "Merve", "Esra", "Büşra", "Selin", "Gizem", "Ece", "Derya", "Seda",
+               "Burcu", "Ceren", "Damla", "Ebru", "Gamze", "Hande", "İrem", "Kübra", "Melis", "Nazlı", "Özge", "Pınar",
+               "Sinem", "Tuğba", "Yasemin", "Zehra", "Aslı", "Berna", "Cansu", "Dilara", "Ezgi", "Gül", "Hilal", "Leyla",
+               "Nur", "Rabia", "Sevgi", "Şule", "Tülay", "Duygu", "Ebru", "Feride", "Gonca"]
+SALON_NOTES = ["Boya numarası 6.1, oksidan yüzde 6.", "Kalıcı ojede açık tonları sever.", "Saçları ince, fön düşük ısıda.",
+               "Kaşta ince form istiyor.", "Cumartesi sabah gelir.", "Kızıyla birlikte gelir.",
+               "Keratin sonrası üç gün yıkama yok.", "Röfleyi iki ayda bir tazeler."]
+
+MEN = SimpleNamespace(
+    slug=SLUG, name=SHOP_NAME, about=SHOP_ABOUT, old=OLD_SHOP, email=EMAIL, password=PASSWORD,
+    kind="erkek", staff=STAFF, services=SERVICES, addons=ADDONS, weekday_target=WEEKDAY_TARGET,
+    first_30=FIRST_30, first=FIRST, notes=NOTES, everyday=5, saturday_only="Damat tıraşı", fallback=2,
+    address="Örnek Mah. Çarşı Cad. No: 12", district="Örnek Mahallesi")
+SALON = SimpleNamespace(
+    slug="ornek-salon", name="Örnek Saç ve Güzellik", about="Saç tasarımı, renk, manikür ve cilt bakımı.",
+    old=None, email="salon@example.com", password=PASSWORD,
+    kind="kadin", staff=SALON_STAFF, services=SALON_SERVICES, addons=("Kaş tasarımı",),
+    weekday_target=(15, 17, 17, 19, 24, 30, 0), first_30=[], first=SALON_FIRST, notes=SALON_NOTES,
+    everyday=5, saturday_only="Gelin saçı", fallback=1,
+    address="Örnek Mah. Lale Sok. No: 4", district="Örnek Mahallesi")
+SPECS = (MEN, SALON)
+
+
 def _phone(i):
     return f"0532{1000000 + i:07d}"
 
@@ -84,32 +130,32 @@ def _is_demo(phone):
     return phone.startswith(("05321", "0533"))
 
 
-def _name(i):
-    if i < len(FIRST_30):
-        return FIRST_30[i]
-    return f"{FIRST[i % len(FIRST)]} {LAST[(i * 7 + i // len(FIRST)) % len(LAST)]}"
+def _name(i, spec=MEN):
+    if i < len(spec.first_30):
+        return spec.first_30[i]
+    return f"{spec.first[i % len(spec.first)]} {LAST[(i * 7 + i // len(spec.first)) % len(LAST)]}"
 
 
-def _profile(phone):
+def _profile(phone, spec=MEN):
     """Müşterinin düzeni: kaç günde bir gelir, hangi berbere gider, ne yaptırır. Numarasından türer."""
     key = int(phone[4:])
     rnd = random.Random(f"musteri-{key}")
     short = key % 31 == 7         # üç ziyaretten sonra bırakan düzenli müşteri
     return {
         "interval": 14 if short else rnd.choices((14, 21, 28, 35, 42), (10, 30, 35, 15, 10))[0],
-        "staff": rnd.choices(range(len(STAFF)), [s[3] for s in STAFF])[0],
-        "service": rnd.choices(range(5), [s[3] for s in SERVICES[:5]])[0],   # gündelik işlemlerden biri
+        "staff": rnd.choices(range(len(spec.staff)), [s[3] for s in spec.staff])[0],
+        "service": rnd.choices(range(spec.everyday), [s[3] for s in spec.services[:spec.everyday]])[0],   # gündelik işlemlerden biri
         "visits": 3 if short else rnd.randint(6, 40),   # bu kadar ziyaretten sonra gelmeyi bırakır
         "flaky": key % 57 == 5,   # sık sık gelmeyen müşteri
         "phase": rnd.random(),
     }
 
 
-def _card(customer, seed):
+def _card(customer, seed, spec=MEN):
     """Müşteri kartına berber notu ve kampanya izni (bazılarında)."""
     rnd = random.Random(f"kart-{seed}")
     if rnd.random() < .12:
-        customer.note = rnd.choice(NOTES)
+        customer.note = rnd.choice(spec.notes)
     if rnd.random() < .35:
         customer.marketing_consent, customer.marketing_consent_at = True, timezone.now()
     customer.save(update_fields=["note", "marketing_consent", "marketing_consent_at"])
@@ -132,28 +178,29 @@ def _membership(business, today=None):
         billing.record_payment(business, paid_on=min(today, business.paid_until - timedelta(days=2)))
 
 
-def _shop():
-    """Dükkân, berberler ve hizmetler: yoksa oluşturur, varsa eksik olanı ekler."""
-    business = Business.objects.filter(slug=SLUG).first()
+def _shop(spec=MEN):
+    """Salon, çalışanlar ve hizmetler: yoksa oluşturur, varsa eksik olanı ekler."""
+    business = Business.objects.filter(slug=spec.slug).first()
     if business is None:
         User = get_user_model()
-        user = User.objects.filter(username=EMAIL).first() or User.objects.create_user(EMAIL, EMAIL, PASSWORD)
-        business = create_business(user, SHOP_NAME, SLUG, STAFF[0][0], phone="05320000000")
-        business.description = SHOP_ABOUT
-        business.address = "Örnek Mah. Çarşı Cad. No: 12"
-        business.district = "Örnek Mahallesi"
+        user = (User.objects.filter(username=spec.email).first()
+                or User.objects.create_user(spec.email, spec.email, spec.password))
+        business = create_business(user, spec.name, spec.slug, spec.staff[0][0], phone="05320000000", kind=spec.kind)
+        business.description = spec.about
+        business.address = spec.address
+        business.district = spec.district
         business.save()
-    elif (business.name, business.description) == OLD_SHOP:
+    elif spec.old and (business.name, business.description) == spec.old:
         # Eski adla kurulmuş örnek dükkân: sahibi elle değiştirmediyse yeni ada geçer.
-        business.name, business.description = SHOP_NAME, SHOP_ABOUT
+        business.name, business.description = spec.name, spec.about
         business.save(update_fields=["name", "description"])
     _membership(business)
     services = {}
-    for order, (name, duration, price, _) in enumerate(SERVICES):
+    for order, (name, duration, price, _) in enumerate(spec.services):
         services[name], _ = Service.objects.get_or_create(
             business=business, name=name, defaults={"duration": duration, "price": price, "order": order})
     staff = []
-    for order, (name, title, cannot, _) in enumerate(STAFF):
+    for order, (name, title, cannot, _) in enumerate(spec.staff):
         person, created = Staff.objects.get_or_create(
             business=business, name=name, defaults={"title": title, "order": order})
         if created or not person.services.exists():
@@ -161,17 +208,17 @@ def _shop():
         elif not cannot:   # ustalar sonradan eklenen işlemleri de yapar
             person.services.add(*services.values())
         staff.append(person)
-    return business, staff, [services[s[0]] for s in SERVICES]
+    return business, staff, [services[s[0]] for s in spec.services]
 
 
-def _customers(business):
+def _customers(business, spec=MEN):
     """Baştan beri gelen müşteriler yoksa oluşturulur; sonradan katılanlarla birlikte hepsi döner."""
     pool = Customer.objects.filter(business=business).filter(
         Q(phone__startswith="05321") | Q(phone__startswith="0533"))
     have = set(pool.values_list("phone", flat=True))
     for i in range(CUSTOMERS):
         if _phone(i) not in have:
-            _card(get_or_create_customer(business, _phone(i), _name(i), verified=True), i)
+            _card(get_or_create_customer(business, _phone(i), _name(i, spec), verified=True), i, spec)
     return list(pool.order_by("phone"))
 
 
@@ -208,7 +255,8 @@ def _time_off(business, staff, today, tz):
 
 
 def ensure_demo(history_days=HISTORY_DAYS, ahead_days=AHEAD_DAYS, now=None):
-    """Örnek dükkânı güncel tutar; oluşturduğu ve kapattığı randevu sayısını döndürür.
+    """Örnek salonları güncel tutar; oluşturduğu ve kapattığı randevu sayısını (ikisinin toplamı) ve
+    ilk örneği (erkek kuaförü) döndürür.
 
     Aynı anda yalnızca bir kez çalışır (veritabanı kilidi): yayın sırasındaki kurulum adımı ile
     uyanan sunucu süreci aynı günleri iki kez doldurmasın.
@@ -218,16 +266,20 @@ def ensure_demo(history_days=HISTORY_DAYS, ahead_days=AHEAD_DAYS, now=None):
         if not cursor.fetchone()[0]:
             return {"created": 0, "closed": 0, "business": Business.objects.filter(slug=SLUG).first(), "busy": True}
     try:
-        return _ensure_demo(history_days, ahead_days, now or timezone.now())
+        now = now or timezone.now()
+        results = [_ensure_demo(history_days, ahead_days, now, spec) for spec in SPECS]
+        first = results[0]
+        return {"created": sum(r["created"] for r in results), "closed": sum(r["closed"] for r in results),
+                "business": first["business"]}
     finally:
         with connection.cursor() as cursor:
             cursor.execute("SELECT pg_advisory_unlock(%s)", [LOCK_ID])
 
 
-def _ensure_demo(history_days, ahead_days, now):
-    business, staff, services = _shop()
-    customers = _customers(business)
-    profiles = [_profile(c.phone) for c in customers]
+def _ensure_demo(history_days, ahead_days, now, spec=MEN):
+    business, staff, services = _shop(spec)
+    customers = _customers(business, spec)
+    profiles = [_profile(c.phone, spec) for c in customers]
     tz = business_tz(business)
     today = now.astimezone(tz).date()
     first_day = today - timedelta(days=history_days)
@@ -254,14 +306,14 @@ def _ensure_demo(history_days, ahead_days, now):
         day = start.astimezone(tz).date()
         counts[day] = counts.get(day, 0) + 1
 
-    weights = [s[3] for s in SERVICES]
-    addons = [s for s in services if s.name in ADDONS]
+    weights = [s[3] for s in spec.services]
+    addons = [s for s in services if s.name in spec.addons]
     created = 0
     for offset in range(-history_days, ahead_days + 1):
         day = today + timedelta(days=offset)
         existing = counts.get(day, 0)
         rnd = random.Random(f"gun-{day.isoformat()}")
-        target = WEEKDAY_TARGET[day.weekday()] + rnd.randint(-3, 3) if WEEKDAY_TARGET[day.weekday()] else 0
+        target = spec.weekday_target[day.weekday()] + rnd.randint(-3, 3) if spec.weekday_target[day.weekday()] else 0
         if offset > 0:   # ileriki günler yaklaştıkça dolar
             target = round(target * (.75 if offset <= 2 else .5 if offset <= 7 else .3 if offset <= 14 else .15))
         need = target - existing
@@ -287,8 +339,9 @@ def _ensure_demo(history_days, ahead_days, now):
                 newcomers -= 1
                 phone = f"0533{day:%y%j}{newcomers:02d}"
                 customer = _card(get_or_create_customer(
-                    business, phone, _name(len(FIRST_30) + (day.toordinal() * 3 + newcomers) % 1900), verified=True), phone)
-                profile = _profile(phone)
+                    business, phone, _name(len(spec.first_30) + (day.toordinal() * 3 + newcomers) % 1900, spec),
+                    verified=True), phone, spec)
+                profile = _profile(phone, spec)
                 customers.append(customer)
                 profiles.append(profile)
                 due[customer.id], visits[customer.id] = day, 0
@@ -302,16 +355,16 @@ def _ensure_demo(history_days, ahead_days, now):
                 chosen = [services[profile["service"]]]
             else:
                 chosen = [rnd.choices(services, weights)[0]]
-            if chosen[0].name == "Damat tıraşı" and day.weekday() != 5:
-                chosen = [services[2]]
-            if chosen[0].duration >= 30 and chosen[0].name != "Damat tıraşı" and rnd.random() < .15:
+            if chosen[0].name == spec.saturday_only and day.weekday() != 5:
+                chosen = [services[spec.fallback]]
+            if chosen[0].duration >= 30 and chosen[0].name != spec.saturday_only and addons and rnd.random() < .15:
                 chosen.append(rnd.choice(addons))
             able = eligible_staff(business, chosen)
             if not able:
                 continue
             favourite = staff[profile["staff"]] if profile else None
             person = favourite if favourite in able and rnd.random() < .75 else rnd.choices(
-                able, [STAFF[staff.index(s)][3] if s in staff else 10 for s in able])[0]
+                able, [spec.staff[staff.index(s)][3] if s in staff else 10 for s in able])[0]
             duration = sum(s.duration for s in chosen)
             times = day_slots(business, [person], day, duration, now=booked_at, enforce_rules=False)[person.id]
             if kind == "walkin":   # bugün içinde de ileri bir saate yazılamaz

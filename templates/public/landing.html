@@ -22,7 +22,7 @@
     {# Önizleme: gerçek ekranların küçük bir örneği. Süslemedir; ekran okuyucuya ve klavyeye kapalıdır. #}
     <div class="lp-stage" aria-hidden="true" inert>
       <div class="lp-phone"><div class="lp-screen">
-        <div class="lp-shop"><span class="lp-mono">A</span><span><small>Kadın ve erkek kuaförü · Moda</small><b>Atelier Saç Tasarım</b></span></div>
+        <div class="lp-shop"><span class="lp-mono">Ö</span><span><small>Kadın kuaförü · Örnek Mahallesi</small><b>Örnek Saç ve Güzellik</b></span></div>
         <div class="lp-label">Model seçin</div>
         <div class="lp-looks"><span class="lp-look l1"><i></i>Kısa bob</span><span class="lp-look l2 on"><i></i>Dalgalı fön</span><span class="lp-look l3"><i></i>Röfle</span></div>
         <div class="lp-label">Saat · {{ days.1|date:"j F l" }}</div>
@@ -42,9 +42,9 @@
     <p class="lp-eyebrow">Kimler için</p>
     <h2>Her salonun çalışma düzenine uyar</h2>
     <div class="lp-cards three">
-      <article class="lp-card"><h3>Kadın kuaförleri</h3><p>Kesim, fön, boya ve bakım randevuları kendi süresiyle takvime yerleşir. Müşteriniz beğendiği modeli seçerek gelir; ne istediği randevudan önce bellidir.</p></article>
-      <article class="lp-card"><h3>Erkek kuaförleri ve berberler</h3><p>Yoğun saatlerde telefon susar. Randevusuz gelen müşteriyi de iki dokunuşla kaydedersiniz; gün sonunda kasa eksiksiz çıkar.</p></article>
-      <article class="lp-card"><h3>Güzellik merkezleri</h3><p>Cilt bakımı, manikür, kaş ve kirpik hizmetleri uygulayan uzmana göre ayrılır. Her müşterinin geçmiş uygulamaları kendi kartında durur.</p></article>
+      <article class="lp-card"><h3>Kadın kuaförleri</h3><p>Kesim, fön, boya ve bakım randevuları kendi süresiyle takvime yerleşir. Müşteriniz beğendiği modeli seçerek gelir; ne istediği randevudan önce bellidir.</p>{% if demo_salon %}<a class="lp-card-link" href="{% url 'public:business' demo_salon.slug %}">Örnek salonu görün</a>{% endif %}</article>
+      <article class="lp-card"><h3>Erkek kuaförleri ve berberler</h3><p>Yoğun saatlerde telefon susar. Randevusuz gelen müşteriyi de iki dokunuşla kaydedersiniz; gün sonunda kasa eksiksiz çıkar.</p>{% if demo_men %}<a class="lp-card-link" href="{% url 'public:business' demo_men.slug %}">Örnek kuaförü görün</a>{% endif %}</article>
+      <article class="lp-card"><h3>Güzellik merkezleri</h3><p>Cilt bakımı, manikür, kaş ve kirpik hizmetleri uygulayan uzmana göre ayrılır. Her müşterinin geçmiş uygulamaları kendi kartında durur.</p>{% if demo_salon %}<a class="lp-card-link" href="{% url 'public:business' demo_salon.slug %}">Örnek salonu görün</a>{% endif %}</article>
     </div>
   </section>
 

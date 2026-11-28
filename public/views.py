@@ -27,8 +27,10 @@ DAY_NAMES = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"]
 def landing(request):
     today = timezone.localdate()
     return render(request, "public/landing.html", {
-        # Örnek dükkân yalnızca tanıtım kurulumunda vardır; yoksa bağlantısı da gösterilmez.
-        "demo": Business.objects.filter(slug="ornek-berber").first(),
+        # Örnek salonlar yalnızca tanıtım kurulumunda vardır; yoksa bağlantıları da gösterilmez.
+        "demo": Business.objects.filter(slug="ornek-salon").first() or Business.objects.filter(slug="ornek-berber").first(),
+        "demo_men": Business.objects.filter(slug="ornek-berber").first(),
+        "demo_salon": Business.objects.filter(slug="ornek-salon").first(),
         "days": [today + timedelta(days=i) for i in range(5)],   # telefon önizlemesindeki gün
         "price": PlatformSettings.load().monthly_price,
     })

@@ -1,7 +1,8 @@
-# Erkek Kuaförleri İçin Online Randevu Platformu
+# Kuaförler ve Güzellik Merkezleri İçin Online Randevu Platformu
 
-Her kuaförün kendi randevu sayfası: pazar yeri yok, komisyon yok. Müşteri üye olmadan,
-SMS koduyla randevu alır; kuaför takvimini, müşterilerini ve cirosunu tek panelden görür.
+Kadın ve erkek kuaförleri ile güzellik merkezleri için: her işletmenin kendi randevu sayfası,
+pazar yeri yok, komisyon yok. Müşteri üye olmadan, SMS koduyla randevu alır ve geçmişini görür;
+işletme takvimini, müşterilerini, model kataloğunu ve cirosunu tek panelden yönetir.
 
 Proje raporundaki Faz 1 ve Faz 2 kapsamını içerir (ayrıntı aşağıda).
 
@@ -27,7 +28,7 @@ python manage.py runserver
 
 Geliştirmede SMS gönderilmez; mesajlar konsola yazılır ve doğrulama kodu ekranda gösterilir.
 
-Testler: `python manage.py test` (83 test).
+Testler: `python manage.py test` (94 test).
 
 ## Canlı tanıtım sitesi (Render)
 
@@ -43,10 +44,12 @@ Platform yönetimi (`/yonetim/`) için Render'da servisin **Environment** sekmes
 kurulum sırasında oluşturulur. Kullanıcı zaten varsa şifresi değişmez. Şifreyi sonradan
 `/yonetim/` içinden değiştirebilirsin.
 
-Bu bir tanıtım kurulumudur: SMS gitmez, doğrulama kodu ekranda gösterilir, örnek dükkân
-(`/ornek-berber/`, panel: `demo@example.com` / `demo-sifre-1`) hazır gelir ve hatırlatma
-mesajları gönderilmez. Örnek dükkânda dört berber, dokuz hizmet, birkaç yüz müşteri ve on iki
-haftalık randevu geçmişi vardır (`core/demo.py`). `SEED_DEMO=1` iken veri her yayında ve sunucu
+Bu bir tanıtım kurulumudur: SMS gitmez, doğrulama kodu ekranda gösterilir, iki örnek salon hazır
+gelir ve hatırlatma mesajları gönderilmez: erkek kuaförü (`/ornek-berber/`, panel:
+`demo@example.com` / `demo-sifre-1`) ve kadın kuaförü ile güzellik hizmetleri (`/ornek-salon/`,
+panel: `salon@example.com` / `demo-sifre-1`). Her birinde dört çalışan, dokuz-on iki hizmet, birkaç
+yüz müşteri ve on iki haftalık randevu geçmişi vardır (`core/demo.py`). Örnek salonlarda model
+fotoğrafı yoktur: panelden gerçek çalışma fotoğrafları eklenebilir. `SEED_DEMO=1` iken veri her yayında ve sunucu
 her uyandığında tazelenir: yeni günler eklenir, geçmişe düşen örnek randevular kapatılır;
 ziyaretçilerin kendi aldığı deneme randevularına dokunulmaz. Gerçek müşteriyle kullanmadan önce `SMS_SHOW_CODE` ve `SEED_DEMO`
 değişkenlerini kaldır, demo kullanıcısını sil ve aşağıdaki "Yayına almadan önce" listesini uygula.
@@ -54,15 +57,33 @@ değişkenlerini kaldır, demo kullanıcısını sil ve aşağıdaki "Yayına al
 ## Neler var
 
 **Ana sayfa**
-- Tanıtım sayfası (`templates/public/landing.html`, `static/css/landing.css`): ürün önizlemesi, nasıl
-  çalışır, özellikler, sık sorulanlar. Örnek dükkân kuruluysa "Örnek dükkânı gez" bağlantısı görünür
+- Tanıtım sayfası (`templates/public/landing.html`, `static/css/landing.css`): ürün önizlemesi, kimler
+  için, özellikler, nasıl çalışır, fiyat (platform ayarlarından), güven, sık sorulanlar. Örnek salonlar
+  kuruluysa bağlantıları görünür
+- Kurumsal sayfalar: İletişim (`/iletisim/`) ve Gizlilik ve kişisel veriler (`/gizlilik/`). Şirket
+  unvanı, adres, vergi bilgisi, e-posta ve telefon yönetim panelinde **Platform ayarları**ndan girilir;
+  boş olan bilgi gösterilmez. Gizlilik metni hizmetin işleyişini anlatır; yayından önce bir hukukçuya
+  okutulmalıdır
+
+**İşletme türleri**
+- Kadın kuaförü, erkek kuaförü, kadın ve erkek kuaförü, güzellik merkezi. Kayıtta seçilir; hazır
+  hizmet listesi türe göre gelir. Müşterinin gördüğü personel sözü kuaförlerde "Kuaför", güzellik
+  merkezinde "Uzman"dır
+
+**Model kataloğu**
+- İşletme panelde (Ayarlar → Modeller) çalışma ya da model fotoğrafı ekler, istersen bir işleme bağlar.
+  Fotoğraf küçültülür, yönü düzeltilir, konum ve cihaz bilgisi silinir ve WebP olarak veritabanında
+  saklanır (`core/images.py`); ayrı dosya deposu gerekmez. İşletme başına en fazla 60 model
+- Salon sayfasında galeri; müşteri randevu alırken modeli seçer (bağlı işlem kendiliğinden işaretlenir).
+  Seçilen model fişte, panelde randevu satırında ve müşteri kartında görünür
 
 **Müşteri tarafı**
 - Kuaföre özel sayfa: hizmetler, süre, fiyat, çalışma saatleri, arama ve WhatsApp butonu
 - Dört adımda randevu: işlem ve berber ("fark etmez" dahil), gün ve saat, ad ve telefon, SMS kodu
 - Doğrulanmış cihaz 90 gün tekrar kod istemez
 - Onay sayfası: iptal, takvime ekleme, isteğe bağlı kampanya izni (koddan ayrı, işaretsiz kutu)
-- Şifresiz müşteri hesabı: geçmiş randevular, "aynısını tekrar al"
+- Şifresiz müşteri hesabı: randevu almadan da telefon ve SMS koduyla giriş/kayıt. Son ziyaret, kaç gün
+  önce, en çok yaptırılan işlem, yaklaşan randevu, seçilen modeller ve "aynısını tekrar al"
 
 **Kuaför paneli**
 - Bugün: günün randevuları, randevu kapatma (tamamlandı / gelmedi, tutar, nakit ya da kart),
@@ -109,23 +130,18 @@ değişkenlerini kaldır, demo kullanıcısını sil ve aşağıdaki "Yayına al
 - İşlem kaydı: kim, ne zaman, hangi randevuyu değiştirdi
 
 **Görünüm**
-- Açık tema "Usta işi": kemik beyazı kâğıt, mürekkep siyahı ve tek vurgu olarak bordo. Renk, yazı ve
-  ölçü değerleri `static/css/app.css` dosyasının ilk bloğundadır (`--gold` adı eski temadan kalmadır;
-  değeri bordodur)
-- Yazı tipleri kendi sunucumuzdan gelir (`static/fonts`, SIL OFL): başlıklar Gloock, metin Libre
-  Franklin, şekil altı notları Newsreader italik. Dışarıya hiçbir istek gitmez
-- Ustura, makas, tarak ve berber direği elle çizilmiş SVG'dir (`templates/_pole.html`,
-  `templates/_sprite.html`, ana sayfadaki levhalar)
+- Kurumsal tema: sıcak kırık beyaz zemin, beyaz kartlar, tek vurgu olarak petrol yeşili. Renk, yazı ve
+  ölçü değerleri `static/css/app.css` dosyasının ilk bloğundadır (`--gold` adları eski temadan kalmadır;
+  değerleri vurgu rengidir)
+- Yazı tipleri kendi sunucumuzdan gelir (`static/fonts`, SIL OFL): başlıklar Newsreader, metin Libre
+  Franklin. Dışarıya hiçbir istek gitmez
+- Marka işareti `templates/_brand.html` ve `static/icons/`; site adı `SITE_NAME` ortam değişkenindedir
 
 **Hareket katmanı**
 - Sayfa geçişleri, buton durumları ve bekleme göstergesi; derleme adımı ve dış kütüphane yok
   (`static/css/app.css`, `static/js/app.js`, müşteri tarafı `public.*`, panel `panel.*`)
-- Berberliğe özgü hareketler: ustura köpüğü siler (ana sayfa başlığı, gün değişimi, kapatılan
-  randevunun tutarı), makas kesik çizgiyi ve seçilen saatin köşesini keser, onayda mühür iner ve
-  koçan ayrılır, beklerken direk döner
-- Ana sayfadaki ustura, tarak ve makas ekrandayken durmadan çalışır (sap açılıp kapanır, dişlerden
-  ışık geçer, makas keser); ekrandan çıkınca bekler. Şekil altındaki "Durdur" hepsini durdurur,
-  seçim oturum boyunca kalır. Yalnızca tam harekette çalışır (`html[data-loops]`, `public.js`)
+- Sade ve kısa: sayfa girişinde içerik yerine oturur, seçilen gün ve saat hemen işaretlenir, onayda
+  "Onaylandı" rozeti belirir, beklerken ekranın üstünde ince bir çubuk ilerler
 - Hareket yalnızca süslemedir: JavaScript kapalıyken ya da "hareketi azalt" ayarı açıkken her sayfa
   eksiksiz çalışır; sayfa geçişlerini desteklemeyen tarayıcıda geçiş olmadan açılır
 - `MOTION` ortam değişkeni: `full` (varsayılan), `lite` (yalnızca basma, yükleme ve geçiş), `off` (hareket
