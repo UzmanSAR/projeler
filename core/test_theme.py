@@ -26,11 +26,31 @@ def tokens(body):
     return dict(re.findall(r"(--[\w-]+)\s*:\s*([^;]+);", body))
 
 
+def without_token_blocks(css):
+    """Belirteç blokları (:root ile başlayanlar ve koyu tema medya blokları) çıkarılmış CSS: bileşen kuralları."""
+    out, i = [], 0
+    for m in re.finditer(r"^(:root[^{\n]*|@media \(prefers-color-scheme: dark\)) \{", css, re.M):
+        if m.start() < i:
+            continue
+        out.append(css[i:m.start()])
+        depth, j = 1, m.end()
+        while depth:
+            depth += {"{": 1, "}": -1}.get(css[j], 0)
+            j += 1
+        i = j
+    out.append(css[i:])
+    return "".join(out)
+
+
+PLAIN = re.compile(r"\s*(#[0-9a-fA-F]{3,8}|rgba?\([^)]*\))\s*")
+TONES = ("turkuaz", "pembe")
+
+
 class ThemeTokenTests(TestCase):
     def setUp(self):
         self.css = (CSS / "app.css").read_text()
-        media = block(self.css, "@media (prefers-color-scheme: dark)")
-        self.auto_dark = tokens(block(media, ':root:not([data-theme="light"])'))
+        self.media = block(self.css, "@media (prefers-color-scheme: dark)")
+        self.auto_dark = tokens(block(self.media, ':root:not([data-theme="light"])'))
         self.chosen_dark = tokens(block(self.css, ':root[data-theme="dark"]'))
         self.light = tokens(block(self.css, ":root"))
 
@@ -45,15 +65,24 @@ class ThemeTokenTests(TestCase):
     def test_colour_tokens_are_redefined_for_dark(self):
         # açık temadaki her düz renk belirteci koyu temada da yeniden tanımlanır (bilerek aynı kalanlar hariç)
         same_on_purpose = {"--on-band", "--on-band-dim", "--band"}
-        plain = {k for k, v in self.light.items() if re.fullmatch(r"\s*(#[0-9a-fA-F]{3,8}|rgba?\([^)]*\))\s*", v)}
+        plain = {k for k, v in self.light.items() if PLAIN.fullmatch(v)}
         missing = plain - set(self.auto_dark) - same_on_purpose
         self.assertFalse(missing, "koyu temada karşılığı yok: %s" % sorted(missing))
 
+    def test_tones_redefine_the_same_tokens_in_light_and_dark(self):
+        tone_media = block(self.css[self.css.index(':root[data-tone="turkuaz"] {'):], "@media (prefers-color-scheme: dark)")
+        for tone in TONES:
+            light = tokens(block(self.css, f':root[data-tone="{tone}"]'))
+            auto = tokens(block(tone_media, f':root[data-tone="{tone}"]:not([data-theme="light"])'))
+            chosen = tokens(block(self.css, f':root[data-tone="{tone}"][data-theme="dark"]'))
+            self.assertTrue(light, tone)
+            self.assertEqual(auto, chosen, tone)
+            self.assertEqual(set(light), set(auto), tone)              # koyu temada her vurgu yeniden tanımlı
+            self.assertFalse(set(light) - set(self.light), tone)      # yalnızca var olan belirteçler
+
     def test_component_rules_take_colours_from_tokens(self):
-        rest = self.css
-        for sel in (":root", ':root[data-theme="dark"]'):
-            rest = rest.replace(block(rest, sel), "", 1)
-        rest = rest.replace(block(rest, "@media (prefers-color-scheme: dark)"), "", 1)
+        rest = without_token_blocks(self.css)
+        self.assertNotIn("--accent:", rest)                            # bütün belirteç blokları çıktı
         allowed = ["rgba(0, 0, 0, .08)", "rgba(45, 106, 74, .5)", "rgba(45, 106, 74, 0)"]   # meşgul düğme gölgesi, onay halkası
         for a in allowed:
             rest = rest.replace(a, "")
@@ -103,3 +132,96 @@ class ThemeSwitchTests(TestCase):
         html = self.client.get("/cevrimdisi/").content.decode()
         self.assertIn("prefers-color-scheme: dark", html)
         self.assertIn('data-theme="dark"', html)
+
+
+class ToneTests(TestCase):
+    """İşletmenin rengi: erkek kuaförü turkuaz, kadın kuaförü ve güzellik merkezi pembe, karma yeşil; ayardan değişir."""
+
+    def setUp(self):
+        cache.clear()
+        self.b, self.user = make_business("ali")
+
+    def html_tag(self, url):
+        html = self.client.get(url).content.decode()
+        return html[html.index("<html"):html.index(">", html.index("<html")) + 1], html
+
+    def test_tone_follows_kind_unless_chosen(self):
+        from core.models import Business
+        expected = {Business.Kind.MEN: "turkuaz", Business.Kind.WOMEN: "pembe",
+                    Business.Kind.BEAUTY: "pembe", Business.Kind.UNISEX: "yesil"}
+        for kind, tone in expected.items():
+            self.b.kind = kind
+            self.assertEqual(self.b.active_tone, tone, kind)
+        self.b.kind, self.b.tone = Business.Kind.MEN, Business.Tone.PINK
+        self.assertEqual(self.b.active_tone, "pembe")
+        self.assertTrue(self.b.lights)
+        self.b.tone = Business.Tone.GREEN
+        self.assertFalse(self.b.lights)
+
+    def test_shop_pages_carry_tone_lights_and_emblem(self):
+        tag, html = self.html_tag(f"/{self.b.slug}/")
+        self.assertIn('data-tone="turkuaz"', tag)
+        self.assertIn("data-lights", tag)
+        self.assertIn('class="emblem"', html)
+        self.assertIn('class="card lit"', html)                 # hizmet listesi çerçevesi
+        self.b.kind = "karma"; self.b.save()
+        tag, _ = self.html_tag(f"/{self.b.slug}/randevu/")
+        self.assertIn('data-tone="yesil"', tag)
+        self.assertNotIn("data-lights", tag)                    # yeşil temada ışık dönmez
+        tag, _ = self.html_tag("/")
+        self.assertNotIn("data-tone", tag)                      # platform sayfaları kurumsal renkte
+
+    def test_panel_takes_the_tone_and_settings_change_it(self):
+        self.client.force_login(self.user)
+        tag, html = self.html_tag("/panel/")
+        self.assertIn('data-tone="turkuaz"', tag)
+        self.assertNotIn("data-lights", tag)                    # panelde ışık yok, yalnızca renk
+        settings_page = self.client.get("/panel/ayarlar/").content.decode()
+        self.assertIn('name="tone"', settings_page)
+        from panel.forms import BusinessForm
+        data = {k: v for k, v in BusinessForm(instance=self.b).initial.items() if v is not None}
+        data.update(tone="pembe", remind_manual="on" if self.b.remind_manual else "")
+        r = self.client.post("/panel/ayarlar/", data)
+        self.assertEqual(r.status_code, 302, getattr(r, "context", None) and r.context["form"].errors)
+        self.b.refresh_from_db()
+        self.assertEqual(self.b.tone, "pembe")
+        tag, _ = self.html_tag(f"/{self.b.slug}/")
+        self.assertIn('data-tone="pembe"', tag)
+
+    def test_emblem_drawing_per_kind(self):
+        from django.template.loader import render_to_string
+        men = render_to_string("public/_emblem.html", {"kind": "erkek"})
+        women = render_to_string("public/_emblem.html", {"kind": "kadin"})
+        beauty = render_to_string("public/_emblem.html", {"kind": "guzellik"})
+        self.assertIn('class="solid"', men)                     # ustura sapı
+        self.assertIn('class="spark"', women)                   # fön makinesinin hava çizgileri
+        self.assertIn('class="star"', beauty)
+        self.assertEqual(len({men, women, beauty}), 3)
+
+
+class CalendarTests(TestCase):
+    def setUp(self):
+        cache.clear()
+        self.b, self.user = make_business("ali")
+        self.client.force_login(self.user)
+
+    def test_staff_chips_counts_and_readable_events(self):
+        from datetime import datetime, time, timedelta
+        from core.booking import create_appointment, get_or_create_customer
+        from core.tests import TZ
+        self.b.staff.create(name="Veli")
+        ali = self.b.staff.get(name="Ali")
+        cut = self.b.services.get(name="Saç kesimi")
+        day = datetime.now(TZ).date() + timedelta(days=1)
+        while day.weekday() == 6:
+            day += timedelta(days=1)
+        customer = get_or_create_customer(self.b, "05321112233", "Ayşe Kara", verified=True)
+        create_appointment(self.b, [cut], datetime.combine(day, time(10, 0), TZ), staff=ali, customer=customer)
+        html = self.client.get(f"/panel/takvim/?g={day:%Y-%m-%d}").content.decode()
+        self.assertIn('class="cal-staff"', html)
+        self.assertIn("1 randevu", html)                        # Ali'nin sütun başlığı
+        self.assertIn("Boş", html)                              # Veli'nin sütunu
+        self.assertIn("10:00<span class=\"end\">–10:30</span>", html)
+        self.assertIn("Ayşe Kara", html)
+        self.assertIn("Bugüne dön", html)
+        self.assertNotIn("Siyah kenar", html)

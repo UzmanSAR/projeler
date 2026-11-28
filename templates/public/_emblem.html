@@ -1,0 +1,36 @@
+{% comment %}Salon başlığındaki rozet: işletme türünün çizimi, etrafında dönen ışık (app.css: .emblem).
+Erkek kuaförü çapraz tarak ve ustura, kadın kuaförü fön makinesi, güzellik merkezi nilüfer, karma salon çapraz tarak ve makas.
+Çizgiler vurgu renginde (currentColor), dolgular .e1 / .e2 sınıflarıyla temanın açık tonlarında.{% endcomment %}
+<span class="emblem" aria-hidden="true"><svg viewBox="0 0 48 48">
+{% if kind == "erkek" or kind == "karma" %}
+  <g transform="rotate(-45 24 24)">
+    <rect class="e1" x="5" y="17.5" width="38" height="6" rx="2"/>
+    <path d="M8.5 23.5v7M12 23.5v7M15.5 23.5v7M19 23.5v7M22.5 23.5v7M26 23.5v7M29.5 23.5v7M33 23.5v7M36.5 23.5v7M40 23.5v5"/>
+  </g>
+  {% if kind == "erkek" %}
+  <g transform="rotate(45 24 24)">
+    <rect class="solid" x="3.5" y="21.6" width="21.5" height="5.2" rx="2.6"/>
+    <path class="e2" d="M24 27.6V20.6h18a2.3 2.3 0 0 1 2.3 2.3V25c-7 .3-12.6 1.4-17.4 3.6z"/>
+    <circle class="dot" cx="25.6" cy="24.2" r="1.3"/>
+  </g>
+  {% else %}
+  <g transform="rotate(45 24 24)">
+    <path class="e1" d="M13.4 20.4L44 25.4l-2.6 1.8-28.4-3.6z"/>
+    <path class="e1" d="M13.4 27.6L44 22.6l-2.6-1.8-28.4 3.6z"/>
+    <circle class="e2" cx="9" cy="19.6" r="4.4"/><circle class="e2" cx="9" cy="28.4" r="4.4"/>
+    <circle class="dot" cx="27.5" cy="24" r="1.2"/>
+  </g>
+  {% endif %}
+{% elif kind == "kadin" %}
+  <path class="e1" d="M8 14h17a8 8 0 0 1 0 16H12a4 4 0 0 1-4-4z"/>
+  <path class="e2" d="M33 18.2l5-1.7v11l-5-1.7z"/>
+  <circle class="e2" cx="25" cy="22" r="3.4"/>
+  <path class="e2" d="M14 30l-2.6 12h6.2l2.6-12"/>
+  <path class="spark" d="M40.5 18c1.4-.9 2.8.9 4.2 0M40.5 22c1.4-.9 2.8.9 4.2 0M40.5 26c1.4-.9 2.8.9 4.2 0"/>
+{% else %}
+  <path class="e2" d="M24 38.5c-5.5-3.5-8-9-8-14.5 0-4.5 3.2-9.5 8-13.5 4.8 4 8 9 8 13.5 0 5.5-2.5 11-8 14.5z"/>
+  <path class="e1" d="M24 38.5c-7-.5-14-4.5-16.5-12.5 4.5-1.5 9.5-.5 13 2.5M24 38.5c7-.5 14-4.5 16.5-12.5-4.5-1.5-9.5-.5-13 2.5"/>
+  <path d="M11 41.5h26"/>
+  <path class="star" d="M38.5 5.5c.5 2.8 1.7 4 4.5 4.5-2.8.5-4 1.7-4.5 4.5-.5-2.8-1.7-4-4.5-4.5 2.8-.5 4-1.7 4.5-4.5z"/>
+{% endif %}
+</svg></span>

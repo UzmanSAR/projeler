@@ -1,28 +1,44 @@
 {% extends "panel/_shell.html" %}
 {% block content %}
-<div class="row between" style="margin-bottom:10px">
-  <a class="btn ghost small" href="?g={{ prev|date:'Y-m-d' }}">‹ Önceki</a>
-  <form method="get"><input type="date" name="g" value="{{ day|date:'Y-m-d' }}" onchange="this.form.submit()" aria-label="Gün"></form>
-  <a class="btn ghost small" href="?g={{ next|date:'Y-m-d' }}">Sonraki ›</a>
+<div class="cal-nav">
+  <a class="btn ghost small" href="?g={{ prev|date:'Y-m-d' }}" aria-label="Önceki gün">‹</a>
+  <h2>{{ day|date:"j F" }} <span>{{ day|date:"l" }}</span></h2>
+  <a class="btn ghost small" href="?g={{ next|date:'Y-m-d' }}" aria-label="Sonraki gün">›</a>
 </div>
-<h2 style="margin-top:0">{{ day|date:"j F Y l" }}{% if closed %} <span class="badge gray">Kapalı gün</span>{% endif %}</h2>
-<div class="cal">
-  <div class="axis"><div class="head"></div><div style="position:relative;height:{{ height }}px">{% for m in marks %}<span style="top:{{ m.top }}px">{{ m.label }}</span>{% endfor %}</div></div>
+<div class="cal-tools">
+  <form method="get"><input type="date" name="g" value="{{ day|date:'Y-m-d' }}" onchange="this.form.submit()" aria-label="Gün seç"></form>
+  {% if is_today %}<span class="badge">Bugün</span>{% else %}<a href="?">Bugüne dön</a>{% endif %}
+  {% if closed %}<span class="badge gray">Kapalı gün</span>{% endif %}
+  <span class="cal-total">{{ total }} randevu</span>
+</div>
+{% if columns|length > 1 %}
+<nav class="cal-staff" aria-label="Çalışanlar">
+  {% for col in columns %}<a href="#c{{ col.staff.id }}" data-col="c{{ col.staff.id }}"><i aria-hidden="true">{{ col.staff.name|first|upper }}</i>{{ col.staff.name }}<small>{{ col.count }}</small></a>{% endfor %}
+</nav>
+{% endif %}
+<div class="cal" style="--hour:{{ hour_px }}px">
+  <div class="axis"><div class="head"></div><div class="ticks" style="height:{{ height }}px">{% for m in marks %}<span style="top:{{ m.top }}px">{{ m.label }}</span>{% endfor %}</div></div>
   {% for col in columns %}
-  <div class="col">
-    <div class="head">{{ col.staff.name }}</div>
+  <section class="col" id="c{{ col.staff.id }}" aria-label="{{ col.staff.name }}">
+    <div class="head"><i aria-hidden="true">{{ col.staff.name|first|upper }}</i><b>{{ col.staff.name }}</b><small>{% if col.count %}{{ col.count }} randevu{% else %}Boş{% endif %}</small></div>
     <div class="lane" style="height:{{ height }}px">
       {% for o in col.offs %}<div class="off" style="top:{{ o.top }}px;height:{{ o.height }}px">{% if o.o %}{{ o.o.reason|default:"Kapalı" }}{% else %}Mola{% endif %}</div>{% endfor %}
       {% for e in col.appts %}
-      <a class="ev {{ e.a.status }} {{ e.a.source }}{% if e.height < 37 %} short{% endif %}" style="top:{{ e.top }}px;height:{{ e.height }}px" {% if e.a.customer %}href="{% url 'panel:customer' e.a.customer.id %}"{% endif %} title="{{ e.a.summary }}">
-        <b>{{ e.a.start|time:"H:i" }}</b> {% if e.a.customer %}{{ e.a.customer.name|default:e.a.customer.phone }}{% else %}İsimsiz{% endif %}{% if e.height < 37 %} · {% else %}<br>{% endif %}{{ e.a.summary }}
+      <a class="ev {{ e.size }} {{ e.a.status }} {{ e.a.source }}{% if e.late %} late{% endif %}" style="top:{{ e.top }}px;height:{{ e.height }}px" {% if e.a.customer %}href="{% url 'panel:customer' e.a.customer.id %}"{% endif %} title="{{ e.a.start|time:'H:i' }}–{{ e.a.end|time:'H:i' }} · {{ e.a.summary }}">
+        <span class="t">{{ e.a.start|time:"H:i" }}<span class="end">–{{ e.a.end|time:"H:i" }}</span></span>
+        <b>{% if e.a.customer %}{{ e.a.customer.name|default:e.a.customer.phone }}{% else %}İsimsiz{% endif %}</b>
+        <span class="w">{{ e.a.summary }}</span>
+        {% if e.a.status == "completed" %}<em>Tamamlandı</em>{% elif e.a.status == "no_show" %}<em>Gelmedi</em>{% elif e.late %}<em>Kapatılmadı</em>{% elif e.a.source == "walkin" %}<em>Randevusuz</em>{% endif %}
       </a>
       {% endfor %}
     </div>
-  </div>
-  {% empty %}<div class="col"><div class="head">Aktif personel yok</div></div>{% endfor %}
+  </section>
+  {% empty %}<div class="col"><div class="head"><b>Aktif personel yok</b></div></div>{% endfor %}
 </div>
-<p class="muted">Düz kenar: onaylı · Yeşil zemin: tamamlandı · Kırmızı kesik kenar: gelmedi · Noktalı kenar: randevusuz. Randevuyu kapatmak için Bugün ekranını kullan.</p>
+<ul class="cal-legend">
+  <li><i class="k-ok"></i>Onaylı</li><li><i class="k-done"></i>Tamamlandı</li><li><i class="k-no"></i>Gelmedi</li><li><i class="k-late"></i>Kapatılmadı</li>
+</ul>
+<p class="muted">Randevuya dokununca müşteri kartı açılır. Randevuyu kapatmak için Bugün ekranını kullan.</p>
 <div class="two">
   <form method="post" action="{% url 'panel:manual_create' %}" class="card">{% csrf_token %}
     <b>Randevu ekle</b> <small>(arayan müşteri için)</small>

@@ -60,7 +60,7 @@ class SignupForm(forms.Form):
 class BusinessForm(forms.ModelForm):
     class Meta:
         model = Business
-        fields = ["name", "kind", "description", "address", "district", "phone", "whatsapp", "maps_url",
+        fields = ["name", "kind", "tone", "description", "address", "district", "phone", "whatsapp", "maps_url",
                   "slot_step", "min_notice_minutes", "max_days_ahead", "cancel_limit_minutes",
                   "max_open_per_phone", "remind_manual"]
         widgets = {"description": forms.Textarea(attrs={"rows": 3})}

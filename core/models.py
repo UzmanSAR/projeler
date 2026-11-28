@@ -41,6 +41,13 @@ class Business(models.Model):
         UNISEX = "karma", "Kadın ve erkek kuaförü"
         BEAUTY = "guzellik", "Güzellik merkezi"
 
+    class Tone(models.TextChoices):
+        """Müşteri sayfalarının ve panelin rengi (static/css/app.css: [data-tone])."""
+        AUTO = "", "İşletme türüne göre"
+        TURQUOISE = "turkuaz", "Turkuaz"
+        PINK = "pembe", "Pembe"
+        GREEN = "yesil", "Yeşil"
+
     class Plan(models.TextChoices):
         SOLO = "solo", "Tek Koltuk"
         SHOP = "shop", "Dükkân"
@@ -54,6 +61,9 @@ class Business(models.Model):
 
     name = models.CharField("işletme adı", max_length=80)
     kind = models.CharField("işletme türü", max_length=10, choices=Kind.choices, default=Kind.MEN)
+    tone = models.CharField("renk", max_length=10, choices=Tone.choices, default=Tone.AUTO, blank=True,
+                            help_text="Müşteri sayfanın ve panelin rengi. İşletme türüne göre seçildiğinde erkek "
+                                      "kuaförü turkuaz, kadın kuaförü ve güzellik merkezi pembe, karma salon yeşil olur.")
     slug = models.CharField(
         "sayfa adresi", max_length=40, unique=True,
         validators=[slug_validator, validate_slug_free],
@@ -108,6 +118,18 @@ class Business(models.Model):
     def staff_word(self):
         """Müşterinin gördüğü personel sözü: kuaförlerde "Kuaför", güzellik merkezinde "Uzman"."""
         return "Uzman" if self.kind == self.Kind.BEAUTY else "Kuaför"
+
+    KIND_TONE = {Kind.MEN: Tone.TURQUOISE, Kind.WOMEN: Tone.PINK, Kind.BEAUTY: Tone.PINK, Kind.UNISEX: Tone.GREEN}
+
+    @property
+    def active_tone(self):
+        """Seçilen renk; seçilmediyse işletme türünün rengi."""
+        return self.tone or self.KIND_TONE.get(self.kind, self.Tone.GREEN)
+
+    @property
+    def lights(self):
+        """Randevu ekranında dönen ışıklar: turkuaz ve pembe temada."""
+        return self.active_tone in (self.Tone.TURQUOISE, self.Tone.PINK)
 
     @property
     def staff_plural(self):

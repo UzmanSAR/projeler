@@ -97,4 +97,26 @@
     box.addEventListener('click', copy);
     box.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); copy(); } });
   });
+  /* N10 takvim: çalışan düğmesi o çalışanın sütununa kaydırır; telefonda ekranda duran sütunun düğmesi seçili görünür.
+     Betik yoksa bağlantı sütuna atlar. Bütün sütunlar sığıyorsa (geniş ekran) düğmeler yalnızca özet olarak durur. */
+  var cal = d.querySelector('.cal'), chips = all('.cal-staff a[data-col]');
+  if (cal && chips.length) {
+    var axisW = function () { var a = cal.querySelector('.axis'); return a ? a.offsetWidth : 0; };
+    var mark = function () {
+      var fits = cal.scrollWidth <= cal.clientWidth + 1, x = cal.scrollLeft + axisW(), cur = null;
+      if (!fits) all('.cal .col[id]').forEach(function (c) { if (c.offsetLeft - c.offsetWidth / 2 <= x) cur = c.id; });
+      chips.forEach(function (a) { a.classList.toggle('on', a.getAttribute('data-col') === cur); });
+    };
+    chips.forEach(function (a) {
+      a.addEventListener('click', function (e) {
+        var col = d.getElementById(a.getAttribute('data-col')); if (!col) return;
+        e.preventDefault();
+        cal.scrollTo({ left: col.offsetLeft - axisW(), behavior: M.reduced ? 'auto' : 'smooth' });
+      });
+    });
+    var queued = false;
+    cal.addEventListener('scroll', function () { if (!queued) { queued = true; requestAnimationFrame(function () { queued = false; mark(); }); } }, { passive: true });
+    window.addEventListener('resize', mark);
+    mark();
+  }
 })();

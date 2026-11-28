@@ -2,6 +2,7 @@
 {% load static %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/panel.css' %}?v={{ STATIC_V }}">{% endblock %}
 {% block extra_js %}<script src="{% static 'js/panel.js' %}?v={{ STATIC_V }}"></script>{% endblock %}
+{% block html_attrs %} data-tone="{{ request.business.active_tone }}"{% endblock %}
 {% block title %}{{ request.business.name }} · Panel{% endblock %}
 {% block body %}
 <div class="topbar"><div class="inner">

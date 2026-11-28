@@ -1,4 +1,4 @@
-<div class="card"><dl class="summary" style="margin:0">
+<div class="card lit"><dl class="summary" style="margin:0">
   <dt>İşlem</dt><dd>{% for s in sel.services %}{{ s.name }}{% if not forloop.last %} + {% endif %}{% endfor %} · {{ sel.duration }} dk · {{ sel.price|floatformat:"0g" }} ₺</dd>
   {% if sel.style %}<dt>Model</dt><dd class="with-thumb"><img src="{{ sel.style.thumb_url }}" alt="" width="{{ sel.style.width }}" height="{{ sel.style.height }}">{{ sel.style.title }}</dd>{% endif %}
   <dt>Zaman</dt><dd class="when">{{ local_start|date:"j F l" }} · {{ local_start|time:"H:i" }}</dd>

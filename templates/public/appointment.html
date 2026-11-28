@@ -5,7 +5,7 @@
 {% elif appt.status == "completed" %}<h2 style="margin-top:0">Randevu tamamlandı</h2>
 {% elif appt.status == "no_show" %}<h2 style="margin-top:0">Randevuya gelinmedi</h2>
 {% else %}<h2 style="margin-top:0">Randevu iptal edildi</h2>{% endif %}
-<div class="card ticket {{ appt.status }}">
+<div class="card ticket lit {{ appt.status }}">
   {% if appt.status == "confirmed" %}<span class="confirm-badge"><svg viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="9" fill="currentColor" opacity=".14"/><path d="M5.2 9.3l2.4 2.4 5-5.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" pathLength="1"/></svg>Onaylandı</span>{% endif %}
   <dl class="summary" style="margin:0">
   <dt>Zaman</dt><dd class="when">{{ local_start|date:"j F Y l" }} <span class="at">{{ local_start|time:"H:i" }}</span></dd>

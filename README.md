@@ -28,7 +28,7 @@ python manage.py runserver
 
 Geliştirmede SMS gönderilmez; mesajlar konsola yazılır ve doğrulama kodu ekranda gösterilir.
 
-Testler: `python manage.py test` (103 test).
+Testler: `python manage.py test` (109 test).
 
 ## Canlı tanıtım sitesi (Render)
 
@@ -69,6 +69,15 @@ değişkenlerini kaldır, demo kullanıcısını sil ve aşağıdaki "Yayına al
 - Kadın kuaförü, erkek kuaförü, kadın ve erkek kuaförü, güzellik merkezi. Kayıtta seçilir; hazır
   hizmet listesi türe göre gelir. Müşterinin gördüğü personel sözü kuaförlerde "Kuaför", güzellik
   merkezinde "Uzman"dır
+- Renk: erkek kuaförü turkuaz, kadın kuaförü ve güzellik merkezi pembe, karma salon yeşil. İşletme
+  panelde Ayarlar'dan (Renk) başka birini seçebilir. Renk müşteri sayfalarına ve panele uygulanır
+  (`<html data-tone>`, belirteçler `app.css` içinde, açık ve koyu temada)
+- Salon başlığında türün çizimi: erkek kuaförü çapraz tarak ve ustura, kadın kuaförü fön makinesi,
+  güzellik merkezi nilüfer, karma salon tarak ve makas (`templates/public/_emblem.html`). Etrafında ışık
+  döner
+- Dönen ışıklar (turkuaz ve pembe temada, yalnızca müşteri sayfalarında): seçilen işlem, model, çalışan,
+  gün ve saat; düğmeler; hizmet listesi, özet, randevu fişi ve geçmiş çerçeveleri. Telefonda hareket
+  azaltılmışsa, veri tasarrufu açıksa ya da `MOTION` kapalıysa ışık durur ama görünür kalır
 
 **Model kataloğu**
 - İşletme panelde (Ayarlar → Modeller) çalışma ya da model fotoğrafı ekler, istersen bir işleme bağlar.
@@ -88,7 +97,9 @@ değişkenlerini kaldır, demo kullanıcısını sil ve aşağıdaki "Yayına al
 **Kuaför paneli**
 - Bugün: günün randevuları, randevu kapatma (tamamlandı / gelmedi, tutar, nakit ya da kart),
   randevusuz müşteri kaydı, kapatılmamış eski randevu uyarısı
-- Takvim: berber başına sütun, elle randevu ekleme, saat kapatma
+- Takvim: çalışan başına sütun (telefonda tam genişlik, yana kaydırarak sıradaki çalışan; üstte çalışan
+  düğmeleri ve randevu sayıları), saat aralığı, müşteri ve işlem ayrı satırlarda; durum yazıyla
+  (Tamamlandı, Gelmedi, Kapatılmadı, Randevusuz). Elle randevu ekleme, saat kapatma
 - Müşteriler: ziyaret, harcama, gelmeme sayısı, not, kaybedilme riski olanlar, kayıt silme
 - Raporlar: beş temel rakam ve önceki aya göre değişim, yoğunluk haritası, hizmete ve berbere göre ciro
 - Ayarlar: hizmetler, personel, çalışma saatleri ve mola, randevu kuralları

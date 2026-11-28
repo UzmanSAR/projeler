@@ -27,7 +27,7 @@ from core.setup import create_business
 from .forms import BusinessForm, ServiceForm, SignupForm, StaffForm, StyleForm
 
 User = get_user_model()
-PX_PER_MIN = 1.5
+PX_PER_MIN = 2          # takvim: dakika başına piksel (yarım saat = 60 px, üç satır yazı sığar)
 
 
 def panel_view(view):
@@ -208,13 +208,22 @@ def calendar(request):
     def box(start, end):
         start, end = max(start, first), min(end, last)
         return {"top": round((start - first).total_seconds() / 60 * PX_PER_MIN),
-                "height": max(22, round((end - start).total_seconds() / 60 * PX_PER_MIN) - 2)}
+                "height": max(26, round((end - start).total_seconds() / 60 * PX_PER_MIN) - 3)}
+
+    now = timezone.now()
+
+    def event(a):
+        e = {"a": a, **box(a.start, a.end)}
+        e["size"] = "s" if e["height"] < 44 else "m" if e["height"] < 76 else "l"   # tek satır, iki satır, üç satır
+        e["late"] = a.status == a.Status.CONFIRMED and a.end < now                  # geçti ama kapatılmadı
+        return e
 
     columns = []
     for s in staff:
+        mine = [event(a) for a in appts if a.staff_id == s.id]
         columns.append({
-            "staff": s,
-            "appts": [{"a": a, **box(a.start, a.end)} for a in appts if a.staff_id == s.id],
+            "staff": s, "count": len(mine),
+            "appts": mine,
             "offs": [{"o": o, **box(o.start, o.end)} for o in offs
                      if o.staff_id in (None, s.id) and o.end > first and o.start < last],
         })
@@ -231,7 +240,8 @@ def calendar(request):
     return render(request, "panel/calendar.html", {
         "tab": "calendar", "day": day, "prev": day - timedelta(days=1),
         "next": day + timedelta(days=1), "closed": not intervals,
-        "columns": columns, "marks": marks,
+        "is_today": day == now.astimezone(tz).date(), "total": sum(c["count"] for c in columns),
+        "columns": columns, "marks": marks, "hour_px": round(60 * PX_PER_MIN),
         "height": round((last - first).total_seconds() / 60 * PX_PER_MIN),
         "staff": staff, "services": b.services.filter(active=True),
         "day_offs": offs,
