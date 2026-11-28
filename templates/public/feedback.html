@@ -9,8 +9,8 @@
 <div class="stripe"></div>
 <main class="wrap">
   {% include "_messages.html" %}
-  <p>Programda beğenmediğin, eksik bulduğun ya da olmasını istediğin bir şey varsa yaz. Yazdıkların dükkâna değil, doğrudan programı yapan ekibe ulaşır.</p>
-  {% if shop and not owned %}<p class="muted">Randevunla ilgili bir konu için dükkâna ulaş{% if shop.phone %}: <a href="tel:{{ shop.phone }}">{{ shop.phone }}</a>{% else %}.{% endif %}</p>{% endif %}
+  <p>Programda beğenmediğin, eksik bulduğun ya da olmasını istediğin bir şey varsa yaz. Yazdıkların salona değil, doğrudan programı yapan ekibe ulaşır.</p>
+  {% if shop and not owned %}<p class="muted">Randevunla ilgili bir konu için salona ulaş{% if shop.phone %}: <a href="tel:{{ shop.phone }}">{{ shop.phone }}</a>{% else %}.{% endif %}</p>{% endif %}
   <form method="post" action="{% url 'feedback' %}">{% csrf_token %}
     <input type="hidden" name="next" value="{{ back }}">{% if shop %}<input type="hidden" name="d" value="{{ shop.slug }}">{% endif %}
     {{ form.non_field_errors }}

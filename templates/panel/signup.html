@@ -2,9 +2,9 @@
 {% load static %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/panel.css' %}?v={{ STATIC_V }}">{% endblock %}
 {% block extra_js %}<script src="{% static 'js/panel.js' %}?v={{ STATIC_V }}"></script>{% endblock %}
-{% block title %}Dükkânını kur{% endblock %}
+{% block title %}İşletmeni kaydet{% endblock %}
 {% block body %}
-<div class="hero"><div class="inner"><small>{{ SITE_NAME }} · 14 gün ücretsiz</small><h1>Dükkânını 5 dakikada kur</h1>{% include "_pole.html" %}<p>Saç, sakal ve saç + sakal hizmetleri hazır gelir; fiyatları sonra değiştirirsin.</p></div></div>
+<div class="hero"><div class="inner"><small>{{ SITE_NAME }} · 14 gün ücretsiz</small><h1>İşletmeni 5 dakikada kur</h1>{% include "_pole.html" %}<p>İşletme türüne uygun hazır hizmet listesiyle başlarsın; fiyatları ve süreleri sonra değiştirirsin.</p></div></div>
 <div class="stripe"></div>
 <main class="wrap">
   <form method="post" novalidate>{% csrf_token %}

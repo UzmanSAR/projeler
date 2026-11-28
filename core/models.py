@@ -15,7 +15,8 @@ from django.utils import timezone
 RESERVED_SLUGS = {
     "panel", "yonetim", "admin", "static", "media", "api", "giris", "kayit",
     "fiyatlar", "hakkinda", "destek", "kvkk", "robots.txt", "favicon.ico",
-    "gorus", "cevrimdisi", "uygulama", "sw", "manifest",
+    "gorus", "cevrimdisi", "uygulama", "sw", "manifest", "m", "hesap", "gizlilik", "iletisim",
+    "kosullar", "hakkimizda",
 }
 
 slug_validator = RegexValidator(
@@ -34,6 +35,12 @@ class TsTzRange(Func):
 
 
 class Business(models.Model):
+    class Kind(models.TextChoices):
+        WOMEN = "kadin", "Kadın kuaförü"
+        MEN = "erkek", "Erkek kuaförü"
+        UNISEX = "karma", "Kadın ve erkek kuaförü"
+        BEAUTY = "guzellik", "Güzellik merkezi"
+
     class Plan(models.TextChoices):
         SOLO = "solo", "Tek Koltuk"
         SHOP = "shop", "Dükkân"
@@ -45,7 +52,8 @@ class Business(models.Model):
         PAST_DUE = "past_due", "Ödeme bekliyor"
         SUSPENDED = "suspended", "Kapalı"
 
-    name = models.CharField("dükkân adı", max_length=80)
+    name = models.CharField("işletme adı", max_length=80)
+    kind = models.CharField("işletme türü", max_length=10, choices=Kind.choices, default=Kind.MEN)
     slug = models.CharField(
         "sayfa adresi", max_length=40, unique=True,
         validators=[slug_validator, validate_slug_free],
@@ -97,6 +105,15 @@ class Business(models.Model):
         return self.status in (self.Status.TRIAL, self.Status.ACTIVE)
 
     @property
+    def staff_word(self):
+        """Müşterinin gördüğü personel sözü: kuaförlerde "Kuaför", güzellik merkezinde "Uzman"."""
+        return "Uzman" if self.kind == self.Kind.BEAUTY else "Kuaför"
+
+    @property
+    def staff_plural(self):
+        return "Uzmanlar" if self.kind == self.Kind.BEAUTY else "Kuaförler"
+
+    @property
     def billing(self):
         """Üyelik özeti (ücret, ödeme günü, kalan gün); şablonlarda request.business.billing."""
         from . import billing
@@ -142,7 +159,7 @@ class Service(models.Model):
 class Staff(models.Model):
     business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name="staff")
     name = models.CharField("ad", max_length=40)
-    title = models.CharField("unvan", max_length=30, blank=True, default="usta")
+    title = models.CharField("unvan", max_length=30, blank=True, help_text="Örn. usta, stilist, uzman, kalfa")
     services = models.ManyToManyField(Service, blank=True, verbose_name="yapabildiği işlemler")
     order = models.PositiveSmallIntegerField("sıra", default=0)
     active = models.BooleanField("aktif", default=True)
@@ -154,6 +171,45 @@ class Staff(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class Style(models.Model):
+    """Örnek model ya da çalışma fotoğrafı: müşteri beğendiğini seçer, randevusunda görünür.
+    Fotoğraf veritabanında, küçültülmüş ve konum bilgisi silinmiş olarak durur (core/images.py)."""
+    business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name="styles")
+    title = models.CharField("ad", max_length=60)
+    note = models.CharField("kısa açıklama", max_length=140, blank=True)
+    service = models.ForeignKey(Service, null=True, blank=True, on_delete=models.SET_NULL,
+                                verbose_name="ilgili işlem",
+                                help_text="Müşteri bu modeli seçince işlem kendiliğinden işaretlenir.")
+    image = models.BinaryField(editable=False)
+    thumb = models.BinaryField(editable=False)
+    width = models.PositiveSmallIntegerField(default=0, editable=False)
+    height = models.PositiveSmallIntegerField(default=0, editable=False)
+    digest = models.CharField(max_length=12, editable=False)   # adres değişsin, tarayıcı eskiyi göstermesin
+    order = models.PositiveSmallIntegerField("sıra", default=0)
+    active = models.BooleanField("yayında", default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    MAX_PER_BUSINESS = 60
+
+    class Meta:
+        ordering = ["order", "-id"]
+        verbose_name = "model"
+        verbose_name_plural = "modeller"
+
+    def __str__(self):
+        return self.title
+
+    @property
+    def image_url(self):
+        from django.urls import reverse
+        return reverse("style_image", args=[self.pk, self.digest])
+
+    @property
+    def thumb_url(self):
+        from django.urls import reverse
+        return reverse("style_thumb", args=[self.pk, self.digest, "k"])
 
 
 class WorkingHours(models.Model):
@@ -250,6 +306,9 @@ class Appointment(models.Model):
     customer = models.ForeignKey(
         Customer, null=True, blank=True, on_delete=models.SET_NULL, related_name="appointments"
     )
+    # Müşterinin seçtiği örnek model (isteğe bağlı); model silinse de randevu kalır.
+    style = models.ForeignKey("Style", null=True, blank=True, on_delete=models.SET_NULL,
+                              related_name="appointments", verbose_name="seçilen model")
     start = models.DateTimeField()
     end = models.DateTimeField()
     block_end = models.DateTimeField(help_text="Bitiş + hazırlık payı")
@@ -361,6 +420,13 @@ class PlatformSettings(models.Model):
         "ödeme bilgisi", blank=True, max_length=600,
         help_text="Kuaförün üyelik sayfasında 'Nasıl ödenir' başlığı altında görünür: "
                   "IBAN, alıcı adı, açıklamaya ne yazılacağı gibi.")
+    # Kurumsal bilgiler: sitenin alt bilgisinde, iletişim ve gizlilik sayfalarında görünür. Boşsa gösterilmez.
+    company_name = models.CharField("şirket unvanı", max_length=120, blank=True,
+                                    help_text="Örn. Ad Soyad Bilişim Hizmetleri ya da ... Ltd. Şti.")
+    contact_email = models.EmailField("iletişim e-postası", blank=True)
+    contact_phone = models.CharField("iletişim telefonu", max_length=20, blank=True)
+    address = models.CharField("adres", max_length=200, blank=True)
+    tax_info = models.CharField("vergi dairesi ve numarası", max_length=80, blank=True)
 
     class Meta:
         verbose_name = "platform ayarları"

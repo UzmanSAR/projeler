@@ -17,7 +17,8 @@
   <dl class="summary" style="margin:0">
   <dt>Zaman</dt><dd class="when">{{ local_start|date:"j F Y l" }} <span class="at">{{ local_start|time:"H:i" }}</span></dd>
   <dt>İşlem</dt><dd>{{ appt.summary }} · {{ appt.planned_total|floatformat:"0g" }} ₺</dd>
-  <dt>Kuaför</dt><dd>{{ appt.staff.name }}</dd>
+  {% if appt.style %}<dt>Model</dt><dd class="with-thumb"><img src="{{ appt.style.thumb_url }}" alt="" width="{{ appt.style.width }}" height="{{ appt.style.height }}">{{ appt.style.title }}</dd>{% endif %}
+  <dt>{{ business.staff_word }}</dt><dd>{{ appt.staff.name }}</dd>
   {% if business.address %}<dt>Adres</dt><dd>{{ business.address }}</dd>{% endif %}
 </dl></div>
 {% if appt.status == "confirmed" %}
@@ -33,7 +34,7 @@
   <p class="muted">Randevudan {{ cancel_hours|floatformat:"-1" }} saat öncesine kadar ücretsiz iptal edebilirsin. Ertelemek için iptal edip yeni saat seç.</p>
   <button class="btn danger block">Randevuyu iptal et</button>
 </form>
-{% else %}<div class="card">Online iptal süresi geçti. {% if business.phone %}Lütfen dükkânı ara: <a href="tel:{{ business.phone }}">{{ business.phone }}</a>{% endif %}</div>{% endif %}
+{% else %}<div class="card">Online iptal süresi geçti. {% if business.phone %}Lütfen salonu ara: <a href="tel:{{ business.phone }}">{{ business.phone }}</a>{% endif %}</div>{% endif %}
 {% else %}
 <p><a class="btn block" href="{{ rebook }}">Yeni randevu al</a></p>
 {% endif %}

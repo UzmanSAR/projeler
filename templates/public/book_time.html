@@ -14,6 +14,6 @@
 <div class="slots">{% for s in slots %}<a class="slot" href="{{ s.url }}">{{ s.label }}</a>{% endfor %}</div>
 <p class="muted">Yalnızca boş saatler gösterilir.</p>
 {% else %}
-<div class="card">Önümüzdeki günlerde boş saat görünmüyor. {% if business.phone %}Dükkânı arayabilirsiniz: <a href="tel:{{ business.phone }}">{{ business.phone }}</a>{% endif %}</div>
+<div class="card">Önümüzdeki günlerde boş saat görünmüyor. {% if business.phone %}Salonu arayabilirsiniz: <a href="tel:{{ business.phone }}">{{ business.phone }}</a>{% endif %}</div>
 {% endif %}
 {% endblock %}

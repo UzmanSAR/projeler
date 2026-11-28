@@ -7,7 +7,7 @@
 {% block app_name %}{{ business.name }}{% endblock %}
 {% block body %}
 <div class="hero"><div class="inner">
-  <small>{% if business.district %}{{ business.district }} · {% endif %}Erkek kuaförü</small>
+  <small>{% if business.district %}{{ business.district }} · {% endif %}{{ business.get_kind_display }}</small>
   <h1><a href="{% url 'public:business' business.slug %}">{{ business.name }}</a></h1>
   {% include "_pole.html" %}
   {% block hero %}{% endblock %}

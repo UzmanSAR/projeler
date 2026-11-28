@@ -18,8 +18,8 @@ from core import otp
 from core.availability import business_tz, day_slots, merged_slots
 from core.booking import (BookingError, cancel_appointment, create_appointment, eligible_staff,
                           get_or_create_customer, totals)
-from core.models import (Appointment, Business, Customer, Feedback, Membership, Service, Staff, WorkingHours,
-                         slug_validator)
+from core.models import (Appointment, Business, Customer, Feedback, Membership, Service, Staff, Style,
+                         WorkingHours, slug_validator)
 
 DAY_NAMES = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"]
 
@@ -31,6 +31,19 @@ def landing(request):
         "demo": Business.objects.filter(slug="ornek-berber").first(),
         "days": [today + timedelta(days=i) for i in range(5)],   # telefon önizlemesindeki gün şeridi
     })
+
+
+def style_image(request, pk, digest, size=""):
+    """Model fotoğrafı. Adres fotoğrafın özetini taşır: fotoğraf değişince adres de değişir,
+    bu yüzden tarayıcı bir yıl saklayabilir."""
+    style = get_object_or_404(Style.objects.only("image", "thumb", "digest", "business__status")
+                              .select_related("business"), pk=int(pk), digest=digest)
+    if style.business.status == Business.Status.SUSPENDED:
+        raise Http404
+    response = HttpResponse(bytes(style.thumb if size == "k" else style.image), content_type="image/webp")
+    response["Cache-Control"] = "public, max-age=31536000, immutable"
+    response["X-Content-Type-Options"] = "nosniff"
+    return response
 
 
 FEEDBACK_HOURLY_CAP = 300
@@ -120,6 +133,12 @@ class Selection:
         ids = [int(x) for x in data.getlist("h") if x.isdigit()][:6]
         by_id = {s.id: s for s in Service.objects.filter(business=business, active=True, id__in=ids)}
         self.services = [by_id[i] for i in dict.fromkeys(ids) if i in by_id]
+        style_id = data.get("m", "")
+        self.style = (Style.objects.filter(business=business, active=True, id=style_id).select_related("service").first()
+                      if style_id.isdigit() else None)
+        # Modelden gelinince (henüz işlem seçilmemişken) ilgili işlem işaretli gelir; müşteri kaldırabilir.
+        if self.style and self.style.service and self.style.service.active and not ids and not data.get("devam"):
+            self.services = [self.style.service]
         staff_id = data.get("b", "0")
         self.staff = (Staff.objects.filter(business=business, active=True, id=staff_id).first()
                       if staff_id.isdigit() and staff_id != "0" else None)
@@ -134,6 +153,8 @@ class Selection:
 
     def query(self, **extra):
         pairs = [("h", s.id) for s in self.services] + [("b", self.staff.id if self.staff else 0)]
+        if self.style:
+            pairs.append(("m", self.style.id))
         if self.start and "t" not in extra:
             pairs.append(("t", int(self.start.timestamp())))
         pairs += [(k, v) for k, v in extra.items() if v is not None]
@@ -155,6 +176,7 @@ def business_page(request, slug):
         "business": business,
         "services": business.services.filter(active=True),
         "staff": business.staff.filter(active=True),
+        "styles": business.styles.filter(active=True).defer("image", "thumb"),
         "week": week,
         "known": device_customer(request, business),
     })
@@ -168,12 +190,13 @@ def book_select(request, slug):
         if not sel.services:
             messages.error(request, "En az bir işlem seçin.")
         elif not eligible_staff(business, sel.services, sel.staff):
-            messages.error(request, "Seçtiğiniz kuaför bu işlemlerin hepsini yapmıyor. "
+            messages.error(request, f"Seçtiğiniz {business.staff_word.lower()} bu işlemlerin hepsini yapmıyor. "
                                     "'Fark etmez' seçeneğini deneyin.")
         else:
             return redirect(_url("book_time", business, sel))
     return render(request, "public/book_select.html", {
         "business": business, "sel": sel,
+        "styles": business.styles.filter(active=True).defer("image", "thumb"),
         "services": business.services.filter(active=True),
         "staff": business.staff.filter(active=True),
         "selected_ids": [s.id for s in sel.services],
@@ -219,7 +242,7 @@ def _finish(request, business, sel, customer):
     """Randevuyu oluşturur; saat dolduysa saat seçimine geri gönderir."""
     try:
         appt = create_appointment(business, sel["services"], sel["start"], staff=sel["staff"],
-                                  customer=customer)
+                                  customer=customer, style=sel.get("style"))
     except BookingError as exc:
         messages.error(request, str(exc))
         return None
@@ -240,7 +263,7 @@ def book_details(request, slug):
 
     if request.method == "POST":
         name = request.POST.get("name", "").strip()[:60]
-        choice = {"services": sel.services, "staff": sel.staff, "start": sel.start}
+        choice = {"services": sel.services, "staff": sel.staff, "start": sel.start, "style": sel.style}
         if known and request.POST.get("known") == "1":
             if name and name != known.name:
                 known.name = name
@@ -322,13 +345,14 @@ class _Query:
 
 def _selection_from(pending, business):
     sel = Selection(_Query(pending["query"]), business)
-    return {"services": sel.services, "staff": sel.staff, "start": sel.start}
+    return {"services": sel.services, "staff": sel.staff, "start": sel.start, "style": sel.style}
 
 
 def _appointment(slug, token):
     business = _business(slug)
     appt = get_object_or_404(
-        Appointment.objects.select_related("staff", "customer").prefetch_related("items"),
+        Appointment.objects.select_related("staff", "customer", "style").defer("style__image", "style__thumb")
+        .prefetch_related("items"),
         business=business, token=token,
     )
     return business, appt
@@ -391,21 +415,85 @@ def appointment_ics(request, slug, token):
     return response
 
 
+def _history(business, customer):
+    """Müşterinin bu salondaki geçmişi: son ziyaret, sık yaptırdıkları, yaklaşan randevu ve liste."""
+    tz = business_tz(business)
+    now = timezone.now()
+    appts = list(customer.appointments.select_related("staff", "style").defer("style__image", "style__thumb")
+                 .prefetch_related("items").order_by("-start")[:40])
+    rows, counts = [], {}
+    for a in appts:
+        rebook = urlencode([("h", i.service_id) for i in a.items.all() if i.service_id]
+                           + [("b", a.staff_id)] + ([("m", a.style_id)] if a.style_id else []))
+        rows.append({"a": a, "local": a.start.astimezone(tz),
+                     "rebook": f"{reverse('public:book_time', args=[business.slug])}?{rebook}"})
+        if a.status == Appointment.Status.COMPLETED:
+            for item in a.items.all():
+                counts[item.name] = counts.get(item.name, 0) + 1
+    done = [r for r in rows if r["a"].status == Appointment.Status.COMPLETED]
+    last = done[0] if done else None
+    upcoming = [r for r in rows if r["a"].status == Appointment.Status.CONFIRMED and r["a"].start > now]
+    return {
+        "rows": rows, "last": last, "visits": len(done),
+        "since": (now.astimezone(tz).date() - last["local"].date()).days if last else None,
+        "upcoming": upcoming[-1] if upcoming else None,   # en yakın olan (liste yeniden eskiye sıralı)
+        "favourites": sorted(counts.items(), key=lambda kv: -kv[1])[:3],
+    }
+
+
 def account(request, slug):
-    """Müşteri hesabı: şifre yok, doğrulanmış cihaz yeterli."""
+    """Müşteri hesabı: şifre yok. Telefon bir kez SMS koduyla doğrulanır, cihaz 90 gün hatırlanır.
+    Randevu almadan da giriş yapılabilir (kayıt olmak = numarayı doğrulamak)."""
     business = _business(slug)
     customer = device_customer(request, business)
-    appts = []
+    pending = request.session.get("acct")
+    if pending and pending.get("slug") != business.slug:
+        pending = None
     if customer:
-        tz = business_tz(business)
-        for a in (customer.appointments.select_related("staff").prefetch_related("items")
-                  .order_by("-start")[:30]):
-            rebook = urlencode([("h", i.service_id) for i in a.items.all() if i.service_id]
-                               + [("b", a.staff_id)])
-            appts.append({"a": a, "local": a.start.astimezone(tz),
-                          "rebook": f"{reverse('public:book_time', args=[slug])}?{rebook}"})
+        return render(request, "public/account.html", {
+            "business": business, "customer": customer, **_history(business, customer)})
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+        if action == "send" or (action == "resend" and pending):
+            name = request.POST.get("name", "").strip()[:60] if action == "send" else pending.get("name", "")
+            phone = otp.normalize_phone(request.POST.get("phone")) if action == "send" else pending["phone"]
+            if not phone:
+                messages.error(request, "Geçerli bir cep numarası yazın (05xx xxx xx xx).")
+            elif action == "send" and not otp.verify_turnstile(request.POST.get("cf-turnstile-response"),
+                                                              otp.client_ip(request)):
+                messages.error(request, "Güvenlik kontrolü tamamlanamadı. Sayfayı yenileyip tekrar deneyin.")
+            else:
+                try:
+                    code = otp.request_code(business, phone, otp.client_ip(request), purpose="login")
+                except otp.OtpError as exc:
+                    messages.error(request, str(exc))
+                else:
+                    request.session["acct"] = {"slug": business.slug, "phone": phone, "name": name}
+                    if code:
+                        messages.info(request, f"Tanıtım modu, SMS gönderilmedi. Kod: {code}")
+            return redirect("public:account", slug)
+        if action == "verify" and pending:
+            try:
+                otp.check_code(business, pending["phone"], request.POST.get("code"))
+            except otp.OtpError as exc:
+                messages.error(request, str(exc))
+                return redirect("public:account", slug)
+            customer = get_or_create_customer(business, pending["phone"], pending.get("name", ""), verified=True)
+            request.session.pop("acct", None)
+            if customer.blocked:
+                messages.error(request, "Bu numara için online işlem kapalı. Lütfen salonu arayın.")
+                return redirect("public:business", slug)
+            messages.success(request, "Giriş yapıldı. Bu cihaz 90 gün hatırlanacak.")
+            return remember_device(redirect("public:account", slug), business, customer)
+        if action == "change":
+            request.session.pop("acct", None)
+            return redirect("public:account", slug)
+
     return render(request, "public/account.html", {
-        "business": business, "customer": customer, "appts": appts,
+        "business": business, "customer": None, "pending": pending,
+        "masked": f"{pending['phone'][:2]}•• ••• •• {pending['phone'][-2:]}" if pending else "",
+        "resend_seconds": settings.OTP_RESEND_SECONDS,
     })
 
 

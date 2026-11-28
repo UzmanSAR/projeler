@@ -8,12 +8,23 @@
   <div class="kpi"><small>Ziyaret</small><b>{{ visits }}</b></div>
   <div class="kpi"><small>Gelmedi</small><b>{{ customer.no_show_count }}</b></div>
 </div>
+<div class="card cust-summary">
+  <div><small>Son ziyaret</small><b>{% if last %}{{ last.start|date:"j F Y" }}{% else %}Henüz yok{% endif %}</b>
+    {% if last %}<span>{% if since == 0 %}bugün{% elif since == 1 %}dün{% else %}{{ since }} gün önce{% endif %} · {{ last.summary }} · {{ last.staff.name }}</span>{% endif %}</div>
+  {% if usual %}<div><small>Genelde</small><b>{{ usual }} günde bir</b></div>{% endif %}
+  {% if upcoming %}<div><small>Yaklaşan</small><b>{{ upcoming.start|date:"j F H:i" }}</b><span>{{ upcoming.summary }}</span></div>{% endif %}
+  {% if favourites %}<div><small>Sık yaptırdıkları</small><span class="chips-text">{% for name, n in favourites %}<span class="badge gray">{{ name }} · {{ n }}</span> {% endfor %}</span></div>{% endif %}
+</div>
+{% if styles %}
+<h2>Seçtiği modeller</h2>
+<div class="style-strip">{% for st in styles %}<a href="{{ st.image_url }}" target="_blank" rel="noopener" title="{{ st.title }}"><img src="{{ st.thumb_url }}" alt="{{ st.title }}" width="{{ st.width }}" height="{{ st.height }}" loading="lazy"></a>{% endfor %}</div>
+{% endif %}
 <div class="two">
 <div>
   <h2 style="margin-top:0">Geçmiş</h2>
   <div class="card"><table class="plain">
   {% for a in appts %}
-    <tr><td>{{ a.start|date:"d.m.Y H:i" }}<br><small>{{ a.summary }} · {{ a.staff.name }}</small></td>
+    <tr><td>{{ a.start|date:"d.m.Y H:i" }}<br><small>{{ a.summary }} · {{ a.staff.name }}{% if a.style %} · Model: {{ a.style.title }}{% endif %}</small></td>
     <td class="num">{% if a.actual_total != None %}{{ a.actual_total|floatformat:"0g" }}{% else %}{{ a.planned_total|floatformat:"0g" }}{% endif %} ₺<br><small>{{ a.get_status_display }}</small></td></tr>
   {% empty %}<tr><td>Henüz randevu yok.</td></tr>{% endfor %}
   </table></div>

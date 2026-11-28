@@ -1,0 +1,36 @@
+{% extends "panel/_shell.html" %}
+{% block content %}
+<p><a class="tap" href="{% url 'panel:styles' %}">‹ Modeller</a></p>
+<h1>{% if style %}Modeli düzenle{% else %}Yeni model{% endif %}</h1>
+<div class="two">
+<form method="post" enctype="multipart/form-data" class="card" data-photo-form>{% csrf_token %}
+  {{ form.non_field_errors }}
+  <label for="{{ form.photo.id_for_label }}" style="margin-top:0">{% if style %}Fotoğrafı değiştir{% else %}Fotoğraf{% endif %}</label>
+  {% if style %}<img class="style-preview" src="{{ style.thumb_url }}" alt="{{ style.title }}" width="{{ style.width }}" height="{{ style.height }}">{% endif %}
+  <input type="file" name="photo" id="{{ form.photo.id_for_label }}" accept="image/jpeg,image/png,image/webp"{% if not style %} required{% endif %}>
+  {{ form.photo.errors }}<span class="field-help">{{ form.photo.help_text }}</span>
+  {% for f in form %}{% if f.name != "photo" %}
+    {% if f.field.widget.input_type == "checkbox" %}<label class="check">{{ f }}<span>{{ f.label|capfirst }}</span></label>
+    {% else %}<label for="{{ f.id_for_label }}">{{ f.label|capfirst }}</label>{{ f }}{% endif %}{{ f.errors }}
+    {% if f.help_text %}<span class="field-help">{{ f.help_text }}</span>{% endif %}
+  {% endif %}{% endfor %}
+  <p style="margin-top:14px"><button class="btn block">Kaydet</button></p>
+</form>
+<div>
+  {% if style %}
+  <form method="post" onsubmit="return confirm('Model silinsin mi? Bu modeli seçmiş randevular etkilenmez.')">{% csrf_token %}
+    <input type="hidden" name="action" value="delete">
+    <button class="btn danger small">Modeli sil</button>
+  </form>
+  {% endif %}
+  <div class="card">
+    <b>İyi bir model fotoğrafı için</b>
+    <ul class="tips">
+      <li>Gün ışığında, düz bir arka planla çek.</li>
+      <li>Modeli tek fotoğrafta, yakından göster.</li>
+      <li>Müşterinin yüzü görünüyorsa izin al.</li>
+    </ul>
+  </div>
+</div>
+</div>
+{% endblock %}

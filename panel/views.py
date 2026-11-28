@@ -14,16 +14,17 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from core import reports
+from core import images, reports
 from core.availability import business_tz, open_intervals
 from core.booking import (BookingError, cancel_appointment, close_appointment,
                           create_appointment, get_or_create_customer)
-from core.models import (Appointment, Customer, Membership, PlatformSettings, Service, Staff, TimeOff,
+from core.models import (Appointment, Customer, Membership, PlatformSettings, Service, Staff, Style, TimeOff,
                          WorkingHours)
 from core.otp import normalize_phone
 from core.setup import create_business
 
-from .forms import BusinessForm, ServiceForm, SignupForm, StaffForm
+
+from .forms import BusinessForm, ServiceForm, SignupForm, StaffForm, StyleForm
 
 User = get_user_model()
 PX_PER_MIN = 1.5
@@ -54,7 +55,7 @@ def signup(request):
         user = User.objects.create_user(username=d["email"], email=d["email"], password=d["password"])
         create_business(user, d["business_name"], d["slug"], d["owner_name"],
                         closed_weekday=d["closed_weekday"], open_at=d["open_at"],
-                        close_at=d["close_at"], phone=d["phone"])
+                        close_at=d["close_at"], phone=d["phone"], kind=d["kind"])
         login(request, user)
         messages.success(request, "Sayfan yayında. Hizmet ve fiyatlarını Ayarlar'dan düzenleyebilirsin.")
         return redirect("panel:today")
@@ -75,7 +76,8 @@ def _day_range(day, tz):
 
 def _appointments(business):
     return (Appointment.objects.filter(business=business)
-            .select_related("staff", "customer").prefetch_related("items"))
+            .select_related("staff", "customer", "style").defer("style__image", "style__thumb")
+            .prefetch_related("items"))
 
 
 def _back(request, default="panel:today"):
@@ -178,7 +180,7 @@ def walkin(request):
     except BookingError as exc:
         msg = str(exc)
         if "doldu" in msg:
-            msg = "Bu kuaför şu an dolu görünüyor. Başka kuaför seçin ya da önceki randevuyu kapatın."
+            msg = "Bu çalışan şu an dolu görünüyor. Başka birini seçin ya da önceki randevuyu kapatın."
         messages.error(request, msg)
     return _back(request)
 
@@ -337,9 +339,22 @@ def customer_detail(request, pk):
         return redirect("panel:customer", pk=pk)
     appts = list(_appointments(request.business).filter(customer=customer).order_by("-start")[:50])
     done = [a for a in appts if a.status == Appointment.Status.COMPLETED]
+    counts = {}
+    for a in done:
+        for item in a.items.all():
+            counts[item.name] = counts.get(item.name, 0) + 1
+    now = timezone.now()
+    last = done[0] if done else None
+    upcoming = [a for a in appts if a.status == Appointment.Status.CONFIRMED and a.start > now]
+    gaps = [(done[i].start - done[i + 1].start).days for i in range(len(done) - 1)]
     return render(request, "panel/customer.html", {
         "tab": "customers", "customer": customer, "appts": appts,
         "visits": len(done), "spent": sum(a.actual_total or 0 for a in done),
+        "last": last, "since": (now - last.start).days if last else None,
+        "upcoming": upcoming[-1] if upcoming else None,
+        "usual": round(sum(gaps) / len(gaps)) if gaps else None,
+        "favourites": sorted(counts.items(), key=lambda kv: -kv[1])[:4],
+        "styles": [a.style for a in done if a.style][:6],
     })
 
 
@@ -384,6 +399,7 @@ def settings_view(request):
         "tab": "settings", "form": form,
         "services": b.services.all(), "staff": b.staff.all(),
         "hours": b.hours.all(), "stale": stale,
+        "styles": b.styles.defer("image", "thumb")[:4], "style_count": b.styles.count(),
         "page_url": f"{settings.SITE_URL}/{b.slug}/",
     })
 
@@ -465,3 +481,42 @@ def staff_edit(request, pk=None):
         messages.success(request, "Personel kaydedildi.")
         return redirect("panel:settings")
     return render(request, "panel/form.html", {"tab": "settings", "form": form, "title": "Personel"})
+
+
+# ---- Modeller (örnek çalışmalar) -------------------------------------------
+
+@panel_view
+def styles(request):
+    b = request.business
+    return render(request, "panel/styles.html", {
+        "tab": "settings", "styles": b.styles.select_related("service").defer("image", "thumb"),
+        "limit": Style.MAX_PER_BUSINESS,
+    })
+
+
+@panel_view
+def style_edit(request, pk=None):
+    b = request.business
+    style = get_object_or_404(Style, business=b, pk=pk) if pk else None
+    if style is None and b.styles.count() >= Style.MAX_PER_BUSINESS:
+        messages.error(request, f"En fazla {Style.MAX_PER_BUSINESS} model eklenebilir. Eskilerden birini sil ya da değiştir.")
+        return redirect("panel:styles")
+    if request.method == "POST" and request.POST.get("action") == "delete" and style:
+        style.delete()
+        messages.success(request, "Model silindi.")
+        return redirect("panel:styles")
+    form = StyleForm(request.POST or None, request.FILES or None, instance=style, business=b)
+    if request.method == "POST" and form.is_valid():
+        obj = form.save(commit=False)
+        obj.business = b
+        photo = form.cleaned_data.get("photo")
+        try:
+            if photo:
+                images.apply(obj, photo)
+        except images.ImageError as exc:
+            form.add_error("photo", str(exc))
+        else:
+            obj.save()
+            messages.success(request, "Model kaydedildi.")
+            return redirect("panel:styles")
+    return render(request, "panel/style_form.html", {"tab": "settings", "form": form, "style": style})

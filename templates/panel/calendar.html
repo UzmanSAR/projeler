@@ -41,13 +41,13 @@
         <div><label for="to">Bitiş</label><input id="to" type="time" name="to" required></div>
       </div>
       <label for="ob">Kim için</label>
-      <select id="ob" name="b"><option value="0">Tüm dükkân</option>{% for p in staff %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}</select>
+      <select id="ob" name="b"><option value="0">Tüm işletme</option>{% for p in staff %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}</select>
       <label for="reason">Not</label><input id="reason" type="text" name="reason" maxlength="80" placeholder="Örn. izin">
       <p style="margin-top:14px"><button class="btn ghost block">Kapat</button></p>
     </form>
     {% for o in day_offs %}
     <form method="post" action="{% url 'panel:timeoff_delete' o.id %}" class="card row between">{% csrf_token %}
-      <span>{{ o.start|time:"H:i" }}–{{ o.end|time:"H:i" }} · {{ o.staff.name|default:"Tüm dükkân" }}{% if o.reason %} · {{ o.reason }}{% endif %}</span>
+      <span>{{ o.start|time:"H:i" }}–{{ o.end|time:"H:i" }} · {{ o.staff.name|default:"Tüm işletme" }}{% if o.reason %} · {{ o.reason }}{% endif %}</span>
       <button class="btn danger small">Aç</button>
     </form>
     {% endfor %}

@@ -6,11 +6,26 @@
 {% endblock %}
 {% block content %}
 {% if not business.accepts_bookings %}
-  <div class="card">Bu dükkân şu an online randevu almıyor. Lütfen telefonla arayın.</div>
+  <div class="card">Bu salon şu an online randevu almıyor. Lütfen telefonla arayın.</div>
 {% endif %}
 {% if known %}
   <div class="card row between welcome-back" data-calm><span>Tekrar hoş geldin{% if known.name %}, <b>{{ known.name }}</b>{% endif %}</span>
   <a href="{% url 'public:account' business.slug %}">Randevularım</a></div>
+{% else %}
+  <div class="card row between sign-in"><span>Daha önce geldin mi? Geçmiş randevularını gör.</span>
+  <a href="{% url 'public:account' business.slug %}">Giriş yap</a></div>
+{% endif %}
+{% if styles %}
+<h2>Modeller</h2>
+<p class="muted step-note">Beğendiğin modele dokun, randevunu o modelle al.</p>
+<div class="style-grid public">
+  {% for st in styles %}
+  <a class="style-card" href="{% url 'public:book_select' business.slug %}?m={{ st.id }}">
+    <img src="{{ st.thumb_url }}" alt="{{ st.title }}" width="{{ st.width }}" height="{{ st.height }}" loading="lazy">
+    <span><b>{{ st.title }}</b>{% if st.note %}<small>{{ st.note }}</small>{% endif %}</span>
+  </a>
+  {% endfor %}
+</div>
 {% endif %}
 <h2>Hizmetler</h2>
 <div class="card">
@@ -19,10 +34,10 @@
     <tr><td><b>{{ s.name }}</b><br><small>{{ s.duration }} dk</small></td><td class="num"><b>{{ s.price|floatformat:"0g" }} ₺</b></td></tr>
   {% empty %}<tr><td>Hizmet listesi henüz eklenmedi.</td></tr>{% endfor %}
   </table>
-  {% with s=services.0 %}{% if s %}<small>Fiyatlar dükkân tarafından girilir.</small>{% endif %}{% endwith %}
+  {% with s=services.0 %}{% if s %}<small>Fiyatlar salon tarafından belirlenir.</small>{% endif %}{% endwith %}
 </div>
 {% if staff|length > 1 %}
-<h2>Kuaförler</h2>
+<h2>{{ business.staff_plural }}</h2>
 <div class="card">{% for p in staff %}<span class="badge gray" style="margin-right:6px">{{ p.name }}{% if p.title %} {{ p.title }}{% endif %}</span>{% endfor %}</div>
 {% endif %}
 <h2>Çalışma saatleri</h2>

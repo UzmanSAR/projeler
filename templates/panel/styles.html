@@ -1,0 +1,23 @@
+{% extends "panel/_shell.html" %}
+{% block content %}
+<p><a class="tap" href="{% url 'panel:settings' %}">‹ Ayarlar</a></p>
+<div class="row between"><h1>Modeller</h1>{% if styles|length < limit %}<a class="btn small" href="{% url 'panel:style_add' %}">+ Model ekle</a>{% endif %}</div>
+<p class="muted">Yaptığın çalışmaların ya da önerdiğin modellerin fotoğraflarını ekle. Müşterilerin randevu alırken beğendiğini seçer; seçtiği model randevusunda sana görünür.</p>
+{% if styles %}
+<div class="style-grid">
+  {% for s in styles %}
+  <a class="style-card{% if not s.active %} off{% endif %}" href="{% url 'panel:style_edit' s.id %}">
+    <img src="{{ s.thumb_url }}" alt="" width="{{ s.width }}" height="{{ s.height }}" loading="lazy">
+    <span><b>{{ s.title }}</b>{% if s.service %}<small>{{ s.service.name }}</small>{% endif %}{% if not s.active %}<small>Yayında değil</small>{% endif %}</span>
+  </a>
+  {% endfor %}
+</div>
+<p class="muted"><small>{{ styles|length }} / {{ limit }} model</small></p>
+{% else %}
+<div class="card empty">
+  <b>Henüz model yok</b>
+  <p class="muted">İlk modelini eklemek bir dakika sürer: fotoğraf seç, ad ver, istersen bir işleme bağla.</p>
+  <p><a class="btn" href="{% url 'panel:style_add' %}">İlk modeli ekle</a></p>
+</div>
+{% endif %}
+{% endblock %}

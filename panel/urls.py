@@ -25,6 +25,9 @@ urlpatterns = [
     path("ayarlar/saatler/", views.hours, name="hours"),
     path("ayarlar/hizmet/", views.service_edit, name="service_add"),
     path("ayarlar/hizmet/<int:pk>/", views.service_edit, name="service_edit"),
+    path("ayarlar/modeller/", views.styles, name="styles"),
+    path("ayarlar/modeller/ekle/", views.style_edit, name="style_add"),
+    path("ayarlar/modeller/<int:pk>/", views.style_edit, name="style_edit"),
     path("ayarlar/personel/", views.staff_edit, name="staff_add"),
     path("ayarlar/personel/<int:pk>/", views.staff_edit, name="staff_edit"),
 ]

@@ -2,9 +2,9 @@
 {% load static %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/panel.css' %}?v={{ STATIC_V }}">{% endblock %}
 {% block extra_js %}<script src="{% static 'js/panel.js' %}?v={{ STATIC_V }}"></script>{% endblock %}
-{% block title %}Kuaför girişi{% endblock %}
+{% block title %}İşletme girişi{% endblock %}
 {% block body %}
-<div class="hero"><div class="inner"><small>{{ SITE_NAME }}</small><h1>Kuaför girişi</h1>{% include "_pole.html" %}</div></div>
+<div class="hero"><div class="inner"><small>{{ SITE_NAME }}</small><h1>İşletme girişi</h1>{% include "_pole.html" %}</div></div>
 <div class="stripe"></div>
 <main class="wrap">
   {% if form.errors %}<ul class="msgs"><li class="error">E-posta ya da şifre hatalı.</li></ul>{% endif %}
@@ -15,6 +15,6 @@
     <input id="id_password" type="password" name="password" autocomplete="current-password" required>
     <p style="margin-top:16px"><button class="btn block">Giriş yap</button></p>
   </form>
-  <p class="muted">Hesabın yok mu? <a href="{% url 'panel:signup' %}">Dükkânını kur</a></p>
+  <p class="muted">Hesabın yok mu? <a href="{% url 'panel:signup' %}">İşletmeni kaydet</a></p>
 </main>
 {% endblock %}

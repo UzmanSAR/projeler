@@ -71,6 +71,13 @@
     if (left < 0) strip.scrollLeft += left; else if (over > 0) strip.scrollLeft += over;
   }
 
+  /* Model seçilince bağlı işlem işaretlenir (müşteri istemezse kaldırabilir). Hareketten bağımsız: her düzeyde. */
+  d.addEventListener('change', function (e) {
+    var r = e.target; if (!r.matches || !r.matches('input[name="m"]') || !r.checked) return;
+    var id = r.getAttribute('data-service'), box = id && d.querySelector('input[name="h"][value="' + id + '"]');
+    if (box && !box.checked) { box.checked = true; box.dispatchEvent(new Event('change', { bubbles: true })); }
+  });
+
   /* P3 live total on "Devam et" (flag live-total). Like the server, it counts the first six ticked services. */
   var picks = d.querySelectorAll('.pick input[name="h"]'), cta = picks.length && picks[0].form && picks[0].form.querySelector('.sticky .btn');
   if (cta && M.flag('live-total')) {
