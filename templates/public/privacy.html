@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 {% block title %}Gizlilik ve kişisel veriler · {{ SITE_NAME }}{% endblock %}
 {% block meta %}<meta name="description" content="{{ SITE_NAME }} hangi kişisel verileri, hangi amaçla işler ve nasıl korur.">{% endblock %}
+{% block body_attrs %} class="scope-paper"{% endblock %}
+{% block theme_color %}{% include "_ink_theme_color.html" %}{% endblock %}
 {% block body %}
 {% include "_site_top.html" %}
 <main class="doc">

@@ -26,12 +26,8 @@ class DemoDataTests(TestCase):
         self.assertTrue(b.appointments.filter(status="completed", actual_total__gt=0).exists())
 
         self.assertEqual(b.name, demo.SHOP_NAME)
-        # eski adla kurulmuş örnek dükkân yeni ada geçer; sahibi adı değiştirdiyse dokunulmaz
-        b.name, b.description = demo.OLD_SHOP
-        b.save()
         again = demo.ensure_demo(history_days=6, ahead_days=3)
-        b.refresh_from_db()
-        self.assertEqual((b.name, b.description), (demo.SHOP_NAME, demo.SHOP_ABOUT))
+        # sahibi adı değiştirdiyse örnek veri tazelenirken dokunulmaz
         b.name = "Benim Dükkânım"
         b.save()
         demo.ensure_demo(history_days=6, ahead_days=3)

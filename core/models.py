@@ -295,8 +295,12 @@ class Customer(models.Model):
 
     @property
     def masked_phone(self):
-        p = self.phone
-        return f"{p[:2]}•• ••• •• {p[-2:]}" if len(p) == 11 else p
+        return mask_phone(self.phone)
+
+
+def mask_phone(p):
+    """05xx xxx xx xx -> 05•• ••• •• xx (ekranda tam numara görünmez)."""
+    return f"{p[:2]}•• ••• •• {p[-2:]}" if len(p) == 11 else p
 
 
 def new_token():

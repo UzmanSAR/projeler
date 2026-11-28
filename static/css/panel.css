@@ -8,9 +8,12 @@
 @media (max-width: 759.98px) {
   /* phone: one mark slides to the tapped tab. No :has(): the mark of app.css stays on the open tab. Five tabs */
   @supports selector(:has(a)) {
-    .tabs a.on::before { content: none; }
-    .tabs::before { content: ""; position: absolute; top: 0; left: 0; width: 20%; height: 3px; pointer-events: none;
-      background: linear-gradient(90deg, transparent calc(50% - 16px), var(--gold) calc(50% - 16px) calc(50% + 16px), transparent calc(50% + 16px));
+    /* basılı tuş sekmeler arasında kayar */
+    .tabs { gap: 0; }
+    .tabs a { z-index: 1; }
+    .tabs a.on, .tabs a.is-picked { background: transparent; box-shadow: none; }
+    .tabs::before { content: ""; position: absolute; top: 6px; bottom: calc(6px + env(safe-area-inset-bottom)); left: 6px; width: calc((100% - 12px) / 5); pointer-events: none;
+      border-radius: 16px; background: var(--surface-2); box-shadow: var(--press-sm);
       transform: translateX(calc(var(--tab, 0) * 100%)); transition: transform 300ms var(--e-soft); }
     .tabs:has(a:nth-child(2).on) { --tab: 1; } .tabs:has(a:nth-child(3).on) { --tab: 2; }
     .tabs:has(a:nth-child(4).on) { --tab: 3; } .tabs:has(a:nth-child(5).on) { --tab: 4; }
@@ -22,9 +25,8 @@
   }
 }
 @media (min-width: 760px) {
-  /* wide: the underline glides inside the transition */
-  .tabs a.on::before { view-transition-name: tab-pill; }
-  ::view-transition-old(tab-pill), ::view-transition-new(tab-pill) { height: 100%; }
+  /* wide: the raised tab glides inside the transition */
+  .tabs a.on { view-transition-name: tab-pill; }
 }
 
 /* ince ışık: bir kez geçer, taşıyıcısı kırpar, yazının arkasında kalır */
@@ -33,7 +35,7 @@
   :where(.kpi.is-up, .appt.just-done, .appt.just-added, .linkbox.is-copied) { position: relative; z-index: 0; }
   :where(.kpi.is-up, .appt.just-done, .appt.just-added, .linkbox.is-copied, .till)::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
     background: var(--foil-soft), var(--foil-soft); transform: translateX(-130%); animation: sheen 900ms var(--e-inout) 150ms backwards; }
-  .appt.just-done::after { background: linear-gradient(105deg, transparent 36%, rgba(42, 90, 67, .16) 50%, transparent 64%); }
+  .appt.just-done::after { background: linear-gradient(105deg, transparent 36%, var(--green-soft) 50%, transparent 64%); }
   .appt:is(.just-done, .just-added)::after { animation-duration: 800ms; animation-delay: 200ms; }
   .linkbox.is-copied::after { animation-duration: var(--t-scene); animation-delay: 0s; }
   .till::after { animation-delay: 500ms; }
@@ -59,10 +61,10 @@ html:not([data-enter="off"]) .kpis > .kpi { animation: rise var(--t-base) var(--
 /* tile scrolled away: a paper slip at the top, about 2s */
 .till { position: fixed; z-index: 20; top: calc(10px + env(safe-area-inset-top)); left: 50%; pointer-events: none;
   display: flex; align-items: baseline; gap: 10px; padding: 7px 16px 6px; white-space: nowrap;
-  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-round); box-shadow: var(--shadow-2);
+  background: var(--face-flat), var(--surface); border-radius: var(--radius-round); box-shadow: var(--raise);
   transform: translate(-50%, 0); animation: pan-till-in 320ms var(--e-out) backwards, pan-till-out 260ms var(--e-in) 2100ms forwards; }
-.till small { font: 600 .74rem var(--sans); }
-.till b { font: 500 1.3rem/1.2 var(--serif); color: var(--gold); text-align: right; }
+.till small { font: 500 .68rem var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+.till b { font: 800 1.3rem/1.2 var(--display); color: var(--accent); text-align: right; }
 @keyframes pan-till-in { from { opacity: 0; transform: translate(-50%, -160%); } }
 @keyframes pan-till-out { to { opacity: 0; transform: translate(-50%, -160%); } }
 
@@ -90,11 +92,11 @@ html:not([data-enter="off"]) .cal .col:nth-child(-n+4) .ev:nth-of-type(-n+7) { a
 .cal .ev:nth-of-type(5) { --e: 4; } .cal .ev:nth-of-type(6) { --e: 5; } .cal .ev:nth-of-type(n+7) { --e: 6; }
 @media (hover: hover) and (pointer: fine) {
   .cal a.ev { transition: transform 260ms var(--e-spring); }
-  .cal a.ev[href]:hover { border-color: var(--gold); transform: translateX(2px); }
+  .cal a.ev[href]:hover { transform: translateX(2px); box-shadow: var(--raise), inset 4px 0 0 var(--accent); }
 }
 /* şu an çizgisi: frozen at load, one stroke (panel.js shares out the 520ms) */
-.cal .now { position: absolute; left: 0; right: 0; height: 0; border-top: 1.5px solid var(--gold); z-index: 2; pointer-events: none; transform-origin: 0 50%; }
-.cal .col:nth-child(2) .now::before { content: ""; position: absolute; left: -4px; top: -5px; width: 8px; height: 8px; border-radius: 50%; background: var(--gold); }
+.cal .now { position: absolute; left: 0; right: 0; height: 0; border-top: 1.5px solid var(--accent); z-index: 2; pointer-events: none; transform-origin: 0 50%; }
+.cal .col:nth-child(2) .now::before { content: ""; position: absolute; left: -4px; top: -5px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
 html:not([data-enter="off"]) .cal .col:nth-child(-n+5) .now { animation: draw-x 520ms linear 300ms backwards; }
 
 /* N8 rapor: first view of a URL (gate) or a filter change to a new one (.is-drawn). 5 bars: budget */
@@ -108,8 +110,8 @@ html:not([data-enter="off"]) .cal .col:nth-child(-n+5) .now { animation: draw-x 
 
 /* N9 bağlantıyı kopyala */
 .linkbox[role="button"] { cursor: pointer; }
-.linkbox[role="button"]:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 2px; }
-.linkbox.is-copied { border-color: var(--gold); border-style: solid; }
+.linkbox[role="button"]:focus-visible { outline: 2px solid var(--accent-bright); outline-offset: 2px; }
+.linkbox.is-copied { color: var(--accent); }
 
 /* N10 auth and form errors */
 html[data-screen="auth"] .msgs li.error { animation: msg-in var(--t-base) var(--e-out) 80ms backwards, shake 360ms var(--e-out) 320ms; }

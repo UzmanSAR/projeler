@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>{% block title %}{{ SITE_NAME }}{% endblock %}</title>
 {# Tarayıcı çubuğunun rengi: telefonun açık/koyu ayarına göre; kişi elle seçtiyse app.js ikisini de seçilen renge çevirir #}
-<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" data-light="#ffffff" data-dark="#1a1f1d" data-own="light">
-<meta name="theme-color" content="#1a1f1d" media="(prefers-color-scheme: dark)" data-light="#ffffff" data-dark="#1a1f1d" data-own="dark">
+{% block theme_color %}<meta name="theme-color" content="#d2d5d8" media="(prefers-color-scheme: light)" data-light="#d2d5d8" data-dark="#1e2125" data-own="light">
+<meta name="theme-color" content="#1e2125" media="(prefers-color-scheme: dark)" data-light="#d2d5d8" data-dark="#1e2125" data-own="dark">{% endblock %}
 <meta name="color-scheme" content="light dark">
 {# Ana ekrana eklenebilen uygulama: panel için platformun, dükkân sayfalarında dükkânın tanımı (public/_shell.html) #}
 <link rel="manifest" href="{% block manifest %}{% url 'manifest' %}{% endblock %}">
@@ -18,16 +18,15 @@
 {% block meta %}{% endblock %}
 {% if MOTION != "off" %}<style>@media (prefers-reduced-motion: no-preference) { @view-transition { navigation: auto; } }</style>{% endif %}
 <link rel="expect" href="#eof" blocking="render">
-{# Başlık ve metin yazıları ilk boyamadan önce yolda olsun: Türkçe harfler (ğ ş ı İ) latin-ext dosyasındadır #}
-<link rel="preload" as="font" type="font/woff2" crossorigin href="{% static 'fonts/newsreader-latin-wght-normal.woff2' %}">
-<link rel="preload" as="font" type="font/woff2" crossorigin href="{% static 'fonts/newsreader-latin-ext-wght-normal.woff2' %}">
-<link rel="preload" as="font" type="font/woff2" crossorigin href="{% static 'fonts/libre-franklin-latin-wght-normal.woff2' %}">
-<link rel="preload" as="font" type="font/woff2" crossorigin href="{% static 'fonts/libre-franklin-latin-ext-wght-normal.woff2' %}">
+{# Yazılar ilk boyamadan önce yolda olsun: Türkçe harfler (ğ ş İ) ve ₺ latin-ext dosyasındadır #}
+<link rel="preload" as="font" type="font/woff2" crossorigin href="{% static 'fonts/manrope-latin-wght-normal.woff2' %}">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="{% static 'fonts/manrope-latin-ext-wght-normal.woff2' %}">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="{% static 'fonts/ibm-plex-mono-latin-500-normal.woff2' %}">
 <link rel="stylesheet" href="{% static 'css/app.css' %}?v={{ STATIC_V }}">
 {% block extra_css %}{% endblock %}
 <script src="{% static 'js/app.js' %}?v={{ STATIC_V }}"></script>
 </head>
-<body>
+<body{% block body_attrs %}{% endblock %}>
 {% block body %}{% endblock %}
 <div id="nav-status" aria-hidden="true"></div><div id="nav-live" class="sr-only" role="status"></div>
 {% block extra_js %}{% endblock %}

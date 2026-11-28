@@ -1,5 +1,5 @@
 Fonts in this directory are redistributed under the SIL Open Font License, Version 1.1
 (https://openfontlicense.org). Files are the latin and latin-ext subsets from the Fontsource packages.
 
-Newsreader      Copyright 2020 The Newsreader Project Authors (https://github.com/productiontype/Newsreader)
-Libre Franklin  Copyright 2020 The Libre Franklin Project Authors (https://github.com/googlefonts/Libre-Franklin)
+Manrope        Copyright 2018 The Manrope Project Authors (https://github.com/sharanda/manrope)
+IBM Plex Mono  Copyright 2017 IBM Corp. (https://github.com/IBM/plex)

@@ -43,7 +43,7 @@ def without_token_blocks(css):
 
 
 PLAIN = re.compile(r"\s*(#[0-9a-fA-F]{3,8}|rgba?\([^)]*\))\s*")
-TONES = ("turkuaz", "pembe")
+TONES = ("turkuaz", "pembe", "yesil")
 
 
 class ThemeTokenTests(TestCase):
@@ -80,6 +80,14 @@ class ThemeTokenTests(TestCase):
             self.assertEqual(set(light), set(auto), tone)              # koyu temada her vurgu yeniden tanımlı
             self.assertFalse(set(light) - set(self.light), tone)      # yalnızca var olan belirteçler
 
+    def test_paper_scope_dark_blocks_are_identical(self):
+        auto = tokens(block(self.css, ':root:not([data-theme="light"]) .scope-paper'))
+        chosen = tokens(block(self.css, ':root[data-theme="dark"] .scope-paper'))
+        light = tokens(block(self.css, ":root .scope-paper"))
+        self.assertTrue(auto)
+        self.assertEqual(auto, chosen)
+        self.assertEqual(set(auto), set(light))
+
     def test_component_rules_take_colours_from_tokens(self):
         rest = without_token_blocks(self.css)
         self.assertNotIn("--accent:", rest)                            # bütün belirteç blokları çıktı
@@ -103,10 +111,14 @@ class ThemeSwitchTests(TestCase):
         self.b, self.user = make_business("ali")
 
     def test_head_follows_the_phone(self):
-        html = self.client.get("/").content.decode()
+        html = self.client.get(f"/{self.b.slug}/").content.decode()
         self.assertIn('<meta name="color-scheme" content="light dark">', html)
-        self.assertIn('media="(prefers-color-scheme: dark)"', html)
+        self.assertIn('media="(prefers-color-scheme: dark)"', html)            # salon sayfası: çubuk temaya uyar
         self.assertNotIn("data-theme=", html.split("<body")[0].split("<html")[1].split(">")[0])  # sunucu tema seçmez
+        landing = self.client.get("/").content.decode()
+        self.assertIn('class="scope-paper"', landing)                          # ana sayfa: kâğıt gövde, siyah açılış
+        self.assertIn('lp-intro scope-ink', landing)
+        self.assertIn('content="#0c0d0f"', landing)
 
     def test_switch_on_corporate_shop_and_panel_pages(self):
         for url in ("/", "/gizlilik/", "/panel/giris/", f"/{self.b.slug}/", f"/{self.b.slug}/hesabim/"):
@@ -173,7 +185,7 @@ class ToneTests(TestCase):
 
     def test_panel_takes_the_tone_and_settings_change_it(self):
         self.client.force_login(self.user)
-        tag, html = self.html_tag("/panel/")
+        tag, _ = self.html_tag("/panel/")
         self.assertIn('data-tone="turkuaz"', tag)
         self.assertNotIn("data-lights", tag)                    # panelde ışık yok, yalnızca renk
         settings_page = self.client.get("/panel/ayarlar/").content.decode()

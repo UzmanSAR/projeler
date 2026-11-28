@@ -53,7 +53,7 @@
   if (level === 'full' && ((con && (con.saveData || /(^|-)2g$/.test(con.effectiveType || ''))) || navigator.deviceMemory <= 1)) level = 'lite';
   root.setAttribute('data-motion', level);
   var reduced = level === 'off' || !!(w.matchMedia && w.matchMedia('(prefers-reduced-motion: reduce)').matches);
-  var M = w.Motion = { store: store, reduced: reduced, lite: level === 'lite', full: !reduced && level === 'full', nav: 'rise', from: null, screen: 'other', entering: false };
+  var M = w.Motion = { store: store, reduced: reduced, full: !reduced && level === 'full', nav: 'rise', from: null, screen: 'other', entering: false };
   M.flag = function (name) { return (' ' + (root.getAttribute('data-flags') || '') + ' ').indexOf(' ' + name + ' ') > -1; };
 
   /* ---- screens and ranks, first match wins; core/test_motion.py keeps them in step with urls.py */
@@ -173,7 +173,6 @@
   var chip = null, live = null, chipTimer = 0, sayTimer = 0;
   function words() {
     if (chip || !d.body) return;
-    if (!d.getElementById('nav-live')) d.body.insertAdjacentHTML('beforeend', '<div id="nav-status" aria-hidden="true"></div><div id="nav-live" class="sr-only" role="status"></div>');
     chip = d.getElementById('nav-status'); live = d.getElementById('nav-live');
   }
   M.announce = function (text) { words(); if (live) live.textContent = text || ''; };
@@ -318,4 +317,27 @@
     requestAnimationFrame(step); setTimeout(end, ms + 400);   /* rAF may stall in a background tab */
     return true;
   };
+})();
+
+/* 3B eğim: [data-tilt] öğesi imlece doğru hafifçe döner (ana sayfadaki kadran ve ürün görüntüsü). Yalnızca tam
+   harekette ve fareli cihazlarda; dokunmatikte landing.css'teki yavaş salınım kalır. Sayfa betiksiz de tamdır. */
+(function () {
+  'use strict';
+  var w = window, d = document, M = w.Motion;
+  if (!M || !M.full || !w.matchMedia || !w.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+  var els = [], raf = 0, px = 0, py = 0;
+  function frame() {
+    raf = 0;
+    els.forEach(function (el) {
+      var r = el.getBoundingClientRect();
+      if (r.bottom < 0 || r.top > w.innerHeight) return;
+      var x = (px - (r.left + r.width / 2)) / w.innerWidth, y = (py - (r.top + r.height / 2)) / w.innerHeight;
+      el.style.setProperty('--ry', (Math.max(-1, Math.min(1, x)) * 24).toFixed(2) + 'deg');
+      el.style.setProperty('--rx', (Math.max(-1, Math.min(1, -y)) * 16).toFixed(2) + 'deg');
+    });
+  }
+  d.addEventListener('DOMContentLoaded', function () {
+    els = [].slice.call(d.querySelectorAll('[data-tilt]'));
+    if (els.length) w.addEventListener('pointermove', function (e) { px = e.clientX; py = e.clientY; if (!raf) raf = w.requestAnimationFrame(frame); }, { passive: true });
+  });
 })();

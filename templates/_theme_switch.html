@@ -2,7 +2,5 @@
 Betik çalışmazsa düğmeler hiçbir şey yapamayacağı için gizli kalır; sayfa yine telefonun ayarına uyar.{% endcomment %}
 <div class="theme-switch" role="group" aria-label="Görünüm" data-theme-switch hidden>
   {% if not bare %}<span class="theme-switch-label" aria-hidden="true">Görünüm</span>{% endif %}
-  <button type="button" data-theme-set="auto" aria-pressed="true">Otomatik</button>
-  <button type="button" data-theme-set="light" aria-pressed="false">Açık</button>
-  <button type="button" data-theme-set="dark" aria-pressed="false">Koyu</button>
+  <span class="opts"><button type="button" data-theme-set="auto" aria-pressed="true">Otomatik</button><button type="button" data-theme-set="light" aria-pressed="false">Açık</button><button type="button" data-theme-set="dark" aria-pressed="false">Koyu</button></span>
 </div>
