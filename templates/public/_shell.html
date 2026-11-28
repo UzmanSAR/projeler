@@ -12,6 +12,7 @@
     {% include "public/_emblem.html" with kind=business.kind %}
     <div><small>{{ business.get_kind_display }}{% if business.district %} · {{ business.district }}{% endif %}</small>
     <h1><a href="{% url 'public:business' business.slug %}">{{ business.name }}</a></h1></div>
+    {% include "_theme_toggle.html" %}
   </div>
   {% block hero %}{% endblock %}
 </div></div>

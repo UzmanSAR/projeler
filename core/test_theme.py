@@ -131,6 +131,26 @@ class ThemeSwitchTests(TestCase):
         self.assertIn("data-theme-switch", html)
         self.assertIn("Görünüm", html)
 
+    def test_toggle_icon_on_every_page(self):
+        pages = ["/", "/gizlilik/", "/iletisim/", "/gorus/", "/panel/giris/", "/panel/kayit/",
+                 f"/{self.b.slug}/", f"/{self.b.slug}/randevu/", f"/{self.b.slug}/hesabim/"]
+        for url in pages:
+            html = self.client.get(url).content.decode()
+            self.assertEqual(html.count("data-theme-toggle"), 1, url)    # tek simge, sayfanın üstünde
+            self.assertIn('aria-label="Koyu tema"', html, url)
+        self.client.force_login(self.user)
+        for url in ("/panel/", "/panel/takvim/", "/panel/musteriler/", "/panel/raporlar/", "/panel/ayarlar/"):
+            self.assertIn("data-theme-toggle", self.client.get(url).content.decode(), url)
+        self.assertIn('onclick="flip()"', self.client.get("/cevrimdisi/").content.decode())
+
+    def test_not_found_page_has_the_toggle(self):
+        from django.test import override_settings
+        with override_settings(DEBUG=False):
+            r = self.client.get("/boyle-bir-salon-yok/")
+        self.assertEqual(r.status_code, 404)
+        self.assertIn("Bu sayfa bulunamadı", r.content.decode())
+        self.assertIn("data-theme-toggle", r.content.decode())
+
     def test_script_applies_the_choice_before_paint(self):
         js = (Path(settings.BASE_DIR) / "static" / "js" / "app.js").read_text()
         self.assertIn("localStorage.getItem(THEME)", js)

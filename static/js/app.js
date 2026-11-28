@@ -5,37 +5,53 @@
   var w = window, d = document, root = d.documentElement, ss = null;
 
   /* ---- theme: 'auto' follows the phone's light/dark setting; 'light' or 'dark' is a choice kept on this device.
-     Runs before the body is painted, so a chosen theme never flashes the other one first. Switch: _theme_switch.html */
-  var THEME = 'theme';
-  function themeChoice() { var t = null; try { t = w.localStorage.getItem(THEME); } catch (e) {} return t === 'light' || t === 'dark' ? t : 'auto'; }
+     Runs before the body is painted, so a chosen theme never flashes the other one first.
+     Controls: the moon/sun button on every page (_theme_toggle.html) and the three-way switch (_theme_switch.html). */
+  var THEME = 'theme', chosen = null, dark = w.matchMedia ? w.matchMedia('(prefers-color-scheme: dark)') : null;
+  function themeChoice() {
+    var t = chosen; try { t = w.localStorage.getItem(THEME) || chosen; } catch (e) {}   /* storage refused (private window): this page keeps it */
+    return t === 'light' || t === 'dark' ? t : 'auto';
+  }
+  function effective() { var t = themeChoice(); return t !== 'auto' ? t : (dark && dark.matches ? 'dark' : 'light'); }
   function applyTheme(t) {
     if (t === 'auto') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', t);
     var metas = d.querySelectorAll('meta[name="theme-color"][data-own]');
     for (var i = 0; i < metas.length; i++) metas[i].setAttribute('content', metas[i].getAttribute('data-' + (t === 'auto' ? metas[i].getAttribute('data-own') : t)));
   }
   function syncSwitches() {
-    var t = themeChoice(), boxes = d.querySelectorAll('[data-theme-switch]');
-    for (var i = 0; i < boxes.length; i++) {
+    var t = themeChoice(), on = String(effective() === 'dark'), i, j;
+    var boxes = d.querySelectorAll('[data-theme-switch]'), toggles = d.querySelectorAll('[data-theme-toggle]');
+    for (i = 0; i < boxes.length; i++) {
       boxes[i].hidden = false;
       var bs = boxes[i].querySelectorAll('[data-theme-set]');
-      for (var j = 0; j < bs.length; j++) bs[j].setAttribute('aria-pressed', String(bs[j].getAttribute('data-theme-set') === t));
+      for (j = 0; j < bs.length; j++) bs[j].setAttribute('aria-pressed', String(bs[j].getAttribute('data-theme-set') === t));
     }
+    for (i = 0; i < toggles.length; i++) { toggles[i].hidden = false; toggles[i].setAttribute('aria-pressed', on); }
   }
   function refreshTheme() { applyTheme(themeChoice()); syncSwitches(); }
+  function choose(t, from) {
+    chosen = t;
+    try { if (t === 'auto') w.localStorage.removeItem(THEME); else w.localStorage.setItem(THEME, t); } catch (err) {}
+    var M = w.Motion;
+    if (!from || !M || !M.full || !d.startViewTransition) { refreshTheme(); return; }
+    /* the new theme opens like a circle from the button (app.css: .is-theming) */
+    var r = from.getBoundingClientRect();
+    root.style.setProperty('--tx', Math.round(r.left + r.width / 2) + 'px');
+    root.style.setProperty('--ty', Math.round(r.top + r.height / 2) + 'px');
+    root.classList.add('is-theming');
+    var vt = d.startViewTransition(refreshTheme), done = function () { root.classList.remove('is-theming'); };
+    vt.finished.then(done, done);
+  }
   applyTheme(themeChoice());
   d.addEventListener('DOMContentLoaded', syncSwitches);
   w.addEventListener('pageshow', function (e) { if (e.persisted) refreshTheme(); });          /* back to a page kept in memory */
   w.addEventListener('storage', function (e) { if (e.key === THEME) refreshTheme(); });     /* chosen in another tab */
+  if (dark && dark.addEventListener) dark.addEventListener('change', syncSwitches);         /* the phone switched while on "auto" */
   d.addEventListener('click', function (e) {
-    var b = e.target && e.target.closest ? e.target.closest('[data-theme-set]') : null;
+    var b = e.target && e.target.closest ? e.target.closest('[data-theme-set], [data-theme-toggle]') : null;
     if (!b) return;
-    var t = b.getAttribute('data-theme-set');
-    try { if (t === 'auto') w.localStorage.removeItem(THEME); else w.localStorage.setItem(THEME, t); } catch (err) {}
-    applyTheme(t); syncSwitches();
-    if (t !== 'auto' && themeChoice() !== t) {               /* storage refused (private window): keep it for this page */
-      var bs = d.querySelectorAll('[data-theme-set]');
-      for (var i = 0; i < bs.length; i++) bs[i].setAttribute('aria-pressed', String(bs[i].getAttribute('data-theme-set') === t));
-    }
+    if (b.hasAttribute('data-theme-toggle')) choose(effective() === 'dark' ? 'light' : 'dark', b);
+    else choose(b.getAttribute('data-theme-set'), null);
   });
 
   try { ss = w.sessionStorage; ss.setItem('m:t', '1'); ss.removeItem('m:t'); } catch (e) { ss = null; }

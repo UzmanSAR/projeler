@@ -26,9 +26,13 @@
   button:active { box-shadow: inset 4px 4px 10px var(--lo), inset -4px -4px 10px var(--hi); }
   svg { border-radius: 10px; box-shadow: -6px -6px 14px var(--hi), 6px 6px 14px var(--lo); }
   button:focus-visible { outline: 2px solid var(--accent-bright); outline-offset: 2px; }
+  .tt { position: fixed; top: calc(14px + env(safe-area-inset-top)); right: calc(14px + env(safe-area-inset-right)); width: 44px; height: 44px; min-height: 0; padding: 0;
+    display: grid; place-items: center; color: var(--ink); background: var(--bg); }
+  .tt svg { width: 20px; height: 20px; border-radius: 0; box-shadow: none; fill: currentColor; }
 </style>
 </head>
 <body>
+<button type="button" class="tt" aria-label="Koyu tema" aria-pressed="false" title="Koyu / açık tema" onclick="flip()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.4 14.6A8.6 8.6 0 0 1 9.4 3.6a8.6 8.6 0 1 0 11 11z"/></svg></button>
 <main>
   <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8"/><path d="M22.4 12.2A7.6 7.6 0 1 0 23.6 16.4M16 11.6v4.6l3 1.9" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="23.1" cy="9.4" r="1.5"/></svg>
   <h1>Bağlantı yok</h1>
@@ -39,6 +43,15 @@
 /* Bağlantı gelince sayfa kendiliğinden açılır: cihaz "çevrimiçi" dediğinde ve, cihaz hiç çevrimdışı
    olmadıysa (zayıf sinyal, sunucu yeniden başlıyor), birkaç saniyede bir sunucuya sorarak.
    Takvim dosyası (.ics) adresinde bir üst sayfaya dönülür: dosya indirilince bu sayfa yerinde kalırdı. */
+/* koyu / açık tema: sitenin geri kalanıyla aynı seçim (localStorage "theme") */
+function isDark() { var t = document.documentElement.getAttribute('data-theme'); return t ? t === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches; }
+function flip() {
+  var t = isDark() ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', t);
+  try { localStorage.setItem('theme', t); } catch (e) {}
+  document.querySelector('.tt').setAttribute('aria-pressed', String(t === 'dark'));
+}
+document.querySelector('.tt').setAttribute('aria-pressed', String(isDark()));
 function again() {
   if (/\.ics$/.test(location.pathname)) location.replace(location.pathname.replace(/[^\/]+$/, ''));
   else if (location.pathname === '{% url "offline" %}') location.replace('/');   /* bu sayfanın kendi adresi: ana sayfaya */
